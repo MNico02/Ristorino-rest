@@ -1,0 +1,8 @@
+ar\edu\ubp\das\ristorino\RistorinoApplication.class
+ar\edu\ubp\das\ristorino\Beans\LoginBean.class
+ar\edu\ubp\das\ristorino\config\SecurityConfig.class
+ar\edu\ubp\das\ristorino\ServletInitializer.class
+ar\edu\ubp\das\ristorino\repositories\RistorinoRepository.class
+ar\edu\ubp\das\ristorino\resources\RistorinoResource.class
+ar\edu\ubp\das\ristorino\components\SimpleJdbcCallFactory.class
+ar\edu\ubp\das\ristorino\Beans\ClienteBean.class
