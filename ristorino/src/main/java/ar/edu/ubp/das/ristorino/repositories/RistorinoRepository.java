@@ -1,6 +1,7 @@
 package ar.edu.ubp.das.ristorino.repositories;
 
 import ar.edu.ubp.das.ristorino.beans.ClienteBean;
+import ar.edu.ubp.das.ristorino.beans.FiltroRecomendacionBean;
 import ar.edu.ubp.das.ristorino.beans.LoginBean;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
 import io.jsonwebtoken.Jwts;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 
@@ -78,4 +80,33 @@ public class RistorinoRepository {
                 .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> obtenerRecomendaciones(FiltroRecomendacionBean filtro) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("tipoComida", filtro.getTipoComida())
+                .addValue("ciudad", filtro.getCiudad())
+                .addValue("provincia", filtro.getProvincia())
+                .addValue("momentoDelDia", filtro.getMomentoDelDia())
+                .addValue("rangoPrecio", filtro.getRangoPrecio())
+                .addValue("cantidadPersonas", filtro.getCantidadPersonas())
+                .addValue("tieneMenores", filtro.getTieneMenores())
+                .addValue("restriccionesAlimentarias", filtro.getRestriccionesAlimentarias())
+                .addValue("preferenciasAmbiente", filtro.getPreferenciasAmbiente())
+                .addValue("nroCliente", filtro.getNroCliente());
+
+        try {
+            System.out.println("🧠 Filtro recibido: " + filtro);
+            return jdbcCallFactory.executeQueryAsMap("recomendar_restaurantes", "dbo", params, "result");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener recomendaciones: " + e.getMessage(), e);
+        }
+    }
+
+
+
+
+
+
+
 }

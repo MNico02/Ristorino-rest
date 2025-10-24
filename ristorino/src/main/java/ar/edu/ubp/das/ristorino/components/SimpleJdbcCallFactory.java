@@ -1,6 +1,7 @@
 package ar.edu.ubp.das.ristorino.components;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -48,6 +49,30 @@ public class SimpleJdbcCallFactory {
         return new SimpleJdbcCall(jdbcTpl)
                 .withProcedureName(procedureName)
                 .withSchemaName(schemaName);
+    }
+    public List<Map<String, Object>> executeList(String procedureName, String schemaName, SqlParameterSource params) {
+        SimpleJdbcCall jdbcCall = createCall(procedureName, schemaName);
+        Map<String, Object> result = jdbcCall.execute(params);
+
+        // buscar el primer ResultSet (Spring devuelve bajo una clave "#result-set-1")
+        Object rs = result.get("#result-set-1");
+        if (rs instanceof List) {
+            return (List<Map<String, Object>>) rs;
+        }
+        return List.of();
+    }
+
+    public List<Map<String, Object>> executeQueryAsMap(
+            String procedureName,
+            String schemaName,
+            SqlParameterSource params,
+            String resultSetName) {
+
+        SimpleJdbcCall jdbcCall = createCall(procedureName, schemaName)
+                .returningResultSet(resultSetName, new ColumnMapRowMapper());
+
+        Map<String, Object> out = jdbcCall.execute(params);
+        return (List<Map<String, Object>>) out.get(resultSetName);
     }
 
 }

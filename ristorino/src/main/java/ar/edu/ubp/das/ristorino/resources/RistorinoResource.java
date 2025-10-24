@@ -1,12 +1,8 @@
 package ar.edu.ubp.das.ristorino.resources;
 
-import ar.edu.ubp.das.ristorino.beans.HorarioBean;
-import ar.edu.ubp.das.ristorino.beans.ReservaBean;
-import ar.edu.ubp.das.ristorino.beans.SoliHorarioBean;
-import ar.edu.ubp.das.ristorino.beans.ClienteBean;
-import ar.edu.ubp.das.ristorino.beans.LoginBean;
+import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
-//import ar.edu.ubp.das.ristorino.service.GeminiService;
+import ar.edu.ubp.das.ristorino.service.GeminiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +20,8 @@ import java.util.List;
 public class RistorinoResource {
     @Autowired
     private RistorinoRepository ristorinoRepository;
-   // private GeminiService geminiService;
+    @Autowired
+    private GeminiService geminiService;
 
     @PostMapping("/confirmarReserva")
     public ResponseEntity<Map<String, String>> insertarReserva(@RequestBody ReservaBean reserva) {
@@ -45,18 +42,22 @@ public class RistorinoResource {
     }
 
 
-   /* @PostMapping("/ia/recomendaciones")
-    public ResponseEntity<Map<String, String>> procesarTexto(@RequestBody Map<String, String> body) {
+    @PostMapping("/ia/recomendaciones")
+    public ResponseEntity<?> procesarTexto(@RequestBody Map<String, String> body) {
         try {
             String texto = body.get("texto");
-            Map<String, String> resultado = geminiService.interpretarTexto(texto);
-            return ResponseEntity.ok(resultado);
+            FiltroRecomendacionBean filtros = geminiService.interpretarTexto(texto);
+            System.out.println("🎯 Filtro recibido desde IA: " + filtros);
+            List<Map<String, Object>> restaurantes = ristorinoRepository.obtenerRecomendaciones(filtros);
+            return ResponseEntity.ok(restaurantes);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", e.getMessage()));
         }
-    }*/
+    }
+
+
 
     @PostMapping("/registrarCliente")
     public ResponseEntity<String> RegistrarCliente(@RequestBody ClienteBean clienteBean) {
