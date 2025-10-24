@@ -1,7 +1,7 @@
 package ar.edu.ubp.das.ristorino.repositories;
 
-import ar.edu.ubp.das.ristorino.Beans.ClienteBean;
-import ar.edu.ubp.das.ristorino.Beans.LoginBean;
+import ar.edu.ubp.das.ristorino.beans.ClienteBean;
+import ar.edu.ubp.das.ristorino.beans.LoginBean;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
