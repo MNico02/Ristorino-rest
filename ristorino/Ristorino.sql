@@ -1,4 +1,5 @@
 -- 1) Tablas más dependientes (niveles bajos)
+IF OBJECT_ID('dbo.clicks_contenidos_restaurantes','U') IS NOT NULL DROP TABLE dbo.clicks_contenidos_restaurantes;
 IF OBJECT_ID('dbo.preferencias_reservas_restaurantes','U') IS NOT NULL DROP TABLE dbo.preferencias_reservas_restaurantes;
 IF OBJECT_ID('dbo.preferencias_clientes','U') IS NOT NULL DROP TABLE dbo.preferencias_clientes;
 IF OBJECT_ID('dbo.reservas_restaurantes','U') IS NOT NULL DROP TABLE dbo.reservas_restaurantes;
@@ -215,6 +216,28 @@ CREATE TABLE dbo.contenidos_restaurantes (
                                              CONSTRAINT FK_cont_rest_sucursal
                                                  FOREIGN KEY (nro_restaurante, nro_sucursal)
                                                      REFERENCES dbo.sucursales_restaurantes (nro_restaurante, nro_sucursal)
+);
+GO
+-- ============================================================
+-- Tabla: clicks_contenidos_restaurantes
+-- Registra los clicks de clientes en contenidos promocionales
+-- ============================================================
+CREATE TABLE dbo.clicks_contenidos_restaurantes (
+                                                    nro_restaurante      INT            NOT NULL, -- (FK)
+                                                    nro_idioma           INT            NOT NULL, -- (FK)
+                                                    nro_contenido        INT            NOT NULL, -- (FK)
+                                                    nro_click            INT            NOT NULL,
+                                                    fecha_hora_registro  DATETIME       NOT NULL DEFAULT GETDATE(),
+                                                    nro_cliente          INT            NULL,     -- (FK) - Puede ser NULL si el click es anónimo
+                                                    costo_click          DECIMAL(12,2)  NULL,
+                                                    notificado           BIT            NOT NULL DEFAULT (0),
+                                                    CONSTRAINT PK_clicks_contenidos_restaurantes
+                                                        PRIMARY KEY (nro_restaurante, nro_idioma, nro_contenido, nro_click),
+                                                    CONSTRAINT FK_clicks_contenido
+                                                        FOREIGN KEY (nro_restaurante, nro_idioma, nro_contenido)
+                                                            REFERENCES dbo.contenidos_restaurantes (nro_restaurante, nro_idioma, nro_contenido),
+                                                    CONSTRAINT FK_clicks_cliente
+                                                        FOREIGN KEY (nro_cliente) REFERENCES dbo.clientes (nro_cliente)
 );
 GO
 -- preferencias_restaurantes
@@ -872,6 +895,9 @@ WHERE nro_contenido = @nro_contenido;
 END
 GO
 
+
+
+
 -- 🍝 Restaurante 1 - Sucursal 1
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
@@ -903,3 +929,107 @@ VALUES
      N'CONT-R2S2-SUSHI');
 
 select * from contenidos_restaurantes
+go
+
+
+/* ============================================================
+Procedimiento: registrar_click_contenido
+Descripción: Registra un click en un contenido promocional
+       de un restaurante. El nro_click se genera
+       automáticamente de forma incremental.
+============================================================*/
+CREATE OR ALTER PROCEDURE dbo.registrar_click_contenido
+    @nro_restaurante INT,
+    @nro_idioma INT,
+    @nro_contenido INT,
+    @nro_cliente INT = NULL,        -- Opcional: NULL si es click anónimo
+    @costo_click DECIMAL(12,2) = NULL
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @nuevo_nro_click INT;
+    DECLARE @ErrorMessage NVARCHAR(4000);
+
+BEGIN TRY
+BEGIN TRANSACTION;
+
+        -- Verificar que el contenido existe
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.contenidos_restaurantes
+            WHERE nro_restaurante = @nro_restaurante
+              AND nro_idioma = @nro_idioma
+              AND nro_contenido = @nro_contenido
+        )
+BEGIN
+            RAISERROR('El contenido especificado no existe.', 16, 1);
+            RETURN;
+END;
+
+        -- Si no se especifica costo_click, tomar el del contenido
+        IF @costo_click IS NULL
+BEGIN
+SELECT @costo_click = costo_click
+FROM dbo.contenidos_restaurantes
+WHERE nro_restaurante = @nro_restaurante
+  AND nro_idioma = @nro_idioma
+  AND nro_contenido = @nro_contenido;
+END;
+
+        -- Obtener el siguiente número de click para este contenido
+SELECT @nuevo_nro_click = ISNULL(MAX(nro_click), 0) + 1
+FROM dbo.clicks_contenidos_restaurantes
+WHERE nro_restaurante = @nro_restaurante
+  AND nro_idioma = @nro_idioma
+  AND nro_contenido = @nro_contenido;
+
+-- Insertar el registro de click
+INSERT INTO dbo.clicks_contenidos_restaurantes
+(nro_restaurante, nro_idioma, nro_contenido, nro_click,
+ fecha_hora_registro, nro_cliente, costo_click, notificado)
+VALUES
+    (@nro_restaurante, @nro_idioma, @nro_contenido, @nuevo_nro_click,
+     GETDATE(), @nro_cliente, @costo_click, 0);
+
+COMMIT TRANSACTION;
+
+-- Devolver el número de click generado
+SELECT @nuevo_nro_click AS nro_click_generado,
+       GETDATE() AS fecha_hora_registro;
+
+END TRY
+BEGIN CATCH
+IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        SET @ErrorMessage = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
+END CATCH
+END;
+GO
+/* PAra probar el procedimimento
+INSERT INTO dbo.clientes (apellido, nombre, clave, correo, telefonos, nro_localidad, habilitado)
+VALUES 
+    (N'Pérez', N'Juan', 
+     UPPER(CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'password123'), 2)), 
+     N'juan.perez@example.com', 
+     N'351-123-4567', 
+     1, -- Córdoba Capital
+     1);
+go
+
+EXEC dbo.registrar_click_contenido 
+    @nro_restaurante = 1,
+    @nro_idioma = 1,
+    @nro_contenido = 1,
+    @nro_cliente = 1,
+    @costo_click = 0.10;
+    go
+EXEC dbo.registrar_click_contenido 
+    @nro_restaurante = 1,
+    @nro_idioma = 1,
+    @nro_contenido = 1;
+    go
+select * from dbo.clicks_contenidos_restaurantes
+go */

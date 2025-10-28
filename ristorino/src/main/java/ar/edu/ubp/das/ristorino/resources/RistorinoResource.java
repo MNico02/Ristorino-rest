@@ -91,6 +91,14 @@ public class RistorinoResource {
                     .body("Error al procesar el login: " + e.getMessage());
         }
     }
+    @PostMapping("/registrarClickPromocion")
+    public ResponseEntity<String> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
+
+            String mensaje=ristorinoRepository.registrarClick(clickBean);
+            return ResponseEntity.ok(mensaje);
+    }
+
+
 
 
 

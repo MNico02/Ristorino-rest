@@ -1,9 +1,6 @@
 package ar.edu.ubp.das.ristorino.repositories;
 
-import ar.edu.ubp.das.ristorino.beans.ClienteBean;
-import ar.edu.ubp.das.ristorino.beans.ContenidoPromocionalBean;
-import ar.edu.ubp.das.ristorino.beans.LoginBean;
-import ar.edu.ubp.das.ristorino.beans.FiltroRecomendacionBean;
+import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
 import io.jsonwebtoken.Jwts;
@@ -164,6 +161,22 @@ public class RistorinoRepository {
         }
     }
 
+    public String registrarClick(ClickBean clickBean) {
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_restaurante", clickBean.getNroRestaurante())
+                .addValue("nro_idioma", clickBean.getNroIdioma())
+                .addValue("nro_contenido", clickBean.getNroContenido())
+                .addValue("nro_cliente", clickBean.getNroCliente())
+                .addValue("costo_click",clickBean.getCostoClick());
+        try {
+            jdbcCallFactory.execute("registrar_click_contenido", "dbo", params);
+            return "Click registrado correctamente.";
+        } catch (Exception e) {
+
+            return "Error al registrar cliente: " + e.getMessage();
+        }
+
+    }
 
 
 
