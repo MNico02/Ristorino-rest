@@ -23,7 +23,7 @@ public class RistorinoResource {
     @Autowired
     private GeminiService geminiService;
 
-    @PostMapping("/confirmarReserva")
+    @PostMapping("/RegistrarReserva")
     public ResponseEntity<Map<String, String>> insertarReserva(@RequestBody ReservaBean reserva) {
 
         String codReserva = new Httpful("http://localhost:8085/api/v1/restaurante1").path("/confirmarReserva").method(HttpMethod.GET)
@@ -47,7 +47,6 @@ public class RistorinoResource {
         try {
             String texto = body.get("texto");
             FiltroRecomendacionBean filtros = geminiService.interpretarTexto(texto);
-            System.out.println("🎯 Filtro recibido desde IA: " + filtros);
             List<Map<String, Object>> restaurantes = ristorinoRepository.obtenerRecomendaciones(filtros);
             return ResponseEntity.ok(restaurantes);
         } catch (Exception e) {
@@ -56,6 +55,19 @@ public class RistorinoResource {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/ia/generarContenidosPromocionales")
+    public ResponseEntity<?> generarContenidosPromocionales() {
+        try {
+            Map<String, Object> resultado = ristorinoRepository.generarContenidosPromocionales();
+            return ResponseEntity.ok(resultado);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
 
 
 
@@ -79,5 +91,8 @@ public class RistorinoResource {
                     .body("Error al procesar el login: " + e.getMessage());
         }
     }
+
+
+
 
 }

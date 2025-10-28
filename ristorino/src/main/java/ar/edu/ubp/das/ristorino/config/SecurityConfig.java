@@ -24,12 +24,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Solo estos dos endpoints son públicos:
+                        /
                         .requestMatchers("/api/v1/ristorino/registrarCliente", "/api/v1/ristorino/login").permitAll()
-                        // 🚫 Todo lo demás requiere JWT
+
                         .anyRequest().authenticated()
                 )
-                // 🧩 Recurso protegido con JWT
+
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.decoder(jwtDecoder()))
                 );
@@ -57,15 +57,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 🔸 Desactiva protección CSRF
+
                 .csrf(csrf -> csrf.disable())
 
-                // 🔸 Permite TODO (ninguna ruta requiere autenticación)
+
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 )
 
-                // 🔸 Desactiva el soporte de OAuth2 / JWT completamente
+
                 .oauth2ResourceServer(oauth2 -> oauth2.disable());
 
         return http.build();

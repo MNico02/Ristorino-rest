@@ -1,9 +1,11 @@
 package ar.edu.ubp.das.ristorino.repositories;
 
 import ar.edu.ubp.das.ristorino.beans.ClienteBean;
+import ar.edu.ubp.das.ristorino.beans.ContenidoPromocionalBean;
 import ar.edu.ubp.das.ristorino.beans.LoginBean;
 import ar.edu.ubp.das.ristorino.beans.FiltroRecomendacionBean;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
+import ar.edu.ubp.das.ristorino.service.GeminiService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
@@ -23,7 +26,8 @@ import java.util.List;
 public class RistorinoRepository {
     @Autowired
     private SimpleJdbcCallFactory jdbcCallFactory;
-
+    @Autowired
+    private GeminiService geminiService;
     @Value("${security.jwt.secret}")
     private String jwtSecret;
 
@@ -96,14 +100,69 @@ public class RistorinoRepository {
                 .addValue("nroCliente", filtro.getNroCliente());
 
         try {
-            System.out.println("🧠 Filtro recibido: " + filtro);
+
             return jdbcCallFactory.executeQueryAsMap("recomendar_restaurantes", "dbo", params, "result");
         } catch (Exception e) {
             throw new RuntimeException("Error al obtener recomendaciones: " + e.getMessage(), e);
         }
     }
 
+    // Obtener todos los contenidos pendientes de generación
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> obtenerContenidosPendientes() {
+        return jdbcCallFactory.executeList("get_contenidos_a_generar", "dbo", new MapSqlParameterSource());
+    }
 
+    // Actualizar un contenido con el texto generado y duración configurable
+    public void actualizarContenidoPromocional(Integer nroContenido, String textoGenerado, int duracionHoras) {
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_contenido", nroContenido)
+                .addValue("contenido_promocional", textoGenerado)
+                .addValue("duracion_horas", duracionHoras); // 👈 nuevo parámetro
+
+        jdbcCallFactory.execute("actualizar_contenido_promocional", "dbo", params);
+    }
+
+    // Generar todos los contenidos pendientes
+    public Map<String, Object> generarContenidosPromocionales() {
+        try {
+            List<Map<String, Object>> pendientes = obtenerContenidosPendientes();
+
+            if (pendientes == null || pendientes.isEmpty()) {
+                return Map.of("mensaje", "No hay contenidos pendientes para generar.");
+            }
+
+            int generados = 0;
+            for (Map<String, Object> row : pendientes) {
+                String textoBase = (String) row.get("contenido_a_publicar");
+                Integer nroContenido = (Integer) row.get("nro_contenido");
+                Integer nroIdioma = (Integer) row.get("nro_idioma");
+
+                String idioma = (nroIdioma != null && nroIdioma == 2) ? "English" : "Spanish";
+
+                String textoGenerado = geminiService.generarTextoPromocional(
+                        textoBase,
+                        idioma,
+                        (Integer) row.get("nro_restaurante"),
+                        (Integer) row.get("nro_sucursal")
+                );
+
+                //Duración automática (24h por defecto)
+                int duracion = 24;
+
+                actualizarContenidoPromocional(nroContenido, textoGenerado, duracion);
+                generados++;
+            }
+
+            return Map.of(
+                    "mensaje", "Contenidos generados correctamente.",
+                    "cantidad", generados
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar contenidos promocionales: " + e.getMessage(), e);
+        }
+    }
 
 
 
