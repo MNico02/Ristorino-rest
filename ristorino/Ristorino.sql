@@ -191,18 +191,21 @@ CREATE TABLE dbo.idiomas_dominio_cat_preferencias (
 );
 GO
 
--- contenidos_restaurantes
+-- ============================================================
+-- Tabla: contenidos_restaurantes
+-- ============================================================
 CREATE TABLE dbo.contenidos_restaurantes (
-                                             nro_restaurante       INT             NOT NULL, -- (FK)
-                                             nro_idioma            INT             NOT NULL, -- (FK)
-                                             nro_contenido         INT             NOT NULL,
-                                             nro_sucursal          INT             NULL,     -- (FK)
-                                             contenido_promocional NVARCHAR(MAX)   NULL,
-                                             imagen_promocional    NVARCHAR(255)   NULL,     -- ruta/URL de imagen
-                                             contenido_a_publicar  NVARCHAR(MAX)   NULL,
-                                             fecha_ini_vigencia    DATE            NULL,
-                                             fecha_fin_vigencia    DATE            NULL,
-                                             costo_click           DECIMAL(12,2)   NULL,
+                                             nro_restaurante         INT             NOT NULL, -- (FK)
+                                             nro_idioma              INT             NOT NULL, -- (FK)
+                                             nro_contenido           INT       IDENTITY(1,1)       NOT NULL,
+                                             nro_sucursal            INT             NULL,     -- (FK)
+                                             contenido_promocional   NVARCHAR(MAX)   NULL,
+                                             imagen_promocional      NVARCHAR(255)   NULL,     -- ruta/URL de imagen
+                                             contenido_a_publicar    NVARCHAR(MAX)   NULL,
+                                             fecha_ini_vigencia      DATE            NULL,
+                                             fecha_fin_vigencia      DATE            NULL,
+                                             costo_click             DECIMAL(12,2)   NULL,
+                                             cod_contenido_restaurante   NVARCHAR(MAX)         NULL,
                                              CONSTRAINT PK_contenidos_restaurantes
                                                  PRIMARY KEY (nro_restaurante, nro_idioma, nro_contenido),
                                              CONSTRAINT FK_cont_rest_rest
@@ -214,7 +217,6 @@ CREATE TABLE dbo.contenidos_restaurantes (
                                                      REFERENCES dbo.sucursales_restaurantes (nro_restaurante, nro_sucursal)
 );
 GO
-
 -- preferencias_restaurantes
 CREATE TABLE dbo.preferencias_restaurantes (
                                                nro_restaurante      INT            NOT NULL, -- (FK)
@@ -487,15 +489,15 @@ INSERT INTO dbo.idiomas_dominio_cat_preferencias (cod_categoria, nro_valor_domin
 
 -- contenidos_restaurantes
 INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_contenido, nro_sucursal, contenido_promocional, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click)
+(nro_restaurante, nro_idioma, nro_sucursal, contenido_promocional, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante)
 VALUES
-    (1, 1, 1, 1, N'2x1 en pastas miércoles', N'https://ejemplo/imagen1.jpg', N'Promo semanal', '2025-09-01', '2025-12-31', 0.10);
-
+    (1, 1, 1, N'2x1 en pastas miércoles', N'https://ejemplo/imagen1.jpg', N'Promo semanal', '2025-09-01', '2025-12-31', 0.10, N'CONT-001');
+GO
 -- preferencias_restaurantes
 INSERT INTO dbo.preferencias_restaurantes
 (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
 VALUES
-    (1, 1, 1, 1, N'Especialidad de la casa', 1);
+(1, 1, 1, 1, N'Especialidad de la casa', 1);
 
 -- turnos_sucursales_restaurantes
 INSERT INTO dbo.turnos_sucursales_restaurantes
@@ -750,11 +752,11 @@ GO
 
 
 
-	/* ===========================================================
+	/*===========================================================
    RESTAURANTE DE PRUEBA QUE COINCIDA CON LOS FILTROS
 
 	ATENCION ESTO LO CREE PARA COMPROBAR QUE REALMENTE ANDE, SE SUPONE QUE LA INFO DE LOS RESTAURANTES LAS TRAIGO DESDE LOS ENDPOINT
-   ===========================================================
+   =========================================================== */
 
 -- 1️⃣ Restaurante
 INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit)
@@ -764,19 +766,19 @@ VALUES (2, N'Ristorante Italiano Córdoba', N'30-98765432-1');
 INSERT INTO dbo.sucursales_restaurantes
 (nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
 VALUES
-(2, 1, N'Sucursal Nueva Córdoba', N'Av. Hipólito Yrigoyen', 1250, N'Nueva Córdoba', 1, N'5000', N'351-666-2222', 80, 10, N'NCOR');
+    (2, 1, N'Sucursal Nueva Córdoba', N'Av. Hipólito Yrigoyen', 1250, N'Nueva Córdoba', 1, N'5000', N'351-666-2222', 80, 10, N'NCOR');
 
 -- 3️⃣ Zona del restaurante
 INSERT INTO dbo.zonas_sucursales_restaurantes
 (nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
 VALUES
-(2, 1, 1, N'Salón para adultos', 60, 0, 1);
+    (2, 1, 1, N'Salón para adultos', 60, 0, 1);
 
 -- 4️⃣ Turno nocturno (para “noche”)
 INSERT INTO dbo.turnos_sucursales_restaurantes
 (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
 VALUES
-(2, 1, '20:00', '23:30', 1);
+    (2, 1, '20:00', '23:30', 1);
 
 -- 5️⃣ Preferencia del restaurante: tipo de comida italiana
 -- categoría 1 = “Tipo de cocina” (según tus inserts iniciales)
@@ -784,7 +786,7 @@ VALUES
 INSERT INTO dbo.preferencias_restaurantes
 (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
 VALUES
-(2, 1, 1, 1, N'Cocina italiana gourmet', 1);
+    (2, 1, 1, 1, N'Cocina italiana gourmet', 1);
 
 -- 6️⃣ Restricción alimentaria (opcional)
 -- categoría 2 = “Restricciones alimentarias”
@@ -794,31 +796,110 @@ VALUES (2, 3, N'Vegetariana');
 INSERT INTO dbo.preferencias_restaurantes
 (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
 VALUES
-(2, 2, 3, 1, N'Ofrece opciones vegetarianas', 1);
+    (2, 2, 3, 1, N'Ofrece opciones vegetarianas', 1);
 
 
 -- 7️⃣ Sucursal alternativa en otra provincia (Rosario, Santa Fe)
 INSERT INTO dbo.sucursales_restaurantes
 (nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
 VALUES
-(2, 2, N'Sucursal Rosario Centro', N'Av. Pellegrini', 850, N'Centro',
- (SELECT nro_localidad FROM dbo.localidades WHERE nom_localidad = N'Rosario'),
- N'2000', N'341-555-2222', 70, 10, N'ROS');
+    (2, 2, N'Sucursal Rosario Centro', N'Av. Pellegrini', 850, N'Centro',
+     (SELECT nro_localidad FROM dbo.localidades WHERE nom_localidad = N'Rosario'),
+     N'2000', N'341-555-2222', 70, 10, N'ROS');
 
 -- 8️⃣ Zona en Rosario
 INSERT INTO dbo.zonas_sucursales_restaurantes
 (nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
 VALUES
-(2, 2, 1, N'Salón familiar', 50, 1, 1);
+    (2, 2, 1, N'Salón familiar', 50, 1, 1);
 
 -- 9️⃣ Turno en Rosario (también nocturno)
 INSERT INTO dbo.turnos_sucursales_restaurantes
 (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
 VALUES
-(2, 2, '20:00', '23:30', 1);
+    (2, 2, '20:00', '23:30', 1);
 
 -- 10️⃣ Preferencias iguales (para que no influya otro factor)
 INSERT INTO dbo.preferencias_restaurantes
 (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
 VALUES
-(2, 1, 1, 2, N'Cocina italiana en Rosario', 2);*/
+    (2, 1, 1, 2, N'Cocina italiana en Rosario', 2);
+
+
+
+/* ============================================================
+   Procedimiento: get_datos_restaurante_promocion
+   Descripción: Devuelve los datos básicos del restaurante y
+                sucursal para generar el contenido promocional.
+   ============================================================*/
+go
+CREATE OR ALTER PROCEDURE dbo.get_contenidos_a_generar
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT
+    nro_contenido,
+    nro_restaurante,
+    ISNULL(nro_sucursal, 0) AS nro_sucursal,
+    ISNULL(nro_idioma, 1) AS nro_idioma,
+    contenido_a_publicar,
+    ISNULL(imagen_promocional, '') AS imagen_promocional,
+    ISNULL(costo_click, 0) AS costo_click
+FROM dbo.contenidos_restaurantes
+WHERE contenido_promocional IS NULL;
+END
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.actualizar_contenido_promocional
+    @nro_contenido INT,
+    @contenido_promocional NVARCHAR(MAX),
+    @duracion_horas INT = 24  -- por defecto 24 horas de vigencia
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @fecha_inicio DATETIME = GETDATE();
+    DECLARE @fecha_fin DATETIME = DATEADD(HOUR, @duracion_horas, @fecha_inicio);
+
+UPDATE dbo.contenidos_restaurantes
+SET
+    contenido_promocional = @contenido_promocional,
+    fecha_ini_vigencia = @fecha_inicio,
+    fecha_fin_vigencia = @fecha_fin
+WHERE nro_contenido = @nro_contenido;
+END
+GO
+
+-- 🍝 Restaurante 1 - Sucursal 1
+INSERT INTO dbo.contenidos_restaurantes
+(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
+VALUES
+(1, 2, 1,
+ N'Noche italiana de pastas caseras y vinos locales. Celebrá la tradición en nuestro salón principal con música en vivo.',
+ N'https://example.com/imagenes/pasta-night.jpg',
+ 0.15,
+ N'CONT-R1S1-PASTAS');
+
+-- 🥩 Restaurante 2 - Sucursal 1
+INSERT INTO dbo.contenidos_restaurantes
+(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
+VALUES
+    (2, 1, 1,
+     N'Gran asado familiar los domingos. Parrillada libre con cortes premium y postres artesanales. valor por persona 3000pesos incluye bebida',
+     N'https://example.com/imagenes/asado-familiar.jpg',
+     0.18,
+     N'CONT-R2S1-ASADO');
+
+-- 🍣 Restaurante 2 - Sucursal 2
+INSERT INTO dbo.contenidos_restaurantes
+(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
+VALUES
+    (2, 1, 2,
+     N'Noche de sushi libre y tragos de autor. Disfrutá sabores orientales en un ambiente moderno y relajado.',
+     N'https://example.com/imagenes/sushi-night.jpg',
+     0.20,
+     N'CONT-R2S2-SUSHI');
+
+select * from contenidos_restaurantes
