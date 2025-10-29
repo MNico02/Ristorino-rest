@@ -69,6 +69,17 @@ public class RistorinoResource {
     }
 
 
+    @GetMapping("/obtenerPromociones")
+    public ResponseEntity<List<Map<String, Object>>> obtenerPromociones(@RequestParam(required = false) Integer idRestaurante, @RequestParam(required = false) Integer idSucursal) {
+
+        try {
+            List<Map<String, Object>> resultado = ristorinoRepository.obtenerPromociones(idRestaurante, idSucursal);
+            return ResponseEntity.ok(resultado);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(List.of(Map.of("error", e.getMessage())));
+        }
+    }
 
 
     @PostMapping("/registrarCliente")

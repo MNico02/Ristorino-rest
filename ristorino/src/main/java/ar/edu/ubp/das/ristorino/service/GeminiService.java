@@ -103,14 +103,14 @@ public class GeminiService {
     Basate en la siguiente idea o campaña del restaurante:
     👉 "%s"
 
-    🎯 Instrucciones:
+    Instrucciones:
     - Escribe en tono entusiasta y cercano, como una publicación de redes sociales.
     - Usa emojis relacionados con comida o celebración (🥩🍕🍝🍔🍷🍰🔥🎉, etc.), pero sin abusar.
     - Si la información lo permite, destacá la propuesta (precio, combo, tipo de comida o experiencia).
     - Si hay datos del restaurante o sucursal, podés mencionarlos de forma natural (ej: “en nuestra sucursal del centro”).
     - Cierra el texto con una invitación atractiva (por ejemplo: “¡Te esperamos hoy!” o “No te lo pierdas 🍴”).
 
-    🚫 Devuelve solo el texto final, sin comillas ni formato adicional.
+    Devuelve solo el texto final, sin comillas ni formato adicional.
 """, idioma, textoBase);
 
 

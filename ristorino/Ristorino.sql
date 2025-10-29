@@ -1033,3 +1033,35 @@ EXEC dbo.registrar_click_contenido
     go
 select * from dbo.clicks_contenidos_restaurantes
 go */
+
+
+
+go
+CREATE OR ALTER PROCEDURE dbo.get_promociones
+    @nro_restaurante INT = NULL,
+    @nro_sucursal INT = NULL
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT
+    -- cr.nro_contenido,
+    cr.nro_restaurante,
+    cr.nro_sucursal,
+    cr.contenido_promocional,
+    cr.fecha_ini_vigencia,
+    cr.fecha_fin_vigencia
+-- cr.nro_idioma,
+-- cr.costo_click,
+--cr.cod_contenido_restaurante
+FROM dbo.contenidos_restaurantes cr
+WHERE
+    (@nro_restaurante IS NULL OR cr.nro_restaurante = @nro_restaurante)
+  AND (@nro_sucursal IS NULL OR cr.nro_sucursal = @nro_sucursal)
+ORDER BY
+    cr.nro_restaurante,
+    cr.nro_sucursal,
+    cr.nro_contenido;
+END
+GO
+--EXEC dbo.get_promociones @nro_restaurante = 2, @nro_sucursal = 2;

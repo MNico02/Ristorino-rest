@@ -178,6 +178,20 @@ public class RistorinoRepository {
 
     }
 
+    public List<Map<String, Object>> obtenerPromociones(Integer idRestaurante, Integer idSucursal) {
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_restaurante", idRestaurante)
+                .addValue("nro_sucursal", idSucursal);
+
+        return jdbcCallFactory.executeQueryAsMap(
+                "get_promociones",
+                "dbo",
+                params,
+                "result"
+        );
+    }
+
+
 
 
 }
