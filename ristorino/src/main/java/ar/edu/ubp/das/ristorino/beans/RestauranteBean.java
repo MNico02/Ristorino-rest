@@ -1,18 +1,25 @@
 package ar.edu.ubp.das.ristorino.beans;
 
-import java.util.List;
+
 
 public class RestauranteBean {
-    private int idRestaurante;
+    private int nroRestaurante;
     private String nombre;
-    private String tipoCocina;
-    private String descripcion;
-    private List<String> imagenes;
-    private float valoracion;
-    private int cantReservas;
-    private List<String> metodosPago;
-    private List<String> servicios;
-    private List<SucursalesBean> sucursales;
 
 
+    public int getNroRestaurante() {
+        return nroRestaurante;
+    }
+
+    public void setNroRestaurante(int nroRestaurante) {
+        this.nroRestaurante = nroRestaurante;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 }

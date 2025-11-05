@@ -186,6 +186,11 @@ public class RistorinoRepository {
 
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
     }
+    public RestauranteBean obtenerRestaurantePorId(Integer idRestaurante) {
+        SqlParameterSource params = new MapSqlParameterSource().addValue("nro_restaurante", idRestaurante);
+        return jdbcCallFactory.executeSingle("get_restaurante_info", "dbo", params, "restaurante", RestauranteBean.class);
+
+    }
 
 
 

@@ -4,6 +4,7 @@ import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ar.edu.ubp.das.ristorino.utils.Httpful;
@@ -77,6 +78,13 @@ public class RistorinoResource {
             return ResponseEntity.ok(resultado);
 
     }
+    @GetMapping("/obtenerRestaurante/{nro}")
+    public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable int nro) {
+        RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
+        return ResponseEntity.ok(restauranteBean);
+    }
+
+
 
 
     @PostMapping("/registrarCliente")

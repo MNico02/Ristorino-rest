@@ -1065,3 +1065,18 @@ ORDER BY
 END
 GO
 --EXEC dbo.get_promociones @nro_restaurante = 2, @nro_sucursal = 2;
+CREATE OR ALTER PROCEDURE dbo.get_restaurante_info
+    @nro_restaurante INT
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT
+    nro_restaurante,
+    razon_social
+FROM
+    dbo.restaurantes
+WHERE
+    nro_restaurante = @nro_restaurante;
+END;
+GO

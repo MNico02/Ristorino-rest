@@ -40,6 +40,10 @@ public class SimpleJdbcCallFactory {
     public void execute(String procedureName, String schemaName, SqlParameterSource params) {
         executeWithOutputs(procedureName, schemaName, params);
     }
+    public <T> T executeSingle(String procedureName, String schemaName, SqlParameterSource params, String resultSetName, Class<T> mappedClass) {
+        List<T> result = executeQuery(procedureName, schemaName, params, resultSetName, mappedClass);
+        return result.isEmpty() ? null : result.get(0);
+    }
 
     public void execute(String procedureName, String schemaName) {
         execute(procedureName, schemaName, new MapSqlParameterSource());
