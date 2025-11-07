@@ -3,6 +3,7 @@ package ar.edu.ubp.das.ristorino.resources;
 import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -78,7 +79,7 @@ public class RistorinoResource {
     }
 
     @GetMapping("/obtenerRestaurante/{nro}")
-    public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable int nro) {
+    public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable int nro) throws JsonProcessingException {
         RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
         return ResponseEntity.ok(restauranteBean);
     }

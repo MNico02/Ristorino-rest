@@ -3,6 +3,7 @@ package ar.edu.ubp.das.ristorino.repositories;
 import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -12,11 +13,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.sql.Types;
+import java.util.*;
 
 
 @Repository
@@ -188,10 +188,211 @@ public class RistorinoRepository {
 
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
     }
-    public RestauranteBean obtenerRestaurantePorId(Integer idRestaurante) {
-        SqlParameterSource params = new MapSqlParameterSource().addValue("nro_restaurante", idRestaurante);
-        return jdbcCallFactory.executeSingle("get_restaurante_info", "dbo", params, "restaurante", RestauranteBean.class);
+    public RestauranteBean obtenerRestaurantePorId(int nroRestaurante) throws JsonProcessingException {
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_restaurante", nroRestaurante, Types.INTEGER);
 
+        // 👇 Cambiamos al nombre real del SP con 5 result sets
+        Map<String, Object> out =
+                jdbcCallFactory.executeWithOutputs("get_restaurante_info", "dbo", params);
+
+        // =========================
+        // RS1: Restaurante
+        // =========================
+        List<Map<String, Object>> rs1 = castRS(out.get("#result-set-1"));
+        if (rs1 == null || rs1.isEmpty()) return null;
+
+        Map<String, Object> r1 = rs1.get(0);
+        RestauranteBean restaurante = new RestauranteBean();
+        restaurante.setNroRestaurante(getInt(r1.get("nro_restaurante")));
+        restaurante.setRazonSocial(getStr(r1.get("razon_social")));
+
+        // =========================
+        // RS2: Sucursales + localidad/provincia
+        // =========================
+        List<Map<String, Object>> rs2 = castRS(out.get("#result-set-2"));
+        Map<Integer, SucursalBean> sucursalesMap = new LinkedHashMap<>();
+
+        if (rs2 != null) {
+            for (Map<String, Object> row : rs2) {
+                int nroSuc = getInt(row.get("nro_sucursal"));
+                SucursalBean s = new SucursalBean();
+
+                s.setNroSucursal(nroSuc);
+                s.setNomSucursal(getStr(row.get("nom_sucursal")));
+                s.setCalle(getStr(row.get("calle")));
+                s.setNroCalle(getStr(row.get("nro_calle")));   // si es INT en bean, usa getInt
+                s.setBarrio(getStr(row.get("barrio")));
+                s.setNroLocalidad(getInt(row.get("nro_localidad")));
+                s.setNomLocalidad(getStr(row.get("nom_localidad")));
+                s.setCodProvincia(getInt(row.get("cod_provincia")));
+                s.setNomProvincia(getStr(row.get("nom_provincia")));
+                s.setCodPostal(getStr(row.get("cod_postal")));
+                s.setTelefonos(getStr(row.get("telefonos")));
+                s.setTotalComensales(getInt(row.get("total_comensales")));
+                s.setMinTolerenciaReserva(getInt(row.get("min_tolerencia_reserva")));
+                s.setCodSucursalRestaurante(getStr(row.get("cod_sucursal_restaurante")));
+
+                // Inicializamos colecciones que vamos a llenar abajo
+                s.setTurnos(new ArrayList<>());
+                s.setZonas(new ArrayList<>());
+                s.setPreferencias(new ArrayList<>()); // ⬅️ agregá esta lista al SucursalBean si no existe
+
+
+                sucursalesMap.put(nroSuc, s);
+            }
+        }
+
+        // =========================
+        // RS3: Turnos por sucursal
+        // =========================
+        List<Map<String, Object>> rs3 = castRS(out.get("#result-set-3"));
+        if (rs3 != null) {
+            for (Map<String, Object> row : rs3) {
+                int nroSuc = getInt(row.get("nro_sucursal"));
+                TurnoBean t = new TurnoBean();
+                t.setHoraDesde(getStr(row.get("hora_desde")));  // o getTime(...) si tu bean usa java.sql.Time
+                t.setHoraHasta(getStr(row.get("hora_hasta")));
+                t.setHabilitado(getBool(row.get("habilitado")));
+
+                SucursalBean s = sucursalesMap.get(nroSuc);
+                if (s != null) s.getTurnos().add(t);
+            }
+        }
+
+        // =========================
+        // RS4: Zonas por sucursal
+        // =========================
+        List<Map<String, Object>> rs4 = castRS(out.get("#result-set-4"));
+        if (rs4 != null) {
+            for (Map<String, Object> row : rs4) {
+                int nroSuc = getInt(row.get("nro_sucursal"));
+                ZonaBean z = new ZonaBean();
+                z.setCodZona(getInt(row.get("cod_zona")));
+                // El RS4 trae "desc_zona". Si tu bean tiene "nomZona", mapealo ahí:
+                // z.setNomZona(getStr(row.get("desc_zona")));
+                z.setDescZona(getStr(row.get("desc_zona")));
+                z.setCantComensales(getInt(row.get("cant_comensales")));
+                z.setPermiteMenores(getBool(row.get("permite_menores")));
+                z.setHabilitada(getBool(row.get("habilitada")));
+
+                SucursalBean s = sucursalesMap.get(nroSuc);
+                if (s != null) s.getZonas().add(z);
+            }
+        }
+
+        // =========================
+        // RS5: Preferencias por sucursal
+        // (con nom_valor_dominio y nom_categoria)
+        // =========================
+        List<Map<String, Object>> rs5 = castRS(out.get("#result-set-5"));
+        if (rs5 != null) {
+            for (Map<String, Object> row : rs5) {
+                int nroSuc = getInt(row.get("nro_sucursal"));
+                PreferenciaBean p = new PreferenciaBean();
+                p.setCodCategoria(getInt(row.get("cod_categoria")));
+                p.setNomCategoria(getStr(row.get("nom_categoria")));
+                p.setNroValorDominio(getInt(row.get("nro_valor_dominio")));
+                p.setNomValorDominio(getStr(row.get("nom_valor_dominio")));
+                p.setNroPreferencia(getInt(row.get("nro_preferencia")));
+                p.setObservaciones(getStr(row.get("observaciones")));
+
+                SucursalBean s = sucursalesMap.get(nroSuc);
+                if (s != null) s.getPreferencias().add(p);
+            }
+        }
+
+        restaurante.setSucursales(new ArrayList<>(sucursalesMap.values()));
+        return restaurante;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> castRS(Object o) {
+        return (o instanceof List) ? (List<Map<String, Object>>) o : null;
+    }
+
+    private static String getStr(Object o) {
+        return (o == null) ? null : o.toString();
+    }
+
+    private static int getInt(Object o) {
+        if (o == null) return 0;
+        if (o instanceof Integer) return (Integer) o;
+        if (o instanceof Long)    return ((Long) o).intValue();
+        if (o instanceof Short)   return ((Short) o).intValue();
+        if (o instanceof BigDecimal) return ((BigDecimal) o).intValue();
+        try { return Integer.parseInt(o.toString()); } catch (Exception e) { return 0; }
+    }
+
+    private static Integer getIntObj(Object o) {
+        return (o == null) ? null : getInt(o);
+    }
+
+    private static boolean getBool(Object o) {
+        if (o == null) return false;
+        if (o instanceof Boolean) return (Boolean) o;
+        if (o instanceof Number)  return ((Number) o).intValue() != 0;
+        return Boolean.parseBoolean(o.toString());
+    }
+
+    private static BigDecimal getBigDec(Object o) {
+        if (o == null) return null;
+        if (o instanceof BigDecimal) return (BigDecimal) o;
+        if (o instanceof Number)     return BigDecimal.valueOf(((Number) o).doubleValue());
+        try { return new BigDecimal(o.toString()); } catch (Exception e) { return null; }
+    }
+
+    /**
+     * Devuelve un String "HH:mm:ss" a partir de columnas TIME (java.sql.Time),
+     * LocalTime, Number (milis) o String ("HH:mm" / "HH:mm:ss"). Si no puede, null.
+     * Útil para RS3 (turnos: hora_desde / hora_hasta).
+     */
+    private static String getTimeStr(Object o) {
+        if (o == null) return null;
+        try {
+            if (o instanceof java.sql.Time) {
+                return o.toString(); // ya viene "HH:mm:ss"
+            }
+            if (o instanceof java.time.LocalTime) {
+                return o.toString(); // "HH:mm:ss.nnn" -> generalmente "HH:mm:ss"
+            }
+            if (o instanceof Number) {
+                long ms = ((Number) o).longValue();
+                return new java.sql.Time(ms).toString();
+            }
+            String s = o.toString().trim();
+            // normalizamos: si viene "HH:mm", devolvemos "HH:mm:00"
+            if (s.matches("^\\d{2}:\\d{2}$")) return s + ":00";
+            if (s.matches("^\\d{2}:\\d{2}:\\d{2}$")) return s;
+            // último intento: parsear LocalTime
+            return java.time.LocalTime.parse(s).toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Devuelve un String ISO de fecha "yyyy-MM-dd" a partir de java.sql.Date, LocalDate o String.
+     * No lo usa este SP, pero queda disponible si luego agregás fechas.
+     */
+    private static String getDateStr(Object o) {
+        if (o == null) return null;
+        try {
+            if (o instanceof java.sql.Date) {
+                return o.toString();
+            }
+            if (o instanceof java.time.LocalDate) {
+                return o.toString();
+            }
+            String s = o.toString().trim();
+            // Si ya viene ISO, lo devolvemos
+            if (s.matches("^\\d{4}-\\d{2}-\\d{2}$")) return s;
+            // Intento de parseo
+            return java.time.LocalDate.parse(s).toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 

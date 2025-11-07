@@ -466,73 +466,101 @@ GO
 
 -- restaurantes
 INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
-(1, N'Ristorino S.A.', N'30-12345678-9');
-
--- atributos
-INSERT INTO dbo.atributos (cod_atributo, nom_atributo, tipo_dato) VALUES
-                                                                      (1, N'WiFi', N'BIT'),
-                                                                      (2, N'Música en vivo', N'BIT');
-
--- categorias_preferencias
-INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria) VALUES
-                                                                           (1, N'Tipo de cocina'),
-                                                                           (2, N'Restricciones alimentarias');
-
--- idiomas
-INSERT INTO dbo.idiomas (nro_idioma, nom_idioma, cod_idioma) VALUES
-                                                                 (1, N'Español', N'es-AR'),
-                                                                 (2, N'English', N'en-US');
-
+(1, N'El millonario', N'30-91245678-9');
+INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
+    (2, N'El gallinero', N'31-91245678-9');
+INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
+    (3, N'El monumental', N'32-91245678-9');
 
 -- sucursales_restaurantes
 INSERT INTO dbo.sucursales_restaurantes
 (nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
 VALUES
-    (1, 1, N'Casa Central', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'CEN');
+    (1, 1, N'Casa Central El millonario', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'CEN');
+INSERT INTO dbo.sucursales_restaurantes
+(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+VALUES
+    (1, 2, N'Sucursal norte El millonario', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'NOR MILLO');
+INSERT INTO dbo.sucursales_restaurantes
+(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+VALUES
+    (2, 1, N'Casa Central El gallinero', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'CEN GALLI');
+INSERT INTO dbo.sucursales_restaurantes
+(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+VALUES
+    (2, 2, N'Sucursal sur El gallinero', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'SUR GALLI');
+INSERT INTO dbo.sucursales_restaurantes
+(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+VALUES
+    (3, 1, N'Casa Central El monumental', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'CEN MONU');
+INSERT INTO dbo.sucursales_restaurantes
+(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+VALUES
+    (3, 2, N'Sucursal norte El monumental', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'NOR MONU');
 
--- configuracion_restaurantes
-INSERT INTO dbo.configuracion_restaurantes (nro_restaurante, cod_atributo, valor) VALUES
-                                                                                      (1, 1, N'1'), -- WiFi: habilitado
-                                                                                      (1, 2, N'0'); -- Música en vivo: deshabilitado
 
--- dominio_categorias_preferencias
-INSERT INTO dbo.dominio_categorias_preferencias (cod_categoria, nro_valor_dominio, nom_valor_dominio) VALUES
-                                                                                                          (1, 1, N'Italiana'),
-                                                                                                          (1, 2, N'Parrilla');
-
--- idiomas_categorias_preferencias
-INSERT INTO dbo.idiomas_categorias_preferencias (cod_categoria, nro_idioma, categoria, desc_categoria) VALUES
-                                                                                                           (1, 1, N'Tipo de cocina', N'Clasificación de la cocina ofrecida'),
-                                                                                                           (1, 2, N'Cuisine type', N'Cuisine classification');
-
--- idiomas_dominio_cat_preferencias
-INSERT INTO dbo.idiomas_dominio_cat_preferencias (cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio) VALUES
-                                                                                                                                       (1, 1, 1, N'Italiana', N'Cocina italiana'),
-                                                                                                                                       (1, 1, 2, N'Italian',  N'Italian cuisine');
-
+-- idiomas
+INSERT INTO dbo.idiomas (nro_idioma, nom_idioma, cod_idioma) VALUES
+                                                                 (1, N'Español', N'es-AR'),
+                                                                 (2, N'English', N'en-US');
 -- contenidos_restaurantes
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, contenido_promocional, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante)
 VALUES
     (1, 1, 1, N'2x1 en pastas miércoles', N'https://ejemplo/imagen1.jpg', N'Promo semanal', '2025-09-01', '2025-12-31', 0.10, N'CONT-001');
 GO
--- preferencias_restaurantes
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
-VALUES
-(1, 1, 1, 1, N'Especialidad de la casa', 1);
 
 -- turnos_sucursales_restaurantes
 INSERT INTO dbo.turnos_sucursales_restaurantes
 (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
 VALUES
     (1, 1, '20:00', '23:00', 1);
+INSERT INTO dbo.turnos_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
+VALUES
+    (1, 2, '20:00', '23:00', 1);
+INSERT INTO dbo.turnos_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
+VALUES
+    (2, 1, '20:00', '23:00', 1);
+INSERT INTO dbo.turnos_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
+VALUES
+    (2, 2, '20:00', '23:00', 1);
+INSERT INTO dbo.turnos_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
+VALUES
+    (3, 1, '20:00', '23:00', 1);
+INSERT INTO dbo.turnos_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
+VALUES
+    (3, 2, '20:00', '23:00', 1);
 
 -- zonas_sucursales_restaurantes
 INSERT INTO dbo.zonas_sucursales_restaurantes
 (nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
 VALUES
     (1, 1, 1, N'Salón principal', 40, 1, 1);
+INSERT INTO dbo.zonas_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
+VALUES
+    (1, 2, 1, N'Salón principal', 40, 1, 1);
+INSERT INTO dbo.zonas_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
+VALUES
+    (2, 1, 1, N'Salón principal', 40, 1, 1);
+INSERT INTO dbo.zonas_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
+VALUES
+    (2, 2, 1, N'Salón principal', 40, 1, 1);
+INSERT INTO dbo.zonas_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
+VALUES
+    (3, 1, 1, N'Salón principal', 40, 1, 1);
+INSERT INTO dbo.zonas_sucursales_restaurantes
+(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
+VALUES
+    (3, 2, 1, N'Salón principal', 40, 1, 1);
 
 -- idiomas_zonas_suc_restaurantes
 INSERT INTO dbo.idiomas_zonas_suc_restaurantes
@@ -557,6 +585,329 @@ INSERT INTO dbo.idiomas_estados (cod_estado, nro_idioma, estado) VALUES
 INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto) VALUES
     (N'CLICK', '2025-09-01', '2025-12-31', 0.10);
 GO
+--TRANSACCION PARA CATEGORIA TIPO DE COMIDA
+SET XACT_ABORT ON;
+BEGIN TRAN;
+
+-- 1) Categoria: tipos_comidas
+IF NOT EXISTS (SELECT 1 FROM dbo.categorias_preferencias WHERE cod_categoria = 1)
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (1, N'tipos_comidas');
+
+-- 2) Dominio de la categoría (ej.: un tipo de comida disponible)
+IF NOT EXISTS (
+    SELECT 1
+    FROM dbo.dominio_categorias_preferencias
+    WHERE cod_categoria = 1 AND nro_valor_dominio = 1
+)
+INSERT INTO dbo.dominio_categorias_preferencias
+    (cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES
+    (1, 1, N'Parrilla');
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES
+    (1, 2, N'Pizzeria');
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES
+    (1, 3, N'Sushi');
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES
+    (1, 4, N'Arabe');
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES
+    (1, 5, N'Pastas');
+
+-- (Opcional pero recomendado) Verificaciones previas para evitar errores de FK:
+-- IF NOT EXISTS (SELECT 1 FROM dbo.restaurantes WHERE nro_restaurante = 1)
+--     RAISERROR('Falta el restaurante nro_restaurante=1', 16, 1);
+-- IF NOT EXISTS (SELECT 1 FROM dbo.sucursales_restaurantes WHERE nro_restaurante = 1 AND nro_sucursal = 1)
+--     RAISERROR('Falta la sucursal (nro_restaurante=1, nro_sucursal=1)', 16, 1);
+
+-- 3) Preferencia del restaurante/sucursal apuntando al dominio creado
+IF NOT EXISTS (
+    SELECT 1
+    FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante = 1
+      AND cod_categoria = 1
+      AND nro_valor_dominio = 1
+      AND nro_preferencia = 1
+)
+INSERT INTO dbo.preferencias_restaurantes
+    (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES
+    (1, 1, 1, 1, N'Ofrece especialidad de parrilla en la sucursal 1.', 1);
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES
+    (1, 1, 2, 2, N'Ofrece especialidad de pizzeria en la sucursal 2.', 2);
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES
+    (2, 1, 1, 3, N'Ofrece especialidad de parrilla en la sucursal 1.', 1);
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES
+    (2, 1, 2, 4, N'Ofrece especialidad de pizzeria en la sucursal 2.', 2);
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES
+    (3, 1, 3, 5, N'Ofrece especialidad de sushi en la sucursal 1.', 1);
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES
+    (3, 1, 4, 6, N'Ofrece especialidad de arabe en la sucursal 2.', 2);
+
+COMMIT TRAN;
+-- TRANSACCION PARA CATEGORIA ESPECIALIDADES
+SET XACT_ABORT ON;
+BEGIN TRAN;
+
+--------------------------------------------------------------------
+-- 1) Nueva categoría: especialidades_alimentarias  (cod_categoria=2)
+--------------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM dbo.categorias_preferencias WHERE cod_categoria = 2)
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (2, N'especialidades_alimentarias');
+
+-----------------------------------------------------------
+-- 2) Dominio de la categoría (valores de especialidades)
+--    nro_valor_dominio: 1..6
+-----------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 2 AND nro_valor_dominio = 1)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (2, 1, N'Vegetariano');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 2 AND nro_valor_dominio = 2)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (2, 2, N'Vegano');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 2 AND nro_valor_dominio = 3)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (2, 3, N'Sin TACC');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 2 AND nro_valor_dominio = 4)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (2, 4, N'Sin Lactosa');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 2 AND nro_valor_dominio = 5)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (2, 5, N'Kosher');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 2 AND nro_valor_dominio = 6)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (2, 6, N'Halal');
+
+-------------------------------------------------------------------
+-- 3) Preferencias por restaurante/sucursal usando tus datos base
+--    (nro_restaurante 1..3 y sucursales 1 y 2 cuando existen)
+--    nro_preferencia: numeración local a estos rows (puede reiniciar)
+-------------------------------------------------------------------
+
+-- Restaurante 1 (sucursales 1 y 2)
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=1 AND cod_categoria=2 AND nro_valor_dominio=1 AND nro_preferencia=1)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (1, 2, 1, 1, N'Sucursal 1 con opciones vegetarianas.', 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=1 AND cod_categoria=2 AND nro_valor_dominio=2 AND nro_preferencia=2)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (1, 2, 2, 2, N'Sucursal 2 ofrece menú vegano.', 2);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=1 AND cod_categoria=2 AND nro_valor_dominio=3 AND nro_preferencia=3)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (1, 2, 3, 3, N'Sucursal 1 con platos Sin TACC certificados.', 1);
+
+-- Restaurante 2 (sucursales 1 y 2)
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=2 AND cod_categoria=2 AND nro_valor_dominio=4 AND nro_preferencia=1)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (2, 2, 4, 1, N'Sucursal 1 con opciones Sin Lactosa.', 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=2 AND cod_categoria=2 AND nro_valor_dominio=1 AND nro_preferencia=2)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (2, 2, 1, 2, N'Sucursal 2 suma menú vegetariano.', 2);
+
+-- Restaurante 3 (sucursales 1 y 2)
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=3 AND cod_categoria=2 AND nro_valor_dominio=5 AND nro_preferencia=1)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (3, 2, 5, 1, N'Sucursal 1 ofrece opciones Kosher.', 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=3 AND cod_categoria=2 AND nro_valor_dominio=6 AND nro_preferencia=2)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (3, 2, 6, 2, N'Sucursal 2 con platos Halal.', 2);
+
+COMMIT TRAN;
+--TRANSACCION PARA CATEGORIA ESTILOS
+SET XACT_ABORT ON;
+BEGIN TRAN;
+
+-------------------------------------------------------
+-- 1) Nueva categoría: estilos  (cod_categoria = 3)
+-------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM dbo.categorias_preferencias WHERE cod_categoria = 3)
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (3, N'estilos');
+
+-------------------------------------------------------
+-- 2) Dominio de la categoría estilos
+--    1=Rústico, 2=Moderno, 3=Minimalista, 4=Industrial, 5=Clásico
+-------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 3 AND nro_valor_dominio = 1)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (3, 1, N'Rústico');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 3 AND nro_valor_dominio = 2)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (3, 2, N'Moderno');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 3 AND nro_valor_dominio = 3)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (3, 3, N'Minimalista');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 3 AND nro_valor_dominio = 4)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (3, 4, N'Industrial');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.dominio_categorias_preferencias
+               WHERE cod_categoria = 3 AND nro_valor_dominio = 5)
+INSERT INTO dbo.dominio_categorias_preferencias
+(cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (3, 5, N'Clásico');
+
+-------------------------------------------------------------------
+-- 3) Preferencias por restaurante/sucursal (tu misma lógica)
+--    nro_preferencia: numeración local por restaurante
+-------------------------------------------------------------------
+
+-- Restaurante 1 (sucursales 1 y 2)
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=1 AND cod_categoria=3 AND nro_valor_dominio=1 AND nro_preferencia=1)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (1, 3, 1, 1, N'Sucursal 1 con ambientación rústica.', 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=1 AND cod_categoria=3 AND nro_valor_dominio=2 AND nro_preferencia=2)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (1, 3, 2, 2, N'Sucursal 2 con estilo moderno.', 2);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=1 AND cod_categoria=3 AND nro_valor_dominio=3 AND nro_preferencia=3)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (1, 3, 3, 3, N'Sucursal 1 incorpora detalles minimalistas.', 1);
+
+-- Restaurante 2 (sucursales 1 y 2)
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=2 AND cod_categoria=3 AND nro_valor_dominio=4 AND nro_preferencia=1)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (2, 3, 4, 1, N'Sucursal 1 con look industrial.', 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=2 AND cod_categoria=3 AND nro_valor_dominio=1 AND nro_preferencia=2)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (2, 3, 1, 2, N'Sucursal 2 mantiene un estilo rústico.', 2);
+
+-- Restaurante 3 (sucursales 1 y 2)
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=3 AND cod_categoria=3 AND nro_valor_dominio=2 AND nro_preferencia=1)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (3, 3, 2, 1, N'Sucursal 1 con diseño moderno.', 1);
+
+IF NOT EXISTS (SELECT 1 FROM dbo.preferencias_restaurantes
+    WHERE nro_restaurante=3 AND cod_categoria=3 AND nro_valor_dominio=3 AND nro_preferencia=2)
+INSERT INTO dbo.preferencias_restaurantes
+(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+VALUES (3, 3, 3, 2, N'Sucursal 2 con enfoque minimalista.', 2);
+
+COMMIT TRAN;
+
+
+select * from categorias_preferencias
+    go
+select * from dominio_categorias_preferencias
+    go
+select * from preferencias_restaurantes
+    go
+
+
+/*
+-- 🍝 Restaurante 1 - Sucursal 1
+INSERT INTO dbo.contenidos_restaurantes
+(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
+VALUES
+(1, 2, 1,
+ N'Noche italiana de pastas caseras y vinos locales. Celebrá la tradición en nuestro salón principal con música en vivo.',
+ N'https://example.com/imagenes/pasta-night.jpg',
+ 0.15,
+ N'CONT-R1S1-PASTAS');
+
+-- 🥩 Restaurante 2 - Sucursal 1
+INSERT INTO dbo.contenidos_restaurantes
+(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
+VALUES
+    (2, 1, 1,
+     N'Gran asado familiar los domingos. Parrillada libre con cortes premium y postres artesanales. valor por persona 3000pesos incluye bebida',
+     N'https://example.com/imagenes/asado-familiar.jpg',
+     0.18,
+     N'CONT-R2S1-ASADO');
+
+-- 🍣 Restaurante 2 - Sucursal 2
+INSERT INTO dbo.contenidos_restaurantes
+(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
+VALUES
+    (2, 1, 2,
+     N'Noche de sushi libre y tragos de autor. Disfrutá sabores orientales en un ambiente moderno y relajado.',
+     N'https://example.com/imagenes/sushi-night.jpg',
+     0.20,
+     N'CONT-R2S2-SUSHI');
+
+select * from contenidos_restaurantes
+go
+*/
+
+
+
 
 CREATE OR ALTER PROCEDURE registrar_cliente
     @apellido       NVARCHAR(120),
@@ -774,82 +1125,6 @@ GO
     @preferenciasAmbiente = N'con amigos';*/
 
 
-
-	/*===========================================================
-   RESTAURANTE DE PRUEBA QUE COINCIDA CON LOS FILTROS
-
-	ATENCION ESTO LO CREE PARA COMPROBAR QUE REALMENTE ANDE, SE SUPONE QUE LA INFO DE LOS RESTAURANTES LAS TRAIGO DESDE LOS ENDPOINT
-   =========================================================== */
-
--- 1️⃣ Restaurante
-INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit)
-VALUES (2, N'Ristorante Italiano Córdoba', N'30-98765432-1');
-
--- 2️⃣ Sucursal del restaurante
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
-VALUES
-    (2, 1, N'Sucursal Nueva Córdoba', N'Av. Hipólito Yrigoyen', 1250, N'Nueva Córdoba', 1, N'5000', N'351-666-2222', 80, 10, N'NCOR');
-
--- 3️⃣ Zona del restaurante
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (2, 1, 1, N'Salón para adultos', 60, 0, 1);
-
--- 4️⃣ Turno nocturno (para “noche”)
-INSERT INTO dbo.turnos_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
-VALUES
-    (2, 1, '20:00', '23:30', 1);
-
--- 5️⃣ Preferencia del restaurante: tipo de comida italiana
--- categoría 1 = “Tipo de cocina” (según tus inserts iniciales)
--- dominio 1 = “Italiana”
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
-VALUES
-    (2, 1, 1, 1, N'Cocina italiana gourmet', 1);
-
--- 6️⃣ Restricción alimentaria (opcional)
--- categoría 2 = “Restricciones alimentarias”
-INSERT INTO dbo.dominio_categorias_preferencias (cod_categoria, nro_valor_dominio, nom_valor_dominio)
-VALUES (2, 3, N'Vegetariana');
-
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
-VALUES
-    (2, 2, 3, 1, N'Ofrece opciones vegetarianas', 1);
-
-
--- 7️⃣ Sucursal alternativa en otra provincia (Rosario, Santa Fe)
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
-VALUES
-    (2, 2, N'Sucursal Rosario Centro', N'Av. Pellegrini', 850, N'Centro',
-     (SELECT nro_localidad FROM dbo.localidades WHERE nom_localidad = N'Rosario'),
-     N'2000', N'341-555-2222', 70, 10, N'ROS');
-
--- 8️⃣ Zona en Rosario
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (2, 2, 1, N'Salón familiar', 50, 1, 1);
-
--- 9️⃣ Turno en Rosario (también nocturno)
-INSERT INTO dbo.turnos_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
-VALUES
-    (2, 2, '20:00', '23:30', 1);
-
--- 10️⃣ Preferencias iguales (para que no influya otro factor)
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
-VALUES
-    (2, 1, 1, 2, N'Cocina italiana en Rosario', 2);
-
-
-
 /* ============================================================
    Procedimiento: get_datos_restaurante_promocion
    Descripción: Devuelve los datos básicos del restaurante y
@@ -898,48 +1173,12 @@ GO
 
 
 
--- 🍝 Restaurante 1 - Sucursal 1
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
-VALUES
-(1, 2, 1,
- N'Noche italiana de pastas caseras y vinos locales. Celebrá la tradición en nuestro salón principal con música en vivo.',
- N'https://example.com/imagenes/pasta-night.jpg',
- 0.15,
- N'CONT-R1S1-PASTAS');
-
--- 🥩 Restaurante 2 - Sucursal 1
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
-VALUES
-    (2, 1, 1,
-     N'Gran asado familiar los domingos. Parrillada libre con cortes premium y postres artesanales. valor por persona 3000pesos incluye bebida',
-     N'https://example.com/imagenes/asado-familiar.jpg',
-     0.18,
-     N'CONT-R2S1-ASADO');
-
--- 🍣 Restaurante 2 - Sucursal 2
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, contenido_a_publicar, imagen_promocional, costo_click, cod_contenido_restaurante)
-VALUES
-    (2, 1, 2,
-     N'Noche de sushi libre y tragos de autor. Disfrutá sabores orientales en un ambiente moderno y relajado.',
-     N'https://example.com/imagenes/sushi-night.jpg',
-     0.20,
-     N'CONT-R2S2-SUSHI');
-
-select * from contenidos_restaurantes
-go
-
-
 /* ============================================================
 Procedimiento: registrar_click_contenido
-Descripción : Registra un click en un contenido promocional.
-              Requiere @nro_restaurante y @nro_contenido.
-              @nro_cliente sigue siendo opcional.
-              El costo se obtiene de contenidos_restaurantes.
-============================================================ */
-go
+Descripción: Registra un click en un contenido promocional
+       de un restaurante. El nro_click se genera
+       automáticamente de forma incremental.
+============================================================*/
 CREATE OR ALTER PROCEDURE dbo.registrar_click_contenido
     @nro_restaurante INT,
     @nro_contenido   INT,
@@ -1027,23 +1266,23 @@ END;
 GO
 /* PAra probar el procedimimento
 INSERT INTO dbo.clientes (apellido, nombre, clave, correo, telefonos, nro_localidad, habilitado)
-VALUES 
-    (N'Pérez', N'Juan', 
-     UPPER(CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'password123'), 2)), 
-     N'juan.perez@example.com', 
-     N'351-123-4567', 
+VALUES
+    (N'Pérez', N'Juan',
+     UPPER(CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'password123'), 2)),
+     N'juan.perez@example.com',
+     N'351-123-4567',
      1, -- Córdoba Capital
      1);
 go
 
-EXEC dbo.registrar_click_contenido 
+EXEC dbo.registrar_click_contenido
     @nro_restaurante = 1,
     @nro_idioma = 1,
     @nro_contenido = 1,
     @nro_cliente = 1,
     @costo_click = 0.10;
     go
-EXEC dbo.registrar_click_contenido 
+EXEC dbo.registrar_click_contenido
     @nro_restaurante = 1,
     @nro_idioma = 1,
     @nro_contenido = 1;
@@ -1064,6 +1303,7 @@ BEGIN
 SELECT
     -- cr.nro_contenido,
     cr.nro_restaurante,
+    cr.nro_contenido,
     cr.nro_sucursal,
     cr.contenido_promocional,
     cr.fecha_ini_vigencia,
@@ -1082,18 +1322,102 @@ ORDER BY
 END
 GO
 --EXEC dbo.get_promociones @nro_restaurante = 2, @nro_sucursal = 2;
+
+-- EXEC dbo.get_restaurante_info @nro_restaurante = 1
+
 CREATE OR ALTER PROCEDURE dbo.get_restaurante_info
     @nro_restaurante INT
     AS
 BEGIN
     SET NOCOUNT ON;
 
+    /* =========================================================
+       RS1: Datos del restaurante
+       ========================================================= */
 SELECT
-    nro_restaurante,
-    razon_social
-FROM
-    dbo.restaurantes
-WHERE
-    nro_restaurante = @nro_restaurante;
+    r.nro_restaurante,
+    r.razon_social
+FROM dbo.restaurantes AS r
+WHERE r.nro_restaurante = @nro_restaurante;
+
+/* =========================================================
+   RS2: Sucursales (toda la info de la tabla) + Localidad/Provincia
+   ========================================================= */
+SELECT
+    s.nro_restaurante,
+    s.nro_sucursal,
+    s.nom_sucursal,
+    s.calle,
+    s.nro_calle,
+    s.barrio,
+    s.nro_localidad,
+    l.nom_localidad,
+    l.cod_provincia,
+    p.nom_provincia,
+    s.cod_postal,
+    s.telefonos,
+    s.total_comensales,
+    s.min_tolerencia_reserva,
+    s.cod_sucursal_restaurante
+FROM dbo.sucursales_restaurantes AS s
+         INNER JOIN dbo.localidades AS l
+                    ON l.nro_localidad = s.nro_localidad
+         INNER JOIN dbo.provincias AS p
+                    ON p.cod_provincia = l.cod_provincia
+WHERE s.nro_restaurante = @nro_restaurante
+ORDER BY s.nro_sucursal;
+
+/* =========================================================
+   RS3: Turnos por sucursal
+   ========================================================= */
+SELECT
+    t.nro_restaurante,
+    t.nro_sucursal,
+    t.hora_desde,
+    t.hora_hasta,
+    t.habilitado
+FROM dbo.turnos_sucursales_restaurantes AS t
+WHERE t.nro_restaurante = @nro_restaurante
+ORDER BY t.nro_sucursal, t.hora_desde;
+
+/* =========================================================
+   RS4: Zonas por sucursal
+   ========================================================= */
+SELECT
+    z.nro_restaurante,
+    z.nro_sucursal,
+    z.cod_zona,
+    z.desc_zona,
+    z.cant_comensales,
+    z.permite_menores,
+    z.habilitada
+FROM dbo.zonas_sucursales_restaurantes AS z
+WHERE z.nro_restaurante = @nro_restaurante
+ORDER BY z.nro_sucursal, z.cod_zona;
+
+/* =========================================================
+   RS5: Preferencias por sucursal
+        (incluye nom_valor_dominio y nom_categoria)
+   ========================================================= */
+SELECT
+    pr.nro_restaurante,
+    pr.nro_sucursal,                       -- solo sucursales (se filtra abajo)
+    pr.cod_categoria,
+    cp.nom_categoria,
+    pr.nro_valor_dominio,
+    dcp.nom_valor_dominio,
+    pr.nro_preferencia,
+    pr.observaciones
+FROM dbo.preferencias_restaurantes AS pr
+         INNER JOIN dbo.dominio_categorias_preferencias AS dcp
+                    ON dcp.cod_categoria = pr.cod_categoria
+                        AND dcp.nro_valor_dominio = pr.nro_valor_dominio
+         INNER JOIN dbo.categorias_preferencias AS cp
+                    ON cp.cod_categoria = pr.cod_categoria
+WHERE pr.nro_restaurante = @nro_restaurante
+  AND pr.nro_sucursal IS NOT NULL          -- “por cada sucursal”
+ORDER BY pr.nro_sucursal, pr.cod_categoria, pr.nro_valor_dominio, pr.nro_preferencia;
+
 END;
 GO
+select * from dbo.clicks_contenidos_restaurantes
