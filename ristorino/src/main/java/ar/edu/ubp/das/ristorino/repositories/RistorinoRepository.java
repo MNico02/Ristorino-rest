@@ -161,19 +161,21 @@ public class RistorinoRepository {
         }
     }
 
+
+
     public String registrarClick(ClickBean clickBean) {
+
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("nro_restaurante", clickBean.getNroRestaurante())
-                .addValue("nro_idioma", clickBean.getNroIdioma())
                 .addValue("nro_contenido", clickBean.getNroContenido())
-                .addValue("nro_cliente", clickBean.getNroCliente())
-                .addValue("costo_click",clickBean.getCostoClick());
+                .addValue("nro_cliente", null);
+
         try {
             jdbcCallFactory.execute("registrar_click_contenido", "dbo", params);
             return "Click registrado correctamente.";
         } catch (Exception e) {
 
-            return "Error al registrar cliente: " + e.getMessage();
+            return "Error al registrar click: " + e.getMessage();
         }
 
     }

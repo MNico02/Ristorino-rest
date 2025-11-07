@@ -72,20 +72,16 @@ public class RistorinoResource {
 
     @GetMapping("/obtenerPromociones")
     public ResponseEntity<List<PromocionBean>> obtenerPromociones(@RequestParam(required = false) Integer idRestaurante, @RequestParam(required = false) Integer idSucursal) {
-
-
-            List<PromocionBean> resultado = ristorinoRepository.obtenerPromociones(idRestaurante, idSucursal);
-            return ResponseEntity.ok(resultado);
+        List<PromocionBean> resultado = ristorinoRepository.obtenerPromociones(idRestaurante, idSucursal);
+        return ResponseEntity.ok(resultado);
 
     }
+
     @GetMapping("/obtenerRestaurante/{nro}")
     public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable int nro) {
         RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
         return ResponseEntity.ok(restauranteBean);
     }
-
-
-
 
     @PostMapping("/registrarCliente")
     public ResponseEntity<String> RegistrarCliente(@RequestBody ClienteBean clienteBean) {

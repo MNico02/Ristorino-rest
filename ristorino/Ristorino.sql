@@ -934,75 +934,92 @@ go
 
 /* ============================================================
 Procedimiento: registrar_click_contenido
-Descripción: Registra un click en un contenido promocional
-       de un restaurante. El nro_click se genera
-       automáticamente de forma incremental.
-============================================================*/
+Descripción : Registra un click en un contenido promocional.
+              Requiere @nro_restaurante y @nro_contenido.
+              @nro_cliente sigue siendo opcional.
+              El costo se obtiene de contenidos_restaurantes.
+============================================================ */
+go
 CREATE OR ALTER PROCEDURE dbo.registrar_click_contenido
     @nro_restaurante INT,
-    @nro_idioma INT,
-    @nro_contenido INT,
-    @nro_cliente INT = NULL,        -- Opcional: NULL si es click anónimo
-    @costo_click DECIMAL(12,2) = NULL
+    @nro_contenido   INT,
+    @nro_cliente     INT = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @nuevo_nro_click INT;
     DECLARE @ErrorMessage NVARCHAR(4000);
+    DECLARE @nro_idioma INT;
+    DECLARE @idioma_count INT;
+    DECLARE @costo_click DECIMAL(12,2);
 
 BEGIN TRY
 BEGIN TRANSACTION;
 
-        -- Verificar que el contenido existe
-        IF NOT EXISTS (
-            SELECT 1
-            FROM dbo.contenidos_restaurantes
-            WHERE nro_restaurante = @nro_restaurante
-              AND nro_idioma = @nro_idioma
-              AND nro_contenido = @nro_contenido
-        )
-BEGIN
-            RAISERROR('El contenido especificado no existe.', 16, 1);
-            RETURN;
-END;
-
-        -- Si no se especifica costo_click, tomar el del contenido
-        IF @costo_click IS NULL
-BEGIN
-SELECT @costo_click = costo_click
+        /* 1) Verificar existencia y ambigüedad de idioma */
+SELECT
+    @idioma_count = COUNT(DISTINCT nro_idioma),
+    @nro_idioma   = MIN(nro_idioma)
 FROM dbo.contenidos_restaurantes
 WHERE nro_restaurante = @nro_restaurante
-  AND nro_idioma = @nro_idioma
-  AND nro_contenido = @nro_contenido;
+  AND nro_contenido   = @nro_contenido;
+
+IF @idioma_count IS NULL OR @idioma_count = 0
+BEGIN
+            RAISERROR('El contenido especificado no existe para ese restaurante.', 16, 1);
+ROLLBACK TRANSACTION; RETURN;
 END;
 
-        -- Obtener el siguiente número de click para este contenido
+        IF @idioma_count > 1
+BEGIN
+            RAISERROR('El contenido es ambiguo (múltiples idiomas). Especifique nro_idioma.', 16, 1);
+ROLLBACK TRANSACTION; RETURN;
+END;
+
+        /* 2) Tomar el costo del contenido */
+SELECT @costo_click = cr.costo_click
+FROM dbo.contenidos_restaurantes cr
+WHERE cr.nro_restaurante = @nro_restaurante
+  AND cr.nro_idioma      = @nro_idioma
+  AND cr.nro_contenido   = @nro_contenido;
+
+IF @costo_click IS NULL
+BEGIN
+            RAISERROR('El contenido no tiene costo_click definido.', 16, 1);
+ROLLBACK TRANSACTION; RETURN;
+END;
+
+        /* 3) Obtener siguiente nro_click */
 SELECT @nuevo_nro_click = ISNULL(MAX(nro_click), 0) + 1
 FROM dbo.clicks_contenidos_restaurantes
 WHERE nro_restaurante = @nro_restaurante
-  AND nro_idioma = @nro_idioma
-  AND nro_contenido = @nro_contenido;
+  AND nro_idioma      = @nro_idioma
+  AND nro_contenido   = @nro_contenido;
 
--- Insertar el registro de click
+/* 4) Insertar el click */
 INSERT INTO dbo.clicks_contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_contenido, nro_click,
- fecha_hora_registro, nro_cliente, costo_click, notificado)
+(
+    nro_restaurante, nro_idioma, nro_contenido, nro_click,
+    fecha_hora_registro, nro_cliente, costo_click, notificado
+)
 VALUES
-    (@nro_restaurante, @nro_idioma, @nro_contenido, @nuevo_nro_click,
-     GETDATE(), @nro_cliente, @costo_click, 0);
+    (
+        @nro_restaurante, @nro_idioma, @nro_contenido, @nuevo_nro_click,
+        GETDATE(), @nro_cliente, @costo_click, 0
+    );
 
 COMMIT TRANSACTION;
 
--- Devolver el número de click generado
-SELECT @nuevo_nro_click AS nro_click_generado,
-       GETDATE() AS fecha_hora_registro;
-
+/* 5) Devolver info generada */
+SELECT
+    @nuevo_nro_click AS nro_click_generado,
+    @nro_idioma      AS nro_idioma_resuelto,
+    @costo_click     AS costo_click_usado,
+    GETDATE()        AS fecha_hora_registro;
 END TRY
 BEGIN CATCH
-IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
-
+IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
         SET @ErrorMessage = ERROR_MESSAGE();
         RAISERROR(@ErrorMessage, 16, 1);
 END CATCH

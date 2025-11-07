@@ -3,8 +3,9 @@ import java.util.Date;
 
 public class PromocionBean {
     private int nroRestaurante;
+    private int nroContenido;
     private int nroSucursal;
-    private String  contenidoPromocional;
+    private String contenidoPromocional;
     private Date fechaInicio;
     private Date fechaFin;
 
@@ -14,6 +15,14 @@ public class PromocionBean {
 
     public void setNroRestaurante(int nroRestaurante) {
         this.nroRestaurante = nroRestaurante;
+    }
+
+    public int getNroContenido() {
+        return nroContenido;
+    }
+
+    public void setNroContenido(int nroContenido) {
+        this.nroContenido = nroContenido;
     }
 
     public int getNroSucursal() {

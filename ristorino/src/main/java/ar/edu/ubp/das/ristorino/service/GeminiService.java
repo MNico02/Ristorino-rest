@@ -1,6 +1,6 @@
 package ar.edu.ubp.das.ristorino.service;
 
-import ar.edu.ubp.das.ristorino.beans.ContenidoPromocionalBean;
+
 import ar.edu.ubp.das.ristorino.beans.FiltroRecomendacionBean;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

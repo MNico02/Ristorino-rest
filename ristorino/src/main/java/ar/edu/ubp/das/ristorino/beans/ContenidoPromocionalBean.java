@@ -6,7 +6,6 @@ public class ContenidoPromocionalBean {
     private Integer nroSucursal;
     private Integer nroIdioma;
     private String contenidoAPublicar;
-    private String contenidoPromocional;
     private String imagenPromocional;
     private Double costoClick;
 
@@ -26,8 +25,6 @@ public class ContenidoPromocionalBean {
     public String getContenidoAPublicar() { return contenidoAPublicar; }
     public void setContenidoAPublicar(String contenidoAPublicar) { this.contenidoAPublicar = contenidoAPublicar; }
 
-    public String getContenidoPromocional() { return contenidoPromocional; }
-    public void setContenidoPromocional(String contenidoPromocional) { this.contenidoPromocional = contenidoPromocional; }
 
     public String getImagenPromocional() { return imagenPromocional; }
     public void setImagenPromocional(String imagenPromocional) { this.imagenPromocional = imagenPromocional; }
