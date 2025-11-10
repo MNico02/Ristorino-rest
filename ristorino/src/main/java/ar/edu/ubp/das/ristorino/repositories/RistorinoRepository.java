@@ -180,7 +180,12 @@ public class RistorinoRepository {
 
     }
 
-
+    public List<ClickNotiBean> obtenerClicksPendientes() {
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_restaurante", null, Types.INTEGER)
+                .addValue("top", null, Types.INTEGER);
+        return jdbcCallFactory.executeQuery("sp_clicks_pendientes", "dbo", params,"", ClickNotiBean.class);
+    }
     public List<PromocionBean> obtenerPromociones(Integer idRestaurante, Integer idSucursal) {
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("nro_restaurante", idRestaurante)

@@ -1421,3 +1421,57 @@ ORDER BY pr.nro_sucursal, pr.cod_categoria, pr.nro_valor_dominio, pr.nro_prefere
 END;
 GO
 select * from dbo.clicks_contenidos_restaurantes
+go
+CREATE OR ALTER PROCEDURE dbo.sp_clicks_pendientes
+    @nro_restaurante INT = NULL,
+    @top             INT = NULL
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @top IS NULL
+BEGIN
+SELECT *
+FROM (
+         SELECT
+             ccr.nro_click,
+             ccr.nro_restaurante,
+             ccr.nro_contenido,
+             ISNULL(ccr.nro_cliente, 0) AS nro_cliente,
+             ccr.fecha_hora_registro,
+             ccr.costo_click,
+             ccr.notificado,
+             cr.cod_contenido_restaurante
+         FROM dbo.clicks_contenidos_restaurantes AS ccr
+                  INNER JOIN dbo.contenidos_restaurantes AS cr
+                             ON cr.nro_restaurante = ccr.nro_restaurante
+                                 AND cr.nro_contenido   = ccr.nro_contenido
+         WHERE ISNULL(ccr.notificado,0) = 0
+           AND (@nro_restaurante IS NULL OR ccr.nro_restaurante = @nro_restaurante)
+     ) AS base
+ORDER BY nro_restaurante, fecha_hora_registro, nro_click;
+END
+ELSE
+BEGIN
+SELECT TOP (@top) *
+FROM (
+         SELECT
+             ccr.nro_click,
+             ccr.nro_restaurante,
+             ccr.nro_contenido,
+             ISNULL(ccr.nro_cliente, 0) AS nro_cliente,
+             ccr.fecha_hora_registro,
+             ccr.costo_click,
+             ccr.notificado,
+             cr.cod_contenido_restaurante
+         FROM dbo.clicks_contenidos_restaurantes AS ccr
+                  INNER JOIN dbo.contenidos_restaurantes AS cr
+                             ON cr.nro_restaurante = ccr.nro_restaurante
+                                 AND cr.nro_contenido   = ccr.nro_contenido
+         WHERE ISNULL(ccr.notificado,0) = 0
+           AND (@nro_restaurante IS NULL OR ccr.nro_restaurante = @nro_restaurante)
+     ) AS base
+ORDER BY nro_restaurante, fecha_hora_registro, nro_click;
+END
+END;
+GO

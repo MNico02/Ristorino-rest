@@ -49,6 +49,7 @@ package ar.edu.ubp.das.ristorino.config;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -59,6 +60,7 @@ import org.springframework.web.filter.CorsFilter;
 import java.util.Arrays;
 
 @Configuration
+@Profile("!batch")
 public class SecurityConfig {
 
     @Bean
@@ -81,7 +83,7 @@ public class SecurityConfig {
     public FilterRegistrationBean<CorsFilter> corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:4200");
+        config.setAllowedOrigins(Arrays.asList("http://localhost:4200/, http://localhost:4201"));
         config.setAllowedMethods(Arrays.asList("POST", "OPTIONS", "GET", "DELETE", "PUT"));
         config.setAllowedHeaders(Arrays.asList("X-Requested-With", "Origin", "Content-Type", "Accept", "Authorization"));
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
