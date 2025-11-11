@@ -5,6 +5,7 @@ import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -105,10 +106,10 @@ public class RistorinoResource {
         }
     }
     @PostMapping("/registrarClickPromocion")
-    public ResponseEntity<String> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
-
-            String mensaje=ristorinoRepository.registrarClick(clickBean);
-            return ResponseEntity.ok(mensaje);
+    public ResponseEntity<Map<String, Object>> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
+        Map<String, Object> body = ristorinoRepository.registrarClick(clickBean);
+        boolean ok = (boolean) body.getOrDefault("success", false);
+        return new ResponseEntity<>(body, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 

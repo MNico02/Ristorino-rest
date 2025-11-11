@@ -164,21 +164,23 @@ public class RistorinoRepository {
 
 
 
-    public String registrarClick(ClickBean clickBean) {
+    public Map<String, Object> registrarClick(ClickBean clickBean) {
 
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("nro_restaurante", clickBean.getNroRestaurante())
                 .addValue("nro_contenido", clickBean.getNroContenido())
                 .addValue("nro_cliente", null);
 
+        Map<String, Object> resp = new HashMap<>();
         try {
             jdbcCallFactory.execute("registrar_click_contenido", "dbo", params);
-            return "Click registrado correctamente.";
+            resp.put("success", true);
+            resp.put("message", "Click registrado correctamente.");
         } catch (Exception e) {
-
-            return "Error al registrar click: " + e.getMessage();
+            resp.put("success", false);
+            resp.put("message", "Error al registrar click: " + e.getMessage());
         }
-
+        return resp;
     }
 
     public List<ClickNotiBean> obtenerClicksPendientes() {
