@@ -12,13 +12,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
-
+import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Types;
 import java.util.*;
+import java.util.stream.Collectors;
 
-
+@Slf4j
 @Repository
 public class RistorinoRepository {
     @Autowired
@@ -186,6 +187,44 @@ public class RistorinoRepository {
                 .addValue("top", null, Types.INTEGER);
         return jdbcCallFactory.executeQuery("sp_clicks_pendientes", "dbo", params,"", ClickNotiBean.class);
     }
+
+    public List<ClickNotiBean> marcarClicksComoNotificados(List<ClickNotiBean> clicks, Integer nroRestaurante) {
+        if (clicks == null || clicks.isEmpty()) {
+            log.info("⚠️ No hay clics para marcar como notificados.");
+            return List.of();
+        }
+
+        // 1️⃣ Convertimos la lista de clicks a JSON (como espera el SP)
+        String jsonItems = clicks.stream()
+                .map(click -> String.format("{\"nro_click\": %d}", click.getNroClick()))
+                .collect(Collectors.joining(",", "[", "]"));
+
+        // 2️⃣ Armamos los parámetros
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("items_json", jsonItems)
+                .addValue("nro_restaurante", nroRestaurante);
+
+        try {
+            // 3️⃣ Ejecutamos el procedimiento con la factory
+            List<ClickNotiBean> actualizados = jdbcCallFactory.executeQuery(
+                    "sp_clicks_confirmar_notificados_obj",   // nombre del SP
+                    "dbo",                                   // esquema
+                    params,
+                    "clicks",                                // alias del resultset (puede ser cualquiera)
+                    ClickNotiBean.class                      // clase mapeada
+            );
+
+            log.info("✅ {} clic(s) marcados como notificados para restaurante {}.",
+                    actualizados.size(), nroRestaurante);
+
+            return actualizados;
+
+        } catch (Exception e) {
+            log.error("❌ Error al marcar clics como notificados: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+
     public List<PromocionBean> obtenerPromociones(Integer idRestaurante, Integer idSucursal) {
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("nro_restaurante", idRestaurante)
@@ -193,6 +232,7 @@ public class RistorinoRepository {
 
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
     }
+
     public RestauranteBean obtenerRestaurantePorId(int nroRestaurante) throws JsonProcessingException {
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("nro_restaurante", nroRestaurante, Types.INTEGER);

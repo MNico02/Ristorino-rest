@@ -6,6 +6,16 @@ public class PromocionBean {
     private int nroContenido;
     private int nroSucursal;
     private String contenidoPromocional;
+    private String imagenPromocional;
+
+    public String getImagenPromocional() {
+        return imagenPromocional;
+    }
+
+    public void setImagenPromocional(String imagenPromocional) {
+        this.imagenPromocional = imagenPromocional;
+    }
+
     private Date fechaInicio;
     private Date fechaFin;
 

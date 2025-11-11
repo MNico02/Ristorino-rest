@@ -1306,6 +1306,7 @@ SELECT
     cr.nro_contenido,
     cr.nro_sucursal,
     cr.contenido_promocional,
+    cr.imagen_promocional,
     cr.fecha_ini_vigencia,
     cr.fecha_fin_vigencia
 -- cr.nro_idioma,
@@ -1321,9 +1322,6 @@ ORDER BY
     cr.nro_contenido;
 END
 GO
---EXEC dbo.get_promociones @nro_restaurante = 2, @nro_sucursal = 2;
-
--- EXEC dbo.get_restaurante_info @nro_restaurante = 1
 
 CREATE OR ALTER PROCEDURE dbo.get_restaurante_info
     @nro_restaurante INT
@@ -1475,3 +1473,9 @@ ORDER BY nro_restaurante, fecha_hora_registro, nro_click;
 END
 END;
 GO
+
+
+
+Update dbo.contenidos_restaurantes
+set imagen_promocional = ''
+go
