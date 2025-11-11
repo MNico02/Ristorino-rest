@@ -1180,12 +1180,13 @@ Descripción: Registra un click en un contenido promocional
        automáticamente de forma incremental.
 ============================================================*/
 CREATE OR ALTER PROCEDURE dbo.registrar_click_contenido
-    @nro_restaurante INT,
+    @cod_restaurante VARCHAR(1024),   -- <- ahora recibe el código HEX cifrado
     @nro_contenido   INT,
     @nro_cliente     INT = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @nuevo_nro_click INT;
     DECLARE @ErrorMessage NVARCHAR(4000);
@@ -1193,10 +1194,37 @@ BEGIN
     DECLARE @idioma_count INT;
     DECLARE @costo_click DECIMAL(12,2);
 
+    ------------------------------------------------------------
+    -- 0) Resolver nro_restaurante real desde el código HEX
+    ------------------------------------------------------------
+    DECLARE @cod_rest_bin VARBINARY(1024) =
+        CONVERT(VARBINARY(1024), '0x' + @cod_restaurante, 1);
+
+    DECLARE @nro_restaurante INT;
+
+SELECT TOP (1)
+            @nro_restaurante = r.nro_restaurante
+FROM dbo.restaurantes AS r
+WHERE r.nro_restaurante = CONVERT(
+        INT,
+        CONVERT(VARCHAR(1024),
+                DECRYPTBYPASSPHRASE(
+                        CONVERT(VARCHAR(20), r.nro_restaurante),
+                        @cod_rest_bin
+                )
+        )
+                          );
+
+IF @nro_restaurante IS NULL
+BEGIN
+        RAISERROR('Código de restaurante inválido.', 16, 1);
+        RETURN;
+END
+
 BEGIN TRY
 BEGIN TRANSACTION;
 
-        /* 1) Verificar existencia y ambigüedad de idioma */
+    /* 1) Verificar existencia y ambigüedad de idioma */
 SELECT
     @idioma_count = COUNT(DISTINCT nro_idioma),
     @nro_idioma   = MIN(nro_idioma)
@@ -1206,17 +1234,17 @@ WHERE nro_restaurante = @nro_restaurante
 
 IF @idioma_count IS NULL OR @idioma_count = 0
 BEGIN
-            RAISERROR('El contenido especificado no existe para ese restaurante.', 16, 1);
+        RAISERROR('El contenido especificado no existe para ese restaurante.', 16, 1);
 ROLLBACK TRANSACTION; RETURN;
 END;
 
-        IF @idioma_count > 1
+    IF @idioma_count > 1
 BEGIN
-            RAISERROR('El contenido es ambiguo (múltiples idiomas). Especifique nro_idioma.', 16, 1);
+        RAISERROR('El contenido es ambiguo (múltiples idiomas). Especifique nro_idioma.', 16, 1);
 ROLLBACK TRANSACTION; RETURN;
 END;
 
-        /* 2) Tomar el costo del contenido */
+    /* 2) Tomar el costo del contenido */
 SELECT @costo_click = cr.costo_click
 FROM dbo.contenidos_restaurantes cr
 WHERE cr.nro_restaurante = @nro_restaurante
@@ -1225,11 +1253,11 @@ WHERE cr.nro_restaurante = @nro_restaurante
 
 IF @costo_click IS NULL
 BEGIN
-            RAISERROR('El contenido no tiene costo_click definido.', 16, 1);
+        RAISERROR('El contenido no tiene costo_click definido.', 16, 1);
 ROLLBACK TRANSACTION; RETURN;
 END;
 
-        /* 3) Obtener siguiente nro_click */
+    /* 3) Obtener siguiente nro_click */
 SELECT @nuevo_nro_click = ISNULL(MAX(nro_click), 0) + 1
 FROM dbo.clicks_contenidos_restaurantes
 WHERE nro_restaurante = @nro_restaurante
@@ -1259,11 +1287,10 @@ SELECT
 END TRY
 BEGIN CATCH
 IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        SET @ErrorMessage = ERROR_MESSAGE();
-        RAISERROR(@ErrorMessage, 16, 1);
+    SET @ErrorMessage = ERROR_MESSAGE();
+    RAISERROR(@ErrorMessage, 16, 1);
 END CATCH
 END;
-GO
 /* PAra probar el procedimimento
 INSERT INTO dbo.clientes (apellido, nombre, clave, correo, telefonos, nro_localidad, habilitado)
 VALUES
@@ -1295,14 +1322,21 @@ go */
 go
 CREATE OR ALTER PROCEDURE dbo.get_promociones
     @nro_restaurante INT = NULL,
-    @nro_sucursal INT = NULL
+    @nro_sucursal    INT = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
 
 SELECT
-    -- cr.nro_contenido,
-    cr.nro_restaurante,
+
+    nro_restaurante = CONVERT(
+            VARCHAR(1024),
+            ENCRYPTBYPASSPHRASE(
+                    CONVERT(VARCHAR(20), cr.nro_restaurante), -- passphrase
+                    CONVERT(VARCHAR(20), cr.nro_restaurante)  -- texto claro
+            ),
+            2  -- salida en hex (sin 0x)
+                      ),
     cr.nro_contenido,
     cr.nro_sucursal,
     cr.contenido_promocional,
@@ -1311,23 +1345,108 @@ SELECT
     cr.fecha_fin_vigencia
 -- cr.nro_idioma,
 -- cr.costo_click,
---cr.cod_contenido_restaurante
+-- cr.cod_contenido_restaurante
 FROM dbo.contenidos_restaurantes cr
-WHERE
-    (@nro_restaurante IS NULL OR cr.nro_restaurante = @nro_restaurante)
-  AND (@nro_sucursal IS NULL OR cr.nro_sucursal = @nro_sucursal)
-ORDER BY
-    cr.nro_restaurante,
-    cr.nro_sucursal,
-    cr.nro_contenido;
+WHERE (@nro_restaurante IS NULL OR cr.nro_restaurante = @nro_restaurante)
+  AND (@nro_sucursal    IS NULL OR cr.nro_sucursal    = @nro_sucursal)
+ORDER BY cr.nro_restaurante,
+         cr.nro_sucursal,
+         cr.nro_contenido;
 END
 GO
 
 CREATE OR ALTER PROCEDURE dbo.get_restaurante_info
-    @nro_restaurante INT
+    @cod_restaurante  VARCHAR(1024)   -- <- ahora recibe el código HEX cifrado
     AS
 BEGIN
     SET NOCOUNT ON;
+
+    ------------------------------------------------------------
+    -- 1) Resolver nro_restaurante real a partir del código HEX
+    ------------------------------------------------------------
+    DECLARE @cod_rest_bin VARBINARY(1024) =
+        CONVERT(VARBINARY(1024), '0x' + @cod_restaurante, 1);
+
+    DECLARE @nro_restaurante INT;
+
+    /*
+      Estrategia: probamos desencriptar @cod_rest_bin usando, fila por fila,
+      la passphrase = CONVERT(VARCHAR(20), r.nro_restaurante).
+      Solo para la fila correcta DECRYPTBYPASSPHRASE devuelve el texto original,
+      que es el mismo nro_restaurante, y el WHERE matchea.
+      Hacemos esta resolución una sola vez y luego usamos @nro_restaurante
+      (sargable) en los SELECTs siguientes.
+    */
+SELECT TOP (1)
+            @nro_restaurante = r.nro_restaurante
+FROM dbo.restaurantes AS r
+WHERE r.nro_restaurante = CONVERT(
+        INT,
+        CONVERT(VARCHAR(1024),
+                DECRYPTBYPASSPHRASE(
+                        CONVERT(VARCHAR(20), r.nro_restaurante),
+                        @cod_rest_bin
+                )
+        )
+                          );
+
+-- Si no lo encontró, devolvemos conjuntos vacíos (o podrías RAISERROR)
+IF @nro_restaurante IS NULL
+BEGIN
+        -- RS1: Datos del restaurante (vacío)
+SELECT CAST(NULL AS INT) AS nro_restaurante,
+       CAST(NULL AS VARCHAR(200)) AS razon_social
+    WHERE 1 = 0;
+
+-- RS2: Sucursales (vacío)
+SELECT CAST(NULL AS INT)  AS nro_restaurante,
+       CAST(NULL AS INT)  AS nro_sucursal,
+       CAST(NULL AS VARCHAR(100)) AS nom_sucursal,
+       CAST(NULL AS VARCHAR(100)) AS calle,
+       CAST(NULL AS INT)  AS nro_calle,
+       CAST(NULL AS VARCHAR(100)) AS barrio,
+       CAST(NULL AS INT)  AS nro_localidad,
+       CAST(NULL AS VARCHAR(100)) AS nom_localidad,
+       CAST(NULL AS CHAR(2)) AS cod_provincia,
+       CAST(NULL AS VARCHAR(100)) AS nom_provincia,
+       CAST(NULL AS VARCHAR(10)) AS cod_postal,
+       CAST(NULL AS VARCHAR(200)) AS telefonos,
+       CAST(NULL AS INT)  AS total_comensales,
+       CAST(NULL AS INT)  AS min_tolerencia_reserva,
+       CAST(NULL AS VARCHAR(100)) AS cod_sucursal_restaurante
+    WHERE 1 = 0;
+
+-- RS3: Turnos (vacío)
+SELECT CAST(NULL AS INT) AS nro_restaurante,
+       CAST(NULL AS INT) AS nro_sucursal,
+       CAST(NULL AS TIME) AS hora_desde,
+       CAST(NULL AS TIME) AS hora_hasta,
+       CAST(NULL AS BIT) AS habilitado
+    WHERE 1 = 0;
+
+-- RS4: Zonas (vacío)
+SELECT CAST(NULL AS INT) AS nro_restaurante,
+       CAST(NULL AS INT) AS nro_sucursal,
+       CAST(NULL AS VARCHAR(20)) AS cod_zona,
+       CAST(NULL AS VARCHAR(100)) AS desc_zona,
+       CAST(NULL AS INT) AS cant_comensales,
+       CAST(NULL AS BIT) AS permite_menores,
+       CAST(NULL AS BIT) AS habilitada
+    WHERE 1 = 0;
+
+-- RS5: Preferencias (vacío)
+SELECT CAST(NULL AS INT) AS nro_restaurante,
+       CAST(NULL AS INT) AS nro_sucursal,
+       CAST(NULL AS VARCHAR(10)) AS cod_categoria,
+       CAST(NULL AS VARCHAR(100)) AS nom_categoria,
+       CAST(NULL AS INT) AS nro_valor_dominio,
+       CAST(NULL AS VARCHAR(100)) AS nom_valor_dominio,
+       CAST(NULL AS INT) AS nro_preferencia,
+       CAST(NULL AS VARCHAR(4000)) AS observaciones
+    WHERE 1 = 0;
+
+RETURN;
+END
 
     /* =========================================================
        RS1: Datos del restaurante
@@ -1339,7 +1458,7 @@ FROM dbo.restaurantes AS r
 WHERE r.nro_restaurante = @nro_restaurante;
 
 /* =========================================================
-   RS2: Sucursales (toda la info de la tabla) + Localidad/Provincia
+   RS2: Sucursales + Localidad/Provincia
    ========================================================= */
 SELECT
     s.nro_restaurante,
@@ -1395,11 +1514,10 @@ ORDER BY z.nro_sucursal, z.cod_zona;
 
 /* =========================================================
    RS5: Preferencias por sucursal
-        (incluye nom_valor_dominio y nom_categoria)
    ========================================================= */
 SELECT
     pr.nro_restaurante,
-    pr.nro_sucursal,                       -- solo sucursales (se filtra abajo)
+    pr.nro_sucursal,
     pr.cod_categoria,
     cp.nom_categoria,
     pr.nro_valor_dominio,
@@ -1408,15 +1526,15 @@ SELECT
     pr.observaciones
 FROM dbo.preferencias_restaurantes AS pr
          INNER JOIN dbo.dominio_categorias_preferencias AS dcp
-                    ON dcp.cod_categoria = pr.cod_categoria
-                        AND dcp.nro_valor_dominio = pr.nro_valor_dominio
+                    ON dcp.cod_categoria       = pr.cod_categoria
+                        AND dcp.nro_valor_dominio   = pr.nro_valor_dominio
          INNER JOIN dbo.categorias_preferencias AS cp
-                    ON cp.cod_categoria = pr.cod_categoria
+                    ON cp.cod_categoria        = pr.cod_categoria
 WHERE pr.nro_restaurante = @nro_restaurante
-  AND pr.nro_sucursal IS NOT NULL          -- “por cada sucursal”
+  AND pr.nro_sucursal IS NOT NULL
 ORDER BY pr.nro_sucursal, pr.cod_categoria, pr.nro_valor_dominio, pr.nro_preferencia;
 
-END;
+END
 GO
 select * from dbo.clicks_contenidos_restaurantes
 go

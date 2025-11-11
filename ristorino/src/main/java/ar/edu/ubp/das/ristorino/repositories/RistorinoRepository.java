@@ -167,7 +167,7 @@ public class RistorinoRepository {
     public Map<String, Object> registrarClick(ClickBean clickBean) {
 
         SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("nro_restaurante", clickBean.getNroRestaurante())
+                .addValue("cod_restaurante", clickBean.getNroRestaurante())
                 .addValue("nro_contenido", clickBean.getNroContenido())
                 .addValue("nro_cliente", null);
 
@@ -235,9 +235,9 @@ public class RistorinoRepository {
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
     }
 
-    public RestauranteBean obtenerRestaurantePorId(int nroRestaurante) throws JsonProcessingException {
+    public RestauranteBean obtenerRestaurantePorId(String nroRestaurante) throws JsonProcessingException {
         SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("nro_restaurante", nroRestaurante, Types.INTEGER);
+                .addValue("cod_restaurante", nroRestaurante);
 
         // 👇 Cambiamos al nombre real del SP con 5 result sets
         Map<String, Object> out =
@@ -251,7 +251,7 @@ public class RistorinoRepository {
 
         Map<String, Object> r1 = rs1.get(0);
         RestauranteBean restaurante = new RestauranteBean();
-        restaurante.setNroRestaurante(getInt(r1.get("nro_restaurante")));
+        restaurante.setNroRestaurante(getStr(r1.get("nro_restaurante")));
         restaurante.setRazonSocial(getStr(r1.get("razon_social")));
 
         // =========================

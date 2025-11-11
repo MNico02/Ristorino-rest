@@ -2,7 +2,7 @@ package ar.edu.ubp.das.ristorino.beans;
 import java.util.Date;
 
 public class PromocionBean {
-    private int nroRestaurante;
+    private String nroRestaurante;
     private int nroContenido;
     private int nroSucursal;
     private String contenidoPromocional;
@@ -19,11 +19,11 @@ public class PromocionBean {
     private Date fechaInicio;
     private Date fechaFin;
 
-    public int getNroRestaurante() {
+    public String getNroRestaurante() {
         return nroRestaurante;
     }
 
-    public void setNroRestaurante(int nroRestaurante) {
+    public void setNroRestaurante(String nroRestaurante) {
         this.nroRestaurante = nroRestaurante;
     }
 

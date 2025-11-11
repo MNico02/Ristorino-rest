@@ -80,7 +80,7 @@ public class RistorinoResource {
     }
 
     @GetMapping("/obtenerRestaurante/{nro}")
-    public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable int nro) throws JsonProcessingException {
+    public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable String nro) throws JsonProcessingException {
         RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
         return ResponseEntity.ok(restauranteBean);
     }
@@ -105,6 +105,7 @@ public class RistorinoResource {
                     .body("Error al procesar el login: " + e.getMessage());
         }
     }
+
     @PostMapping("/registrarClickPromocion")
     public ResponseEntity<Map<String, Object>> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
         Map<String, Object> body = ristorinoRepository.registrarClick(clickBean);

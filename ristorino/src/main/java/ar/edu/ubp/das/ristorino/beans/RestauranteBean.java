@@ -4,7 +4,7 @@ package ar.edu.ubp.das.ristorino.beans;
 import java.util.List;
 
 public class RestauranteBean {
-    private int nroRestaurante;
+    private String nroRestaurante;
     private String razonSocial;
     private List<SucursalBean> sucursales;
 
@@ -16,11 +16,11 @@ public class RestauranteBean {
         this.sucursales = sucursales;
     }
 
-    public int getNroRestaurante() {
+    public String getNroRestaurante() {
         return nroRestaurante;
     }
 
-    public void setNroRestaurante(int nroRestaurante) {
+    public void setNroRestaurante(String nroRestaurante) {
         this.nroRestaurante = nroRestaurante;
     }
 

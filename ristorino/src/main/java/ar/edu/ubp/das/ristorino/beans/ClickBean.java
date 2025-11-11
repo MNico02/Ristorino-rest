@@ -1,15 +1,15 @@
 package ar.edu.ubp.das.ristorino.beans;
 
 public class ClickBean {
-    private int nroRestaurante;
+    private String nroRestaurante;
     private int nroContenido;
     private int nroCliente;
 
-    public int getNroRestaurante() {
+    public String getNroRestaurante() {
         return nroRestaurante;
     }
 
-    public void setNroRestaurante(int nroRestaurante) {
+    public void setNroRestaurante(String nroRestaurante) {
         this.nroRestaurante = nroRestaurante;
     }
 
