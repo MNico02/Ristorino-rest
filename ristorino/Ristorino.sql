@@ -509,45 +509,44 @@ INSERT INTO dbo.idiomas (nro_idioma, nom_idioma, cod_idioma) VALUES
 -----------------------------
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 1, N'https://img.example.com/r1/s1_trad_abue_sg.jpg',
+    (1, 1, 1, N'https://media.elgourmet.com/recetas/cover/d886d9d83cdfbbb1e1e7aa1d395d796c_3_3_photo.png',
      N'Menú Tradicional "Abuela" (Sin gluten): empanadas de carne al horno con tapa de maíz + sorrentinos de ricota y nuez en salsa fileto. Precio medio. Ideal para compartir.',
      '2025-09-01', '2025-12-31', 0.10, N'1-1');
 
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 1, N'https://img.example.com/r1/s1_arg_ita_sg_combo.jpg',
+    (1, 1, 1, N'https://airescriollos.com.ar/wp-content/uploads/2020/11/Milanesa-de-Pollo-Napolitana.jpg',
      N'Combo Argentino & Italiano (Sin gluten): milanesa napolitana con papas al horno + penne rigate al pesto. Estilo tradicional, porciones generosas, precio medio.',
      '2025-09-01', '2025-12-31', 0.10, N'2-1');
 
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 1, N'https://img.example.com/r1/s1_pastas_sg.jpg',
+    (1, 1, 1, N'https://cdn.recetasderechupete.com/wp-content/uploads/2020/11/Tallarines-rojos-con-pollo.jpg',
      N'Noche de Pastas Caseras (opción Sin gluten): tallarines amasados a la vista con bolognesa o tuco de cocción lenta + copa de vino de la casa. Ambiente tradicional.',
      '2025-09-01', '2025-12-31', 0.10, N'3-1');
 
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 2, N'https://img.example.com/r1/s2_tacos_veg_premium.jpg',
+    (1, 1, 2, N'https://lastaquerias.com/wp-content/uploads/2022/11/tacos-pastor-gaacc26fa8_1920.jpg',
      N'Tacos Degustación Premium (Vegetarianos): set de 6 tacos (hongos asados, calabaza especiada, frijoles y queso), salsas caseras y guacamole. Estilo casual, experiencia gourmet.',
      '2025-09-01', '2025-12-31', 0.10, N'4-1');
 
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 2,  N'https://img.example.com/r1/s2_burrito_bowl_veg.jpg',
+    (1, 1, 2,  N'https://www.melonsinjamon.com/wp-content/uploads/2022/07/burrito-bowl-vegano.jpg',
      N'Burrito Bowl Verde (Vegetariano): arroz cilantro-lima, mix de hojas, porotos negros, fajitas de verduras, pico de gallo y crema ácida. Presentación premium, servicio casual.',
      '2025-09-01', '2025-12-31', 0.10, N'5-1');
 
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 2,N'https://img.example.com/r1/s2_mex_premium_dinner.jpg',
+    (1, 1, 2,N'https://solnatural.bio/views/img/recipesphotos/97.jpg',
      N'Cena Mexicana Premium: enchiladas rojas vegetarianas + maridaje con tequila/agua fresca. Estilo casual chic, producto de alta calidad, ideal para celebración.',
      '2025-09-01', '2025-12-31', 0.10, N'6-1');
 INSERT INTO dbo.contenidos_restaurantes
 (nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (2, 1, 2,N'https://img.example.com/r1/s2_mex_premium_dinner.jpg',
+    (2, 1, 2,N'https://www.paulinacocina.net/wp-content/uploads/2023/06/choripan-con-chimichurri-receta.jpg',
      N'CHORIPAN',
      '2025-09-01', '2025-12-31', 0.10, N'1-2');
-
 select * from contenidos_restaurantes
 select * from clicks_contenidos_restaurantes
 
