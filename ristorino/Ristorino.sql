@@ -1569,3 +1569,45 @@ GO
 
 
 
+CREATE OR ALTER PROCEDURE dbo.sp_clicks_confirmar_notificados_obj
+    @items_json      NVARCHAR(MAX),   -- Ej: '[{"nro_click":101},{"nro_click":102}]'
+    @nro_restaurante INT = NULL       -- (opcional) para acotar por restaurante
+    AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- 1️⃣ Crear tabla temporal para los IDs extraídos del JSON
+    DECLARE @ids TABLE (nro_click INT PRIMARY KEY);
+
+INSERT INTO @ids (nro_click)
+SELECT DISTINCT TRY_CAST(nro_click AS INT)
+FROM OPENJSON(@items_json)
+    WITH (nro_click INT '$.nro_click')
+WHERE TRY_CAST(nro_click AS INT) IS NOT NULL;
+
+-- 2️⃣ Actualizar solo los clics no notificados aún
+UPDATE c
+SET c.notificado = 1
+    FROM dbo.clicks_contenidos_restaurantes AS c
+    INNER JOIN @ids AS i
+ON i.nro_click = c.nro_click
+WHERE ISNULL(c.notificado,0) = 0
+  AND (@nro_restaurante IS NULL OR c.nro_restaurante = @nro_restaurante);
+
+-- 3️⃣ Devolver los registros afectados
+SELECT c.nro_click,
+       c.nro_restaurante,
+       c.nro_idioma,
+       c.nro_contenido,
+       c.fecha_hora_registro,
+       c.notificado
+FROM dbo.clicks_contenidos_restaurantes AS c
+         INNER JOIN @ids AS i
+                    ON i.nro_click = c.nro_click
+WHERE (@nro_restaurante IS NULL OR c.nro_restaurante = @nro_restaurante)
+ORDER BY c.nro_restaurante, c.fecha_hora_registro, c.nro_click;
+END;
+GO
+
+

@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @SpringBootApplication(scanBasePackages = "ar.edu.ubp.das.ristorino")
+
 public class ClicksBatch {
 
     @Autowired

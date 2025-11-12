@@ -216,13 +216,13 @@ public class RistorinoRepository {
                     ClickNotiBean.class                      // clase mapeada
             );
 
-            log.info("✅ {} clic(s) marcados como notificados para restaurante {}.",
+            log.info("{} clic(s) marcados como notificados para restaurante {}.",
                     actualizados.size(), nroRestaurante);
 
             return actualizados;
 
         } catch (Exception e) {
-            log.error("❌ Error al marcar clics como notificados: {}", e.getMessage(), e);
+           log.error("Error al marcar clics como notificados: {}", e.getMessage(), e);
             return List.of();
         }
     }
