@@ -28,6 +28,10 @@ public class ClicksBatch {
     @Autowired
     private ClickNotificationService clickNotificationService;
 
+    /*
+    * Notifica los click pendientes a su respectivo restaurante
+    * Si se notifico correctamente, los marca como notificados en la base de datos de ristorino
+    * */
     @Transactional
     public void procesarClicksPendientes() {
 

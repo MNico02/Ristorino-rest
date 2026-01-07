@@ -1154,9 +1154,9 @@ Descripción: Registra un click en un contenido promocional
        automáticamente de forma incremental.
 ============================================================*/
 CREATE OR ALTER PROCEDURE dbo.registrar_click_contenido
-    @cod_restaurante VARCHAR(1024),   -- <- ahora recibe el código HEX cifrado
+    @cod_restaurante VARCHAR(1024),      -- código HEX cifrado
     @nro_contenido   INT,
-    @nro_cliente     INT = NULL
+    @correo_cliente  NVARCHAR(255) = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
@@ -1167,21 +1167,45 @@ BEGIN
     DECLARE @nro_idioma INT;
     DECLARE @idioma_count INT;
     DECLARE @costo_click DECIMAL(12,2);
-
-    ------------------------------------------------------------
-    -- 0) Resolver nro_restaurante real desde el código HEX
-    ------------------------------------------------------------
-    DECLARE @cod_rest_bin VARBINARY(1024) =
-        CONVERT(VARBINARY(1024), '0x' + @cod_restaurante, 1);
-
+    DECLARE @nro_cliente INT = NULL;
     DECLARE @nro_restaurante INT;
+    DECLARE @cod_rest_bin VARBINARY(1024);
 
+    ------------------------------------------------------------
+    -- 0) Validar código recibido
+    ------------------------------------------------------------
+    IF @cod_restaurante IS NULL OR LTRIM(RTRIM(@cod_restaurante)) = ''
+BEGIN
+        RAISERROR('Código de restaurante vacío.', 16, 1);
+        RETURN;
+END;
+
+    ------------------------------------------------------------
+    -- 1) Convertir HEX a VARBINARY (SEGURO)
+    ------------------------------------------------------------
+    SET @cod_rest_bin =
+        CASE
+            WHEN LEFT(@cod_restaurante, 2) = '0x'
+                THEN TRY_CONVERT(VARBINARY(1024), @cod_restaurante, 1)
+            ELSE
+                TRY_CONVERT(VARBINARY(1024), '0x' + @cod_restaurante, 1)
+END;
+
+    IF @cod_rest_bin IS NULL
+BEGIN
+        RAISERROR('Código de restaurante inválido (no es HEX válido).', 16, 1);
+        RETURN;
+END;
+
+    ------------------------------------------------------------
+    -- 2) Resolver nro_restaurante real
+    ------------------------------------------------------------
 SELECT TOP (1)
             @nro_restaurante = r.nro_restaurante
-FROM dbo.restaurantes AS r
-WHERE r.nro_restaurante = CONVERT(
-        INT,
-        CONVERT(VARCHAR(1024),
+FROM dbo.restaurantes r
+WHERE r.nro_restaurante = TRY_CONVERT(
+    INT,
+        CONVERT(VARCHAR(50),
                 DECRYPTBYPASSPHRASE(
                         CONVERT(VARCHAR(20), r.nro_restaurante),
                         @cod_rest_bin
@@ -1191,14 +1215,33 @@ WHERE r.nro_restaurante = CONVERT(
 
 IF @nro_restaurante IS NULL
 BEGIN
-        RAISERROR('Código de restaurante inválido.', 16, 1);
+        RAISERROR('Código de restaurante no corresponde a ningún restaurante.', 16, 1);
         RETURN;
-END
+END;
+
+    ------------------------------------------------------------
+    -- 3) Resolver nro_cliente desde correo (si viene)
+    ------------------------------------------------------------
+    IF @correo_cliente IS NOT NULL
+BEGIN
+SELECT @nro_cliente = nro_cliente
+FROM dbo.clientes
+WHERE correo = @correo_cliente
+  AND habilitado = 1;
+
+IF @nro_cliente IS NULL
+BEGIN
+            RAISERROR('El correo del cliente no existe o está deshabilitado.', 16, 1);
+            RETURN;
+END;
+END;
 
 BEGIN TRY
 BEGIN TRANSACTION;
 
-    /* 1) Verificar existencia y ambigüedad de idioma */
+        ------------------------------------------------------------
+        -- 4) Verificar idioma del contenido
+        ------------------------------------------------------------
 SELECT
     @idioma_count = COUNT(DISTINCT nro_idioma),
     @nro_idioma   = MIN(nro_idioma)
@@ -1208,63 +1251,88 @@ WHERE nro_restaurante = @nro_restaurante
 
 IF @idioma_count IS NULL OR @idioma_count = 0
 BEGIN
-        RAISERROR('El contenido especificado no existe para ese restaurante.', 16, 1);
-ROLLBACK TRANSACTION; RETURN;
+            RAISERROR('El contenido no existe para ese restaurante.', 16, 1);
+ROLLBACK;
+RETURN;
 END;
 
-    IF @idioma_count > 1
+        IF @idioma_count > 1
 BEGIN
-        RAISERROR('El contenido es ambiguo (múltiples idiomas). Especifique nro_idioma.', 16, 1);
-ROLLBACK TRANSACTION; RETURN;
+            RAISERROR('Contenido ambiguo (múltiples idiomas).', 16, 1);
+ROLLBACK;
+RETURN;
 END;
 
-    /* 2) Tomar el costo del contenido */
-SELECT @costo_click = cr.costo_click
-FROM dbo.contenidos_restaurantes cr
-WHERE cr.nro_restaurante = @nro_restaurante
-  AND cr.nro_idioma      = @nro_idioma
-  AND cr.nro_contenido   = @nro_contenido;
+        ------------------------------------------------------------
+        -- 5) Obtener costo
+        ------------------------------------------------------------
+SELECT @costo_click = costo_click
+FROM dbo.contenidos_restaurantes
+WHERE nro_restaurante = @nro_restaurante
+  AND nro_idioma      = @nro_idioma
+  AND nro_contenido   = @nro_contenido;
 
 IF @costo_click IS NULL
 BEGIN
-        RAISERROR('El contenido no tiene costo_click definido.', 16, 1);
-ROLLBACK TRANSACTION; RETURN;
+            RAISERROR('El contenido no tiene costo_click.', 16, 1);
+ROLLBACK;
+RETURN;
 END;
 
-    /* 3) Obtener siguiente nro_click */
+        ------------------------------------------------------------
+        -- 6) Generar nro_click
+        ------------------------------------------------------------
 SELECT @nuevo_nro_click = ISNULL(MAX(nro_click), 0) + 1
 FROM dbo.clicks_contenidos_restaurantes
 WHERE nro_restaurante = @nro_restaurante
   AND nro_idioma      = @nro_idioma
   AND nro_contenido   = @nro_contenido;
 
-/* 4) Insertar el click */
+------------------------------------------------------------
+-- 7) Insertar click
+------------------------------------------------------------
 INSERT INTO dbo.clicks_contenidos_restaurantes
 (
-    nro_restaurante, nro_idioma, nro_contenido, nro_click,
-    fecha_hora_registro, nro_cliente, costo_click, notificado
+    nro_restaurante,
+    nro_idioma,
+    nro_contenido,
+    nro_click,
+    fecha_hora_registro,
+    nro_cliente,
+    costo_click,
+    notificado
 )
 VALUES
     (
-        @nro_restaurante, @nro_idioma, @nro_contenido, @nuevo_nro_click,
-        GETDATE(), @nro_cliente, @costo_click, 0
+        @nro_restaurante,
+        @nro_idioma,
+        @nro_contenido,
+        @nuevo_nro_click,
+        GETDATE(),
+        @nro_cliente,
+        @costo_click,
+        0
     );
 
-COMMIT TRANSACTION;
+COMMIT;
 
-/* 5) Devolver info generada */
+------------------------------------------------------------
+-- 8) Resultado
+------------------------------------------------------------
 SELECT
     @nuevo_nro_click AS nro_click_generado,
     @nro_idioma      AS nro_idioma_resuelto,
     @costo_click     AS costo_click_usado,
     GETDATE()        AS fecha_hora_registro;
+
 END TRY
 BEGIN CATCH
-IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-    SET @ErrorMessage = ERROR_MESSAGE();
-    RAISERROR(@ErrorMessage, 16, 1);
+IF @@TRANCOUNT > 0 ROLLBACK;
+        SET @ErrorMessage = ERROR_MESSAGE();
+        RAISERROR(@ErrorMessage, 16, 1);
 END CATCH
 END;
+GO
 /* PAra probar el procedimimento
 INSERT INTO dbo.clientes (apellido, nombre, clave, correo, telefonos, nro_localidad, habilitado)
 VALUES

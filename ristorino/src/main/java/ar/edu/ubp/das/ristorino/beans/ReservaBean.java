@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-
+// dejar solo correo de cliente
+//agregar restaurante
 public class ReservaBean {
     private String nombre;
     private String apellido;

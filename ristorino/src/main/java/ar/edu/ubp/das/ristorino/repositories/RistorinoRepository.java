@@ -83,6 +83,9 @@ public class RistorinoRepository {
                 .compact();
     }
 
+
+
+    /*--IA---*/
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> obtenerRecomendaciones(FiltroRecomendacionBean filtro) {
         MapSqlParameterSource params = new MapSqlParameterSource()
@@ -104,72 +107,72 @@ public class RistorinoRepository {
             throw new RuntimeException("Error al obtener recomendaciones: " + e.getMessage(), e);
         }
     }
+        /*--IA Promociones--*/
+        // Obtener todos los contenidos pendientes de generación
+        @SuppressWarnings("unchecked")
+        public List<Map<String, Object>> obtenerContenidosPendientes() {
+            return jdbcCallFactory.executeList("get_contenidos_a_generar", "dbo", new MapSqlParameterSource());
+        }
 
-    // Obtener todos los contenidos pendientes de generación
-    @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> obtenerContenidosPendientes() {
-        return jdbcCallFactory.executeList("get_contenidos_a_generar", "dbo", new MapSqlParameterSource());
-    }
+        // Actualizar un contenido con el texto generado y duración configurable
+        public void actualizarContenidoPromocional(Integer nroContenido, String textoGenerado, int duracionHoras) {
+            SqlParameterSource params = new MapSqlParameterSource()
+                    .addValue("nro_contenido", nroContenido)
+                    .addValue("contenido_promocional", textoGenerado)
+                    .addValue("duracion_horas", duracionHoras); // 👈 nuevo parámetro
 
-    // Actualizar un contenido con el texto generado y duración configurable
-    public void actualizarContenidoPromocional(Integer nroContenido, String textoGenerado, int duracionHoras) {
-        SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("nro_contenido", nroContenido)
-                .addValue("contenido_promocional", textoGenerado)
-                .addValue("duracion_horas", duracionHoras); // 👈 nuevo parámetro
+            jdbcCallFactory.execute("actualizar_contenido_promocional", "dbo", params);
+        }
 
-        jdbcCallFactory.execute("actualizar_contenido_promocional", "dbo", params);
-    }
+        // Generar todos los contenidos pendientes
+        public Map<String, Object> generarContenidosPromocionales() {
+            try {
+                List<Map<String, Object>> pendientes = obtenerContenidosPendientes();
 
-    // Generar todos los contenidos pendientes
-    public Map<String, Object> generarContenidosPromocionales() {
-        try {
-            List<Map<String, Object>> pendientes = obtenerContenidosPendientes();
+                if (pendientes == null || pendientes.isEmpty()) {
+                    return Map.of("mensaje", "No hay contenidos pendientes para generar.");
+                }
 
-            if (pendientes == null || pendientes.isEmpty()) {
-                return Map.of("mensaje", "No hay contenidos pendientes para generar.");
-            }
+                int generados = 0;
+                for (Map<String, Object> row : pendientes) {
+                    String textoBase = (String) row.get("contenido_a_publicar");
+                    Integer nroContenido = (Integer) row.get("nro_contenido");
+                    Integer nroIdioma = (Integer) row.get("nro_idioma");
 
-            int generados = 0;
-            for (Map<String, Object> row : pendientes) {
-                String textoBase = (String) row.get("contenido_a_publicar");
-                Integer nroContenido = (Integer) row.get("nro_contenido");
-                Integer nroIdioma = (Integer) row.get("nro_idioma");
+                    String idioma = (nroIdioma != null && nroIdioma == 2) ? "English" : "Spanish";
 
-                String idioma = (nroIdioma != null && nroIdioma == 2) ? "English" : "Spanish";
+                    String textoGenerado = geminiService.generarTextoPromocional(
+                            textoBase,
+                            idioma,
+                            (Integer) row.get("nro_restaurante"),
+                            (Integer) row.get("nro_sucursal")
+                    );
 
-                String textoGenerado = geminiService.generarTextoPromocional(
-                        textoBase,
-                        idioma,
-                        (Integer) row.get("nro_restaurante"),
-                        (Integer) row.get("nro_sucursal")
+                    //Duración automática (24h por defecto)
+                    int duracion = 24;
+
+                    actualizarContenidoPromocional(nroContenido, textoGenerado, duracion);
+                    generados++;
+                }
+
+                return Map.of(
+                        "mensaje", "Contenidos generados correctamente.",
+                        "cantidad", generados
                 );
 
-                //Duración automática (24h por defecto)
-                int duracion = 24;
-
-                actualizarContenidoPromocional(nroContenido, textoGenerado, duracion);
-                generados++;
+            } catch (Exception e) {
+                throw new RuntimeException("Error al generar contenidos promocionales: " + e.getMessage(), e);
             }
-
-            return Map.of(
-                    "mensaje", "Contenidos generados correctamente.",
-                    "cantidad", generados
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error al generar contenidos promocionales: " + e.getMessage(), e);
         }
-    }
+    /*-----*/
 
-
-
+        /*--Clicks--*/
     public Map<String, Object> registrarClick(ClickBean clickBean) {
 
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cod_restaurante", clickBean.getNroRestaurante())
                 .addValue("nro_contenido", clickBean.getNroContenido())
-                .addValue("nro_cliente", null);
+                .addValue("correo_cliente", clickBean.getCorreo() );
 
         Map<String, Object> resp = new HashMap<>();
         try {
@@ -226,6 +229,7 @@ public class RistorinoRepository {
             return List.of();
         }
     }
+        /*----------*/
 
     public List<PromocionBean> obtenerPromociones(Integer idRestaurante, Integer idSucursal) {
         SqlParameterSource params = new MapSqlParameterSource()

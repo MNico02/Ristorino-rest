@@ -26,6 +26,31 @@ public class RistorinoResource {
     @Autowired
     private GeminiService geminiService;
 
+    @PostMapping("/registrarCliente")
+    public ResponseEntity<String> RegistrarCliente(@RequestBody ClienteBean clienteBean) {
+        String cliente = ristorinoRepository.registrarCliente(clienteBean);
+        return ResponseEntity.ok(cliente);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String,String>> logueo(@RequestBody LoginBean loginBean) {
+        System.out.println("ENTRÓ AL LOGIN: " + loginBean.getCorreo());
+        try {
+            String token = ristorinoRepository.login(loginBean);
+            if (token != null) {
+                return ResponseEntity.ok(Map.of("token", token));
+            } else {
+                return ResponseEntity.status(401).body(Map.of("error", "error en email o contraseña"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+    /*
+    * Consume el servicio del restaurante y registra una reserva
+    * recive un reservaBean y si todo sale bien obtiene un codigo de reserva por parte del restuarnte
+    * */
     @PostMapping("/RegistrarReserva")
     public ResponseEntity<Map<String, String>> insertarReserva(@RequestBody ReservaBean reserva) {
 
@@ -44,7 +69,11 @@ public class RistorinoResource {
         return ResponseEntity.ok(horarios);
     }
 
-
+    /*
+    * A partir de un texto de busqueda, la IA genera filtros que son usados en la BD para obtener una lista de restaurantes
+    *  que coincidan con el texto de busqueda.
+    * Devuelve una lista de restaurantes.
+    * */
     @PostMapping("/ia/recomendaciones")
     public ResponseEntity<?> procesarTexto(@RequestBody Map<String, String> body) {
         try {
@@ -58,7 +87,10 @@ public class RistorinoResource {
                     .body(Map.of("error", e.getMessage()));
         }
     }
-
+    /*
+    * Obtiene los contenidos pendientes, genera un texto promocional con la IA para cada uno, y lo registra en la BD.
+    * Devuelve la cantidad de contenidos generados.
+    * */
     @PostMapping("/ia/generarContenidosPromocionales")
     public ResponseEntity<?> generarContenidosPromocionales() {
         try {
@@ -71,41 +103,33 @@ public class RistorinoResource {
         }
     }
 
-
+    /*
+    * Obtiene el contenido promocional desde la BD de ristorino
+    * Se necesita antes haber registrado el contenido del restaurante en la BD de ristorino y haber generado a partir de este la promocion con IA
+    * recive idRestaurante e idSucural devuelve una lista de las promociones
+    * */
     @GetMapping("/obtenerPromociones")
     public ResponseEntity<List<PromocionBean>> obtenerPromociones(@RequestParam(required = false) Integer idRestaurante, @RequestParam(required = false) Integer idSucursal) {
         List<PromocionBean> resultado = ristorinoRepository.obtenerPromociones(idRestaurante, idSucursal);
         return ResponseEntity.ok(resultado);
 
     }
-
+    /*
+    * Obtiene desde la BD de ristorino toda la info, menos el contenido promocional, de un restaurante solicitado por id
+    * recive el numero de restaurante y devuelve un restauranteBean
+    * */
     @GetMapping("/obtenerRestaurante/{nro}")
     public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable String nro) throws JsonProcessingException {
         RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
         return ResponseEntity.ok(restauranteBean);
     }
 
-    @PostMapping("/registrarCliente")
-    public ResponseEntity<String> RegistrarCliente(@RequestBody ClienteBean clienteBean) {
-        String cliente = ristorinoRepository.registrarCliente(clienteBean);
-        return ResponseEntity.ok(cliente);
-    }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> logueo(@RequestBody LoginBean loginBean) {
-        try {
-            String token = ristorinoRepository.login(loginBean);
-            if (token != null) {
-                return ResponseEntity.ok(Map.of("token", token));
-            } else {
-                return ResponseEntity.status(401).body("Correo o clave incorrectos.");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body("Error al procesar el login: " + e.getMessage());
-        }
-    }
-
+    /*
+    * Se registra el click de una promocion en la base de datos de ristorino
+    * Recive un clickBean y devuelve un json
+    * //Todavia no guarda el cliente del click
+    * */
     @PostMapping("/registrarClickPromocion")
     public ResponseEntity<Map<String, Object>> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
         Map<String, Object> body = ristorinoRepository.registrarClick(clickBean);
