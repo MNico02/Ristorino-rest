@@ -47,7 +47,9 @@ public class SecurityConfig {
                                 "/ristorino/registrarClickPromocion",
                                 "/ristorino/obtenerRestaurante/**",
                                 "/ristorino/login",
-                                "/ristorino/registrarCliente"
+                                "/ristorino/registrarCliente",
+                                "/ristorino/ia/generarContenidosPromocionales"
+
 
                         ).permitAll()
 

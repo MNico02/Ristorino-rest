@@ -27,10 +27,16 @@ public class RistorinoResource {
     private GeminiService geminiService;
 
     @PostMapping("/registrarCliente")
-    public ResponseEntity<String> RegistrarCliente(@RequestBody ClienteBean clienteBean) {
-        String cliente = ristorinoRepository.registrarCliente(clienteBean);
-        return ResponseEntity.ok(cliente);
+    public ResponseEntity<Map<String, String>> registrarCliente(
+            @RequestBody ClienteBean clienteBean) {
+
+        String mensaje = ristorinoRepository.registrarCliente(clienteBean);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(Map.of("mensaje", mensaje));
     }
+
 
     @PostMapping("/login")
     public ResponseEntity<Map<String,String>> logueo(@RequestBody LoginBean loginBean) {
