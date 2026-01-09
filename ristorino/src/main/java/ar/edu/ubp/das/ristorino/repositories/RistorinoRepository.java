@@ -4,6 +4,7 @@ import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -172,7 +173,7 @@ public class RistorinoRepository {
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cod_restaurante", clickBean.getNroRestaurante())
                 .addValue("nro_contenido", clickBean.getNroContenido())
-                .addValue("correo_cliente", clickBean.getCorreo() );
+                .addValue("correo_cliente", clickBean.getEmailUsuario() );
 
         Map<String, Object> resp = new HashMap<>();
         try {
@@ -230,6 +231,51 @@ public class RistorinoRepository {
         }
     }
         /*----------*/
+        public void guardarPromociones(List<ContenidoBean> promociones, int nroRestaurante) {
+
+            for (ContenidoBean c : promociones) {
+
+                String codContenidoRestaurante =
+                        nroRestaurante + "-" + c.getNroContenido();
+
+                SqlParameterSource params = new MapSqlParameterSource()
+                        .addValue("nro_restaurante", nroRestaurante, Types.INTEGER)
+                        .addValue("nro_idioma", 1, Types.INTEGER)
+                        .addValue("nro_sucursal", c.getNroSucursal(), Types.INTEGER)
+                        .addValue("contenido_a_publicar", c.getContenidoAPublicar(), Types.NVARCHAR)
+                        .addValue("imagen_promocional", c.getImagenAPublicar(), Types.NVARCHAR)
+                        .addValue("costo_click", c.getCostoClick(), Types.DECIMAL)
+                        .addValue("cod_contenido_restaurante", codContenidoRestaurante, Types.NVARCHAR);
+
+                jdbcCallFactory.execute(
+                        "ins_contenido_restaurante",
+                        "dbo",
+                        params
+                );
+            }
+        }
+
+    public Map<String, Object> guardarInfoRestaurante(RestauranteBean restaurante) {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            String json = om.writeValueAsString(restaurante);
+
+            SqlParameterSource params = new MapSqlParameterSource()
+                    .addValue("json", json, Types.NVARCHAR);
+
+            Map<String, Object> out =
+                    jdbcCallFactory.executeWithOutputs("sync_restaurante_desde_json_full", "dbo", params);
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> rs =
+                    (List<Map<String, Object>>) out.get("#result-set-1");
+
+            return (rs != null && !rs.isEmpty()) ? rs.get(0) : Map.of("ok", true);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error en sync bulk restaurante JSON: " + e.getMessage(), e);
+        }
+    }
 
     public List<PromocionBean> obtenerPromociones(Integer idRestaurante, Integer idSucursal) {
         SqlParameterSource params = new MapSqlParameterSource()

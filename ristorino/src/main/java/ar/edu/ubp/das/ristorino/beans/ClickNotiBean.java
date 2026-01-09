@@ -3,7 +3,7 @@ package ar.edu.ubp.das.ristorino.beans;
 public class ClickNotiBean {
     private int nroClick ;
     private int nroRestaurante;
-    private int nroCliente;
+    private String correo_cliente;
     private String fechaHoraRegistro;
     private float costoClick;
     private boolean notificado;
@@ -25,12 +25,13 @@ public class ClickNotiBean {
         this.nroRestaurante = nroRestaurante;
     }
 
-    public int getNroCliente() {
-        return nroCliente;
+
+    public String getCorreo_cliente() {
+        return correo_cliente;
     }
 
-    public void setNroCliente(int nroCliente) {
-        this.nroCliente = nroCliente;
+    public void setCorreo_cliente(String correo_cliente) {
+        this.correo_cliente = correo_cliente;
     }
 
     public String getFechaHoraRegistro() {

@@ -3,7 +3,7 @@ package ar.edu.ubp.das.ristorino.beans;
 public class ClickBean {
     private String nroRestaurante;
     private int nroContenido;
-    private String correo;
+    private String emailUsuario;
 
     public String getNroRestaurante() {
         return nroRestaurante;
@@ -21,11 +21,11 @@ public class ClickBean {
         this.nroContenido = nroContenido;
     }
 
-    public String getCorreo() {
-        return correo;
+    public String getEmailUsuario() {
+        return emailUsuario;
     }
 
-    public void setCorreo(String correo) {
-        this.correo = correo;
+    public void setEmailUsuario(String emailUsuario) {
+        this.emailUsuario = emailUsuario;
     }
 }

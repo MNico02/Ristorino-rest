@@ -96,6 +96,7 @@ public class RistorinoResource {
     /*
     * Obtiene los contenidos pendientes, genera un texto promocional con la IA para cada uno, y lo registra en la BD.
     * Devuelve la cantidad de contenidos generados.
+    * SOLO ES DE PRUEBA,
     * */
     @PostMapping("/ia/generarContenidosPromocionales")
     public ResponseEntity<?> generarContenidosPromocionales() {
@@ -138,6 +139,7 @@ public class RistorinoResource {
     * */
     @PostMapping("/registrarClickPromocion")
     public ResponseEntity<Map<String, Object>> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
+        System.out.println("aca esta el correo " + clickBean.getEmailUsuario());
         Map<String, Object> body = ristorinoRepository.registrarClick(clickBean);
         boolean ok = (boolean) body.getOrDefault("success", false);
         return new ResponseEntity<>(body, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
