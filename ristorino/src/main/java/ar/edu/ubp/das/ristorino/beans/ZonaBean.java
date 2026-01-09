@@ -1,7 +1,10 @@
 package ar.edu.ubp.das.ristorino.beans;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ZonaBean {
     private int codZona;
+    @JsonProperty("nomZona")
     private String descZona;
     private int cantComensales;
     private Boolean permiteMenores;

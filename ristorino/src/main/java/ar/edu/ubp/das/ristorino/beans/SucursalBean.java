@@ -20,6 +20,16 @@ public class SucursalBean {
     private List<TurnoBean> turnos;
     private List<ZonaBean> zonas;
     private List<PreferenciaBean> preferencias;
+    private List<ZonaTurnoBean> zonasTurnos;
+
+
+    public List<ZonaTurnoBean> getZonasTurnos() {
+        return zonasTurnos;
+    }
+
+    public void setZonasTurnos(List<ZonaTurnoBean> zonasTurnos) {
+        this.zonasTurnos = zonasTurnos;
+    }
 
     public List<TurnoBean> getTurnos() {
         return turnos;

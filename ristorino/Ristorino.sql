@@ -1,3 +1,6 @@
+
+
+---------------------------
 -- 1) Tablas más dependientes (niveles bajos)
 IF OBJECT_ID('dbo.clicks_contenidos_restaurantes','U') IS NOT NULL DROP TABLE dbo.clicks_contenidos_restaurantes;
 IF OBJECT_ID('dbo.preferencias_reservas_restaurantes','U') IS NOT NULL DROP TABLE dbo.preferencias_reservas_restaurantes;
@@ -462,16 +465,20 @@ INSERT INTO dbo.localidades (nom_localidad, cod_provincia)
 VALUES (N'La Plata', 3),
        (N'Mar del Plata', 3);
 GO
+--IDIOMAS
+INSERT INTO dbo.idiomas (nro_idioma, nom_idioma, cod_idioma) VALUES
+                                                                 (1, N'Español', N'es-AR'),
+                                                                 (2, N'English', N'en-US');
 
-
+/*
 -- restaurantes
 INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
 (1, N'El millonario', N'30-91245678-9');
 INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
     (2, N'El gallinero', N'31-91245678-9');
 INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
-    (3, N'El monumental', N'32-91245678-9');
-
+    (3, N'El monumental', N'32-91245678-9');*/
+/*
 -- sucursales_restaurantes
 INSERT INTO dbo.sucursales_restaurantes
 (nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
@@ -498,11 +505,9 @@ INSERT INTO dbo.sucursales_restaurantes
 VALUES
     (3, 2, N'Sucursal norte El monumental', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'NOR MONU');
 
+    */
+/*
 
--- idiomas
-INSERT INTO dbo.idiomas (nro_idioma, nom_idioma, cod_idioma) VALUES
-                                                                 (1, N'Español', N'es-AR'),
-                                                                 (2, N'English', N'en-US');
 -- contenidos_restaurantes
 -----------------------------
 -- Restaurante 1 (contenidos 1..6)
@@ -547,10 +552,9 @@ INSERT INTO dbo.contenidos_restaurantes
     (2, 1, 2,N'https://www.paulinacocina.net/wp-content/uploads/2023/06/choripan-con-chimichurri-receta.jpg',
      N'CHORIPAN',
      '2025-09-01', '2025-12-31', 0.10, N'1-2');
-select * from contenidos_restaurantes
-select * from clicks_contenidos_restaurantes
+*/
 
-
+/*
 -- Resto 1
     INSERT INTO dbo.turnos_sucursales_restaurantes (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado) VALUES
     (1, 1, '20:00', '21:30', 1),
@@ -776,13 +780,7 @@ INSERT INTO dbo.idiomas_dominio_cat_preferencias
                                                                                       (4, 3, 1, N'Alto / Premium',   NULL),
                                                                                       (4, 4, 1, N'De lujo',          NULL);
 
-select * from categorias_preferencias
-    go
-select * from dominio_categorias_preferencias
-    go
-select * from preferencias_restaurantes where nro_restaurante=3
 
-    go
 
 --------------------------------------------------------------
 -- RESTAURANTE 1
@@ -880,9 +878,10 @@ INSERT INTO dbo.preferencias_restaurantes
                                                                                                       (3, 4, 2, 2, N'Rango medio (sucursal 2)', 2);   -- Medio
 
 
-
+*/
 
 go
+---------
 CREATE OR ALTER PROCEDURE registrar_cliente
     @apellido       NVARCHAR(120),
     @nombre         NVARCHAR(120),
@@ -939,7 +938,6 @@ END;
 GO
 
 
---select * from clientes
 CREATE OR ALTER PROCEDURE dbo.login_cliente
     @correo NVARCHAR(255),
     @clave NVARCHAR(255),
@@ -1145,8 +1143,6 @@ END
 GO
 
 
-
-
 /* ============================================================
 Procedimiento: registrar_click_contenido
 Descripción: Registra un click en un contenido promocional
@@ -1206,10 +1202,7 @@ FROM dbo.restaurantes r
 WHERE r.nro_restaurante = TRY_CONVERT(
     INT,
         CONVERT(VARCHAR(50),
-                DECRYPTBYPASSPHRASE(
-                        CONVERT(VARCHAR(20), r.nro_restaurante),
-                        @cod_rest_bin
-                )
+                DECRYPTBYPASSPHRASE(CONVERT(VARCHAR(20), r.nro_restaurante), @cod_rest_bin)
         )
                           );
 
@@ -1220,20 +1213,20 @@ BEGIN
 END;
 
     ------------------------------------------------------------
-    -- 3) Resolver nro_cliente desde correo (si viene)
+    -- 3) Resolver nro_cliente desde correo (OPCIONAL)
+    --    Si no existe / está deshabilitado => se registra igual con nro_cliente = NULL
     ------------------------------------------------------------
+    SET @correo_cliente = NULLIF(LTRIM(RTRIM(@correo_cliente)), '');
+
     IF @correo_cliente IS NOT NULL
 BEGIN
-SELECT @nro_cliente = nro_cliente
-FROM dbo.clientes
-WHERE correo = @correo_cliente
-  AND habilitado = 1;
+SELECT @nro_cliente = c.nro_cliente
+FROM dbo.clientes c
+WHERE c.correo = @correo_cliente
+  AND (c.habilitado = 1 OR c.habilitado IS NULL);  -- por si tu tabla no tiene habilitado o lo manejás distinto
 
-IF @nro_cliente IS NULL
-BEGIN
-            RAISERROR('El correo del cliente no existe o está deshabilitado.', 16, 1);
-            RETURN;
-END;
+-- Si no lo encuentra, queda NULL y seguimos (NO error)
+-- IF @nro_cliente IS NULL ... (NO HACER)
 END;
 
 BEGIN TRY
@@ -1280,10 +1273,10 @@ RETURN;
 END;
 
         ------------------------------------------------------------
-        -- 6) Generar nro_click
+        -- 6) Generar nro_click (mejor con locks)
         ------------------------------------------------------------
 SELECT @nuevo_nro_click = ISNULL(MAX(nro_click), 0) + 1
-FROM dbo.clicks_contenidos_restaurantes
+FROM dbo.clicks_contenidos_restaurantes WITH (UPDLOCK, HOLDLOCK)
 WHERE nro_restaurante = @nro_restaurante
   AND nro_idioma      = @nro_idioma
   AND nro_contenido   = @nro_contenido;
@@ -1309,7 +1302,7 @@ VALUES
         @nro_contenido,
         @nuevo_nro_click,
         GETDATE(),
-        @nro_cliente,
+        @nro_cliente,      -- puede ser NULL y está perfecto
         @costo_click,
         0
     );
@@ -1320,9 +1313,12 @@ COMMIT;
 -- 8) Resultado
 ------------------------------------------------------------
 SELECT
+    1               AS success,
+    'OK'            AS message,
     @nuevo_nro_click AS nro_click_generado,
     @nro_idioma      AS nro_idioma_resuelto,
     @costo_click     AS costo_click_usado,
+    @nro_cliente     AS nro_cliente_resuelto,
     GETDATE()        AS fecha_hora_registro;
 
 END TRY
@@ -1333,6 +1329,7 @@ IF @@TRANCOUNT > 0 ROLLBACK;
 END CATCH
 END;
 GO
+
 /* PAra probar el procedimimento
 INSERT INTO dbo.clientes (apellido, nombre, clave, correo, telefonos, nro_localidad, habilitado)
 VALUES
@@ -1578,8 +1575,7 @@ ORDER BY pr.nro_sucursal, pr.cod_categoria, pr.nro_valor_dominio, pr.nro_prefere
 
 END
 GO
-select * from dbo.clicks_contenidos_restaurantes
-    go
+
 CREATE OR ALTER PROCEDURE dbo.sp_clicks_pendientes
     @nro_restaurante INT = NULL,
     @top             INT = NULL
@@ -1637,7 +1633,6 @@ ORDER BY nro_restaurante, fecha_hora_registro, nro_click;
 END
 END;
 GO
-
 
 
 CREATE OR ALTER PROCEDURE dbo.sp_clicks_confirmar_notificados_obj
@@ -1789,22 +1784,21 @@ INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit)
 VALUES (@nro_restaurante, @razon_social, @cuit);
 END
 
-
         ------------------------------------------------------------
-        -- 2) Parse sucursales a tabla variable
+        -- 2) Sucursales (tabla variable)
         ------------------------------------------------------------
         DECLARE @Sucursales TABLE(
-            nro_sucursal              INT           NOT NULL,
-            nom_sucursal              NVARCHAR(150) NOT NULL,
-            calle                     NVARCHAR(150) NULL,
-            nro_calle                 INT           NULL,
-            barrio                    NVARCHAR(120) NULL,
-            nro_localidad             INT           NOT NULL,
-            cod_postal                NVARCHAR(20)  NULL,
-            telefonos                 NVARCHAR(100) NULL,
-            total_comensales          INT           NULL,
-            min_tolerencia_reserva    INT           NULL,
-            cod_sucursal_restaurante  NVARCHAR(50)  NOT NULL
+            nro_sucursal              INT            NOT NULL,
+            nom_sucursal              NVARCHAR(150)   NOT NULL,
+            calle                     NVARCHAR(150)   NULL,
+            nro_calle                 INT            NULL,
+            barrio                    NVARCHAR(120)   NULL,
+            nro_localidad             INT            NOT NULL,
+            cod_postal                NVARCHAR(20)    NULL,
+            telefonos                 NVARCHAR(100)   NULL,
+            total_comensales          INT            NULL,
+            min_tolerencia_reserva    INT            NULL,
+            cod_sucursal_restaurante  NVARCHAR(50)    NOT NULL
         );
 
 INSERT INTO @Sucursales
@@ -1819,7 +1813,6 @@ SELECT
     s.telefonos,
     s.total_comensales,
     s.min_tolerencia_reserva,
-    -- si tu bean NO trae cod_sucursal_restaurante, lo armamos determinístico
     ISNULL(s.cod_sucursal_restaurante, CONCAT(@nro_restaurante, '-', s.nro_sucursal))
 FROM OPENJSON(@json, '$.sucursales')
     WITH (
@@ -1836,38 +1829,29 @@ FROM OPENJSON(@json, '$.sucursales')
     cod_sucursal_restaurante NVARCHAR(50)  '$.codSucursalRestaurante'
     ) s;
 
-
 ------------------------------------------------------------
--- 3) FULL REPLACE sucursales:
---    Antes de borrar sucursales, hay que borrar dependencias
+-- 3) FULL REPLACE sucursales y dependencias
 ------------------------------------------------------------
-
--- 3.1) Borrar dependencias SOLO de sucursales que ya NO vienen
---      (pero como queremos "tal cual", haremos replace total: borramos todas las dependencias del restaurante)
 DELETE zts
-        FROM dbo.zonas_turnos_sucurales_restaurantes zts
-        WHERE zts.nro_restaurante = @nro_restaurante;
+          FROM dbo.zonas_turnos_sucurales_restaurantes zts
+         WHERE zts.nro_restaurante = @nro_restaurante;
 
         DELETE ts
-        FROM dbo.turnos_sucursales_restaurantes ts
-        WHERE ts.nro_restaurante = @nro_restaurante;
+          FROM dbo.turnos_sucursales_restaurantes ts
+         WHERE ts.nro_restaurante = @nro_restaurante;
 
         DELETE iz
-        FROM dbo.idiomas_zonas_suc_restaurantes iz
-        WHERE iz.nro_restaurante = @nro_restaurante;
+          FROM dbo.idiomas_zonas_suc_restaurantes iz
+         WHERE iz.nro_restaurante = @nro_restaurante;
 
         DELETE zs
-        FROM dbo.zonas_sucursales_restaurantes zs
-        WHERE zs.nro_restaurante = @nro_restaurante;
+          FROM dbo.zonas_sucursales_restaurantes zs
+         WHERE zs.nro_restaurante = @nro_restaurante;
 
-        -- (si tenés otras tablas hijas por sucursal, se borran acá antes del DELETE de sucursales)
-
-        -- 3.2) Borrar sucursales del restaurante (replace total)
         DELETE sr
-        FROM dbo.sucursales_restaurantes sr
-        WHERE sr.nro_restaurante = @nro_restaurante;
+          FROM dbo.sucursales_restaurantes sr
+         WHERE sr.nro_restaurante = @nro_restaurante;
 
-        -- 3.3) Insertar sucursales nuevas (las del JSON)
 INSERT INTO dbo.sucursales_restaurantes
 (nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio,
  nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
@@ -1886,10 +1870,8 @@ SELECT
     s.cod_sucursal_restaurante
 FROM @Sucursales s;
 
-
 ------------------------------------------------------------
--- 4) ZONAS (replace por sucursal)
--- Tabla real: dbo.zonas_sucursales_restaurantes
+-- 4) ZONAS
 ------------------------------------------------------------
 DECLARE @Zonas TABLE(
             nro_sucursal    INT NOT NULL,
@@ -1901,24 +1883,25 @@ DECLARE @Zonas TABLE(
         );
 
 INSERT INTO @Zonas
-SELECT
+SELECT DISTINCT
     s.nro_sucursal,
     z.cod_zona,
-    -- el bean trae nomZona; en Ristorino la columna es desc_zona (guardamos el texto ahí)
     z.zona_texto,
     z.cant_comensales,
     z.permite_menores,
     z.habilitada
-FROM OPENJSON(@json, '$.sucursales') WITH (
+FROM OPENJSON(@json, '$.sucursales')
+    WITH (
     nro_sucursal INT '$.nroSucursal',
     zonas NVARCHAR(MAX) '$.zonas' AS JSON
     ) s
-    CROSS APPLY OPENJSON(s.zonas) WITH (
-    cod_zona        INT          '$.codZona',
+    CROSS APPLY OPENJSON(s.zonas)
+WITH (
+    cod_zona        INT           '$.codZona',
     zona_texto      NVARCHAR(200) '$.nomZona',
-    cant_comensales INT          '$.cantComensales',
-    permite_menores BIT          '$.permiteMenores',
-    habilitada      BIT          '$.habilitada'
+    cant_comensales INT           '$.cantComensales',
+    permite_menores BIT           '$.permiteMenores',
+    habilitada      BIT           '$.habilitada'
     ) z;
 
 INSERT INTO dbo.zonas_sucursales_restaurantes
@@ -1933,13 +1916,22 @@ SELECT
     ISNULL(z.habilitada, 1)
 FROM @Zonas z;
 
+------------------------------------------------------------
+-- 5) TURNOS (si viene horaDesde NULL -> tiro error claro)
+------------------------------------------------------------
+IF EXISTS (
+            SELECT 1
+            FROM OPENJSON(@json, '$.sucursales')
+            WITH (turnos NVARCHAR(MAX) '$.turnos' AS JSON) s
+            CROSS APPLY OPENJSON(s.turnos)
+            WITH (hora_desde NVARCHAR(20) '$.horaDesde') t
+            WHERE t.hora_desde IS NULL
+        )
+BEGIN
+            THROW 51002, 'JSON trae turnos con horaDesde NULL (corregir endpoint del restaurante).', 1;
+END
 
-------------------------------------------------------------
--- 5) TURNOS (replace por sucursal)
--- Tabla real: dbo.turnos_sucursales_restaurantes
--- JSON esperado en cada sucursal: turnos:[{horaDesde, horaHasta, habilitado}]
-------------------------------------------------------------
-DECLARE @Turnos TABLE(
+        DECLARE @Turnos TABLE(
             nro_sucursal INT NOT NULL,
             hora_desde   TIME(0) NOT NULL,
             hora_hasta   TIME(0) NOT NULL,
@@ -1952,11 +1944,13 @@ SELECT
     t.hora_desde,
     t.hora_hasta,
     t.habilitado
-FROM OPENJSON(@json, '$.sucursales') WITH (
+FROM OPENJSON(@json, '$.sucursales')
+    WITH (
     nro_sucursal INT '$.nroSucursal',
     turnos NVARCHAR(MAX) '$.turnos' AS JSON
     ) s
-    CROSS APPLY OPENJSON(s.turnos) WITH (
+    CROSS APPLY OPENJSON(s.turnos)
+WITH (
     hora_desde TIME(0) '$.horaDesde',
     hora_hasta TIME(0) '$.horaHasta',
     habilitado BIT     '$.habilitado'
@@ -1972,13 +1966,22 @@ SELECT
     ISNULL(t.habilitado, 1)
 FROM @Turnos t;
 
+------------------------------------------------------------
+-- 6) ZONAS_TURNOS
+------------------------------------------------------------
+IF EXISTS (
+            SELECT 1
+            FROM OPENJSON(@json, '$.sucursales')
+            WITH (zonasTurnos NVARCHAR(MAX) '$.zonasTurnos' AS JSON) s
+            CROSS APPLY OPENJSON(s.zonasTurnos)
+            WITH (hora_desde NVARCHAR(20) '$.horaDesde') zt
+            WHERE zt.hora_desde IS NULL
+        )
+BEGIN
+            THROW 51003, 'JSON trae zonasTurnos con horaDesde NULL (corregir endpoint del restaurante).', 1;
+END
 
-------------------------------------------------------------
--- 6) ZONAS_TURNOS (replace por sucursal)
--- Tabla real: dbo.zonas_turnos_sucurales_restaurantes
--- JSON esperado en cada sucursal: zonasTurnos:[{codZona, horaDesde, permiteMenores}]
-------------------------------------------------------------
-DECLARE @ZonasTurnos TABLE(
+        DECLARE @ZonasTurnos TABLE(
             nro_sucursal    INT NOT NULL,
             cod_zona        INT NOT NULL,
             hora_desde      TIME(0) NOT NULL,
@@ -1986,16 +1989,18 @@ DECLARE @ZonasTurnos TABLE(
         );
 
 INSERT INTO @ZonasTurnos
-SELECT
+SELECT DISTINCT
     s.nro_sucursal,
     zt.cod_zona,
     zt.hora_desde,
     zt.permite_menores
-FROM OPENJSON(@json, '$.sucursales') WITH (
+FROM OPENJSON(@json, '$.sucursales')
+    WITH (
     nro_sucursal INT '$.nroSucursal',
     zonasTurnos NVARCHAR(MAX) '$.zonasTurnos' AS JSON
     ) s
-    CROSS APPLY OPENJSON(s.zonasTurnos) WITH (
+    CROSS APPLY OPENJSON(s.zonasTurnos)
+WITH (
     cod_zona        INT     '$.codZona',
     hora_desde      TIME(0) '$.horaDesde',
     permite_menores BIT     '$.permiteMenores'
@@ -2011,16 +2016,184 @@ SELECT
     ISNULL(zt.permite_menores, 1)
 FROM @ZonasTurnos zt;
 
+------------------------------------------------------------
+-- 7) PREFERENCIAS (mapeo estilos/especialidades/tiposComidas)
+--    evitando PK duplicada con ROW_NUMBER()
+------------------------------------------------------------
+DECLARE @CAT_ESTILOS INT, @CAT_ESPECIALIDADES INT, @CAT_TIPOS_COMIDAS INT;
+
+        -- helper para crear/obtener categoria por nombre
+        DECLARE @maxCat INT;
+
+        -- ESTILOS
+SELECT @CAT_ESTILOS = cod_categoria
+FROM dbo.categorias_preferencias
+WHERE nom_categoria = N'ESTILOS';
+
+IF @CAT_ESTILOS IS NULL
+BEGIN
+SELECT @maxCat = ISNULL(MAX(cod_categoria), 0)
+FROM dbo.categorias_preferencias WITH (UPDLOCK, HOLDLOCK);
+
+SET @CAT_ESTILOS = @maxCat + 1;
+
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (@CAT_ESTILOS, N'ESTILOS');
+END
+
+        -- ESPECIALIDADES
+SELECT @CAT_ESPECIALIDADES = cod_categoria
+FROM dbo.categorias_preferencias
+WHERE nom_categoria = N'ESPECIALIDADES';
+
+IF @CAT_ESPECIALIDADES IS NULL
+BEGIN
+SELECT @maxCat = ISNULL(MAX(cod_categoria), 0)
+FROM dbo.categorias_preferencias WITH (UPDLOCK, HOLDLOCK);
+
+SET @CAT_ESPECIALIDADES = @maxCat + 1;
+
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (@CAT_ESPECIALIDADES, N'ESPECIALIDADES');
+END
+
+        -- TIPOS_COMIDAS
+SELECT @CAT_TIPOS_COMIDAS = cod_categoria
+FROM dbo.categorias_preferencias
+WHERE nom_categoria = N'TIPOS_COMIDAS';
+
+IF @CAT_TIPOS_COMIDAS IS NULL
+BEGIN
+SELECT @maxCat = ISNULL(MAX(cod_categoria), 0)
+FROM dbo.categorias_preferencias WITH (UPDLOCK, HOLDLOCK);
+
+SET @CAT_TIPOS_COMIDAS = @maxCat + 1;
+
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (@CAT_TIPOS_COMIDAS, N'TIPOS_COMIDAS');
+END
+
+        -- Parse preferencias
+        DECLARE @PrefRaw TABLE(
+            nro_sucursal       INT NOT NULL,
+            cod_categoria      INT NOT NULL,
+            nro_valor_dominio  INT NOT NULL,
+            nom_valor_dominio  NVARCHAR(150) NOT NULL
+        );
+
+        -- estilos
+INSERT INTO @PrefRaw
+SELECT DISTINCT
+    s.nro_sucursal,
+    @CAT_ESTILOS,
+    e.nro_estilo,
+    e.nom_estilo
+FROM OPENJSON(@json, '$.sucursales')
+    WITH (
+    nro_sucursal INT '$.nroSucursal',
+    estilos NVARCHAR(MAX) '$.estilos' AS JSON
+    ) s
+    CROSS APPLY OPENJSON(s.estilos)
+WITH (
+    nro_estilo  INT           '$.nroEstilo',
+    nom_estilo  NVARCHAR(150) '$.nomEstilo',
+    habilitado  BIT           '$.habilitado'
+    ) e
+WHERE ISNULL(e.habilitado, 1) = 1;
+
+-- especialidades
+INSERT INTO @PrefRaw
+SELECT DISTINCT
+    s.nro_sucursal,
+    @CAT_ESPECIALIDADES,
+    x.nro_restriccion,
+    x.nom_restriccion
+FROM OPENJSON(@json, '$.sucursales')
+    WITH (
+    nro_sucursal INT '$.nroSucursal',
+    especialidades NVARCHAR(MAX) '$.especialidades' AS JSON
+    ) s
+    CROSS APPLY OPENJSON(s.especialidades)
+WITH (
+    nro_restriccion INT           '$.nroRestriccion',
+    nom_restriccion NVARCHAR(150) '$.nomRestriccion',
+    habilitada      BIT           '$.habilitada'
+    ) x
+WHERE ISNULL(x.habilitada, 1) = 1;
+
+-- tipos comidas
+INSERT INTO @PrefRaw
+SELECT DISTINCT
+    s.nro_sucursal,
+    @CAT_TIPOS_COMIDAS,
+    t.nro_tipo_comida,
+    t.nom_tipo_comida
+FROM OPENJSON(@json, '$.sucursales')
+    WITH (
+    nro_sucursal INT '$.nroSucursal',
+    tiposComidas NVARCHAR(MAX) '$.tiposComidas' AS JSON
+    ) s
+    CROSS APPLY OPENJSON(s.tiposComidas)
+WITH (
+    nro_tipo_comida INT           '$.nroTipoComida',
+    nom_tipo_comida NVARCHAR(150) '$.nomTipoComida',
+    habilitado      BIT           '$.habilitado'
+    ) t
+WHERE ISNULL(t.habilitado, 1) = 1;
+
+-- Upsert dominio (global)
+MERGE dbo.dominio_categorias_preferencias AS tgt
+    USING (
+    SELECT DISTINCT cod_categoria, nro_valor_dominio, nom_valor_dominio
+    FROM @PrefRaw
+    ) AS src
+    ON  tgt.cod_categoria     = src.cod_categoria
+    AND tgt.nro_valor_dominio = src.nro_valor_dominio
+    WHEN MATCHED AND tgt.nom_valor_dominio <> src.nom_valor_dominio THEN
+UPDATE SET nom_valor_dominio = src.nom_valor_dominio
+    WHEN NOT MATCHED THEN
+INSERT (cod_categoria, nro_valor_dominio, nom_valor_dominio)
+VALUES (src.cod_categoria, src.nro_valor_dominio, src.nom_valor_dominio);
+
+-- FULL REPLACE preferencias del restaurante (solo estas categorías)
+DELETE pr
+          FROM dbo.preferencias_restaurantes pr
+         WHERE pr.nro_restaurante = @nro_restaurante
+           AND pr.nro_sucursal IS NOT NULL
+           AND pr.cod_categoria IN (@CAT_ESTILOS, @CAT_ESPECIALIDADES, @CAT_TIPOS_COMIDAS);
+
+        ;WITH x AS (
+    SELECT
+        nro_sucursal,
+        cod_categoria,
+        nro_valor_dominio,
+        ROW_NUMBER() OVER(
+                    PARTITION BY cod_categoria, nro_valor_dominio
+                    ORDER BY nro_sucursal
+                ) AS nro_preferencia
+    FROM @PrefRaw
+)
+         INSERT INTO dbo.preferencias_restaurantes
+        (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+SELECT
+    @nro_restaurante,
+    x.cod_categoria,
+    x.nro_valor_dominio,
+    x.nro_preferencia,
+    NULL,
+    x.nro_sucursal
+FROM x;
 
 COMMIT;
 
--- resultado útil
 SELECT
     @nro_restaurante AS nro_restaurante,
     (SELECT COUNT(*) FROM @Sucursales)  AS sucursales,
     (SELECT COUNT(*) FROM @Zonas)       AS zonas,
     (SELECT COUNT(*) FROM @Turnos)      AS turnos,
-    (SELECT COUNT(*) FROM @ZonasTurnos) AS zonas_turnos;
+    (SELECT COUNT(*) FROM @ZonasTurnos) AS zonas_turnos,
+    (SELECT COUNT(*) FROM @PrefRaw)     AS preferencias_raw;
+
 END TRY
 BEGIN CATCH
 IF XACT_STATE() <> 0 ROLLBACK;
@@ -2030,67 +2203,3 @@ END;
 GO
 
 
-CREATE OR ALTER PROCEDURE dbo.ins_contenido_restaurante
-    @nro_restaurante             INT,
-    @nro_idioma                  INT = 1,
-    @nro_sucursal                INT = NULL,
-    @contenido_a_publicar        NVARCHAR(MAX),
-    @imagen_promocional          NVARCHAR(255) = NULL,
-    @costo_click                 DECIMAL(12,2) = NULL,
-    @cod_contenido_restaurante   NVARCHAR(MAX)
-    AS
-BEGIN
-    SET NOCOUNT ON;
-    SET XACT_ABORT ON;
-
-BEGIN TRY
-BEGIN TRAN;
-
-        -- Evitar duplicados (mismo contenido ya importado)
-        IF EXISTS (
-            SELECT 1
-            FROM dbo.contenidos_restaurantes
-            WHERE nro_restaurante = @nro_restaurante
-              AND cod_contenido_restaurante = @cod_contenido_restaurante
-        )
-BEGIN
-COMMIT;
-RETURN;
-END
-
-INSERT INTO dbo.contenidos_restaurantes
-(
-    nro_restaurante,
-    nro_idioma,
-    nro_sucursal,
-    contenido_a_publicar,
-    imagen_promocional,
-    costo_click,
-    cod_contenido_restaurante
-)
-VALUES
-    (
-        @nro_restaurante,
-        @nro_idioma,
-        @nro_sucursal,
-        @contenido_a_publicar,
-        @imagen_promocional,
-        @costo_click,
-        @cod_contenido_restaurante
-    );
-
-COMMIT;
-END TRY
-BEGIN CATCH
-IF XACT_STATE() <> 0
-            ROLLBACK;
-        THROW;
-END CATCH
-END;
-GO
-
-
-select * from dbo.clicks_contenidos_restaurantes
-select * from dbo.contenidos_restaurantes
-delete from dbo.clicks_contenidos_restaurantes
-delete from dbo.contenidos_restaurantes

@@ -255,11 +255,15 @@ public class RistorinoRepository {
             }
         }
 
-    public Map<String, Object> guardarInfoRestaurante(RestauranteBean restaurante) {
+    public Map<String, Object> guardarInfoRestaurante(SyncRestauranteBean restaurante) {
         try {
             ObjectMapper om = new ObjectMapper();
-            String json = om.writeValueAsString(restaurante);
+            // Si después agregás fechas/horas como LocalDate/LocalTime:
+            // om.registerModule(new JavaTimeModule());
+            // om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
+            String json = om.writeValueAsString(restaurante);
+            System.out.println(json);
             SqlParameterSource params = new MapSqlParameterSource()
                     .addValue("json", json, Types.NVARCHAR);
 
@@ -267,8 +271,7 @@ public class RistorinoRepository {
                     jdbcCallFactory.executeWithOutputs("sync_restaurante_desde_json_full", "dbo", params);
 
             @SuppressWarnings("unchecked")
-            List<Map<String, Object>> rs =
-                    (List<Map<String, Object>>) out.get("#result-set-1");
+            List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
 
             return (rs != null && !rs.isEmpty()) ? rs.get(0) : Map.of("ok", true);
 
