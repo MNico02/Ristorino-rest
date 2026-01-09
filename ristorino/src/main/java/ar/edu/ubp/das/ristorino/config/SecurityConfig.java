@@ -43,12 +43,14 @@ public class SecurityConfig {
 
                         // endpoints públicos (SIN context-path)
                         .requestMatchers(
-                                "/ristorino/obtenerPromociones",
-                                "/ristorino/registrarClickPromocion",
-                                "/ristorino/obtenerRestaurante/**",
                                 "/ristorino/login",
                                 "/ristorino/registrarCliente",
+                                "/ristorino/obtenerPromociones",
+                                "/ristorino/ia/recomendaciones",
+                                "/ristorino/registrarClickPromocion",
+                                "/ristorino/obtenerRestaurante/**",
                                 "/ristorino/ia/generarContenidosPromocionales"
+
 
 
                         ).permitAll()

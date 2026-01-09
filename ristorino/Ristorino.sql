@@ -2028,3 +2028,69 @@ IF XACT_STATE() <> 0 ROLLBACK;
 END CATCH
 END;
 GO
+
+
+CREATE OR ALTER PROCEDURE dbo.ins_contenido_restaurante
+    @nro_restaurante             INT,
+    @nro_idioma                  INT = 1,
+    @nro_sucursal                INT = NULL,
+    @contenido_a_publicar        NVARCHAR(MAX),
+    @imagen_promocional          NVARCHAR(255) = NULL,
+    @costo_click                 DECIMAL(12,2) = NULL,
+    @cod_contenido_restaurante   NVARCHAR(MAX)
+    AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+BEGIN TRY
+BEGIN TRAN;
+
+        -- Evitar duplicados (mismo contenido ya importado)
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.contenidos_restaurantes
+            WHERE nro_restaurante = @nro_restaurante
+              AND cod_contenido_restaurante = @cod_contenido_restaurante
+        )
+BEGIN
+COMMIT;
+RETURN;
+END
+
+INSERT INTO dbo.contenidos_restaurantes
+(
+    nro_restaurante,
+    nro_idioma,
+    nro_sucursal,
+    contenido_a_publicar,
+    imagen_promocional,
+    costo_click,
+    cod_contenido_restaurante
+)
+VALUES
+    (
+        @nro_restaurante,
+        @nro_idioma,
+        @nro_sucursal,
+        @contenido_a_publicar,
+        @imagen_promocional,
+        @costo_click,
+        @cod_contenido_restaurante
+    );
+
+COMMIT;
+END TRY
+BEGIN CATCH
+IF XACT_STATE() <> 0
+            ROLLBACK;
+        THROW;
+END CATCH
+END;
+GO
+
+
+select * from dbo.clicks_contenidos_restaurantes
+select * from dbo.contenidos_restaurantes
+delete from dbo.clicks_contenidos_restaurantes
+delete from dbo.contenidos_restaurantes
