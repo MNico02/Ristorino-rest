@@ -8,6 +8,9 @@ public class ClienteBean {
     private String telefonos;
     private String nomLocalidad;
     private String nomProvincia;
+    private String observaciones;
+    private int codCategoria;
+    private int nroValorDominio;
 
     public String getApellido() {
         return apellido;
@@ -64,5 +67,29 @@ public class ClienteBean {
 
     public void setNomProvincia(String nomProvincia) {
         this.nomProvincia = nomProvincia;
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
+    }
+
+    public int getCodCategoria() {
+        return codCategoria;
+    }
+
+    public void setCodCategoria(int codCategoria) {
+        this.codCategoria = codCategoria;
+    }
+
+    public int getNroValorDominio() {
+        return nroValorDominio;
+    }
+
+    public void setNroValorDominio(int nroValorDominio) {
+        this.nroValorDominio = nroValorDominio;
     }
 }

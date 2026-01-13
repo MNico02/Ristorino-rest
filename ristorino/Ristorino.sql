@@ -883,61 +883,134 @@ INSERT INTO dbo.preferencias_restaurantes
 go
 ---------
 CREATE OR ALTER PROCEDURE registrar_cliente
-    @apellido       NVARCHAR(120),
-    @nombre         NVARCHAR(120),
-    @correo         NVARCHAR(255),
-    @clave          NVARCHAR(255),
-    @telefonos      NVARCHAR(100) = NULL,
-    @nom_localidad  NVARCHAR(120),
-    @nom_provincia  NVARCHAR(120)
+    @apellido           NVARCHAR(120),
+    @nombre             NVARCHAR(120),
+    @correo             NVARCHAR(255),
+    @clave              NVARCHAR(255),
+    @telefonos          NVARCHAR(100) = NULL,
+    @nom_localidad      NVARCHAR(120),
+    @nom_provincia      NVARCHAR(120),
+
+    -- 👇 NUEVOS (preferencias)
+    @cod_categoria      INT = NULL,
+    @nro_valor_dominio  INT = NULL,
+    @observaciones      NVARCHAR(500) = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @cod_provincia INT;
     DECLARE @nro_localidad INT;
+    DECLARE @nro_cliente   INT;
 
+    -- ❌ correo duplicado
     IF EXISTS (SELECT 1 FROM dbo.clientes WHERE correo = @correo)
 BEGIN
         RAISERROR('El correo ya está registrado.', 16, 1);
         RETURN;
 END;
 
+    -- ===============================
+    -- Provincia
+    -- ===============================
 SELECT @cod_provincia = cod_provincia
 FROM dbo.provincias
-WHERE LOWER(nom_provincia) COLLATE Latin1_General_CI_AI = LOWER(@nom_provincia) COLLATE Latin1_General_CI_AI;
+WHERE LOWER(nom_provincia) COLLATE Latin1_General_CI_AI =
+      LOWER(@nom_provincia) COLLATE Latin1_General_CI_AI;
 
 IF @cod_provincia IS NULL
 BEGIN
 INSERT INTO dbo.provincias (nom_provincia)
 VALUES (@nom_provincia);
+
 SET @cod_provincia = SCOPE_IDENTITY();
 END;
 
+    -- ===============================
+    -- Localidad
+    -- ===============================
 SELECT @nro_localidad = nro_localidad
 FROM dbo.localidades
-WHERE LOWER(nom_localidad) COLLATE Latin1_General_CI_AI = LOWER(@nom_localidad) COLLATE Latin1_General_CI_AI
+WHERE LOWER(nom_localidad) COLLATE Latin1_General_CI_AI =
+      LOWER(@nom_localidad) COLLATE Latin1_General_CI_AI
   AND cod_provincia = @cod_provincia;
 
 IF @nro_localidad IS NULL
 BEGIN
 INSERT INTO dbo.localidades (nom_localidad, cod_provincia)
 VALUES (@nom_localidad, @cod_provincia);
+
 SET @nro_localidad = SCOPE_IDENTITY();
 END;
 
-    -- ✅ Hashear la clave en SHA-256 (en mayúsculas)
+    -- ===============================
+    -- Hash de clave (SHA-256)
+    -- ===============================
     DECLARE @clave_hash NVARCHAR(64);
-    SET @clave_hash = UPPER(CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', @clave), 2));
+    SET @clave_hash = UPPER(
+        CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', @clave), 2)
+    );
 
-INSERT INTO dbo.clientes (apellido, nombre, clave, correo, telefonos, nro_localidad, habilitado)
-VALUES (@apellido, @nombre, @clave_hash, @correo, @telefonos, @nro_localidad, 1);
+BEGIN TRAN;
 
-SELECT SCOPE_IDENTITY() AS nro_cliente_creado;
+    -- ===============================
+    -- Cliente
+    -- ===============================
+INSERT INTO dbo.clientes (
+    apellido,
+    nombre,
+    clave,
+    correo,
+    telefonos,
+    nro_localidad,
+    habilitado
+)
+VALUES (
+           @apellido,
+           @nombre,
+           @clave_hash,
+           @correo,
+           @telefonos,
+           @nro_localidad,
+           1
+       );
+
+SET @nro_cliente = SCOPE_IDENTITY();
+
+    -- ===============================
+    -- Preferencia (si viene)
+    -- ===============================
+    IF @cod_categoria IS NOT NULL
+       AND @nro_valor_dominio IS NOT NULL
+BEGIN
+INSERT INTO dbo.preferencias_clientes (
+    nro_cliente,
+    cod_categoria,
+    nro_valor_dominio,
+    observaciones
+)
+VALUES (
+           @nro_cliente,
+           @cod_categoria,
+           @nro_valor_dominio,
+           @observaciones
+       );
+END;
+
+COMMIT TRAN;
+
+-- salida
+SELECT @nro_cliente AS nro_cliente_creado;
 END;
 GO
+SELECT *
+FROM dbo.clientes c
+         LEFT JOIN dbo.preferencias_clientes pc
+                   ON pc.nro_cliente = c.nro_cliente;
 
 
+go
 CREATE OR ALTER PROCEDURE dbo.login_cliente
     @correo NVARCHAR(255),
     @clave NVARCHAR(255),
@@ -2201,5 +2274,40 @@ IF XACT_STATE() <> 0 ROLLBACK;
 END CATCH
 END;
 GO
+
+
+CREATE OR ALTER PROCEDURE dbo.get_categorias_preferencias
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- RS1: Categorías
+SELECT
+    cod_categoria,
+    nom_categoria
+FROM dbo.categorias_preferencias
+ORDER BY cod_categoria;
+
+-- RS2: Dominios por categoría
+SELECT
+    cod_categoria,
+    nro_valor_dominio,
+    nom_valor_dominio
+FROM dbo.dominio_categorias_preferencias
+ORDER BY cod_categoria, nro_valor_dominio;
+END;
+GO
+
+
+
+
+
+select * from dbo.localidades
+
+select* from dbo.sucursales_restaurantes
+select* from dbo.contenidos_restaurantes
+select * from dbo.preferencias_restaurantes
+select * from dbo.categorias_preferencias
+select * from dbo.dominio_categorias_preferencias
 
 

@@ -145,6 +145,13 @@ public class RistorinoResource {
         return new ResponseEntity<>(body, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @GetMapping("/categoriasPreferencias")
+    public ResponseEntity<List<CategoriaPreferenciaBean>> obtenerCategoriasPreferencias() {
+        List<CategoriaPreferenciaBean> resultado =
+                ristorinoRepository.obtenerCategoriasPreferencias();
+        return ResponseEntity.ok(resultado);
+    }
+
 
 
 

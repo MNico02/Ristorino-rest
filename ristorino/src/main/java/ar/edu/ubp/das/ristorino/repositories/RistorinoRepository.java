@@ -39,7 +39,10 @@ public class RistorinoRepository {
                 .addValue("correo", clienteBean.getCorreo())
                 .addValue("telefonos", clienteBean.getTelefonos())
                 .addValue("nom_localidad", clienteBean.getNomLocalidad())
-                .addValue("nom_provincia", clienteBean.getNomProvincia());
+                .addValue("nom_provincia", clienteBean.getNomProvincia())
+                .addValue("observaciones", clienteBean.getObservaciones())
+                .addValue("cod_categoria", clienteBean.getCodCategoria())
+                .addValue("nro_valor_dominio", clienteBean.getNroValorDominio());
 
         try {
             jdbcCallFactory.execute("registrar_cliente", "dbo", params);
@@ -493,6 +496,54 @@ public class RistorinoRepository {
         } catch (Exception e) {
             return null;
         }
+    }
+
+
+    public List<CategoriaPreferenciaBean> obtenerCategoriasPreferencias() {
+
+        Map<String, Object> out =
+                jdbcCallFactory.executeWithOutputs(
+                        "get_categorias_preferencias",
+                        "dbo",
+                        new MapSqlParameterSource()
+                );
+
+        // RS1: Categorías
+        List<Map<String, Object>> rs1 = castRS(out.get("#result-set-1"));
+        Map<Integer, CategoriaPreferenciaBean> categoriasMap = new LinkedHashMap<>();
+
+        if (rs1 != null) {
+            for (Map<String, Object> row : rs1) {
+                CategoriaPreferenciaBean c = new CategoriaPreferenciaBean();
+                Integer codCategoria = getInt(row.get("cod_categoria"));
+
+                c.setCodCategoria(codCategoria);
+                c.setNomCategoria(getStr(row.get("nom_categoria")));
+                c.setDominios(new ArrayList<>());
+
+                categoriasMap.put(codCategoria, c);
+            }
+        }
+
+        // RS2: Dominios
+        List<Map<String, Object>> rs2 = castRS(out.get("#result-set-2"));
+        if (rs2 != null) {
+            for (Map<String, Object> row : rs2) {
+                Integer codCategoria = getInt(row.get("cod_categoria"));
+
+                DominioCategoriaPreferenciaBean d =
+                        new DominioCategoriaPreferenciaBean();
+                d.setNroValorDominio(getInt(row.get("nro_valor_dominio")));
+                d.setNomValorDominio(getStr(row.get("nom_valor_dominio")));
+
+                CategoriaPreferenciaBean c = categoriasMap.get(codCategoria);
+                if (c != null) {
+                    c.getDominios().add(d);
+                }
+            }
+        }
+
+        return new ArrayList<>(categoriasMap.values());
     }
 
 
