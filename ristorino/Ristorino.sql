@@ -2453,3 +2453,204 @@ select * from dbo.categorias_preferencias
 select * from dbo.dominio_categorias_preferencias
 
 
+CREATE OR ALTER PROCEDURE dbo.get_cliente_por_correo
+    @correo VARCHAR(255)
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT
+    c.apellido,
+    c.nombre,
+    c.correo,
+    c.telefonos
+FROM dbo.clientes c
+WHERE c.correo = @correo
+  and habilitado = '1'
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE dbo.ins_reserva_confirmada_ristorino
+    (
+    @correo                 NVARCHAR(255),
+
+    -- lo que devuelve el restaurante (UUID o nro o string)
+    @cod_reserva_restaurante NVARCHAR(50),
+
+    @fecha_reserva           DATE,
+    @hora_reserva            TIME(0),
+    @nro_restaurante         INT,
+    @nro_sucursal            INT,
+    @cod_zona                INT,
+    @cant_adultos            INT,
+    @cant_menores            INT = 0,
+    @costo_reserva           DECIMAL(12,2) = NULL,
+
+    -- opcional: estado (si no lo mandás, queda 1)
+    @cod_estado              INT = 1
+    )
+    AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+BEGIN TRY
+BEGIN TRAN;
+
+        /* 0) Validaciones básicas */
+        IF @correo IS NULL OR LTRIM(RTRIM(@correo)) = ''
+            THROW 51010, 'El correo es obligatorio.', 1;
+
+        IF @cod_reserva_restaurante IS NULL OR LTRIM(RTRIM(@cod_reserva_restaurante)) = ''
+            THROW 51011, 'El cod_reserva_restaurante es obligatorio.', 1;
+
+        IF (@cant_adultos + ISNULL(@cant_menores,0)) <= 0
+            THROW 51012, 'La cantidad de comensales debe ser mayor a 0.', 1;
+
+        /* 1) Construir cod_reserva_sucursal = "codRestaurante-nroSucursal" */
+        DECLARE @cod_reserva_sucursal NVARCHAR(50);
+        SET @cod_reserva_sucursal = CONCAT(@cod_reserva_restaurante, '-', CONVERT(NVARCHAR(10), @nro_sucursal));
+
+        IF LEN(@cod_reserva_sucursal) > 50
+            THROW 51017, 'El cod_reserva_sucursal excede 50 caracteres.', 1;
+
+        /* 2) Idempotencia: si ya existe esa reserva (AK), devolverla */
+        IF EXISTS (SELECT 1 FROM dbo.reservas_restaurantes WHERE cod_reserva_sucursal = @cod_reserva_sucursal)
+BEGIN
+SELECT TOP 1
+                nro_cliente, nro_reserva, cod_reserva_sucursal,
+       fecha_reserva, hora_reserva,
+       nro_restaurante, nro_sucursal, cod_zona,
+       hora_desde, cant_adultos, cant_menores,
+       cod_estado, fecha_cancelacion, costo_reserva
+FROM dbo.reservas_restaurantes
+WHERE cod_reserva_sucursal = @cod_reserva_sucursal;
+
+COMMIT;
+RETURN;
+END
+
+        /* 3) Resolver nro_cliente por correo */
+        DECLARE @nro_cliente INT;
+
+SELECT @nro_cliente = c.nro_cliente
+FROM dbo.clientes c
+WHERE c.correo = @correo
+  AND c.habilitado = 1;
+
+IF @nro_cliente IS NULL
+            THROW 51013, 'El cliente no existe o está deshabilitado en Ristorino.', 1;
+
+        /* 4) Validar sucursal/zona/turno existan en Ristorino (por FKs) */
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.sucursales_restaurantes s
+            WHERE s.nro_restaurante = @nro_restaurante
+              AND s.nro_sucursal    = @nro_sucursal
+        )
+            THROW 51014, 'La sucursal no existe en Ristorino.', 1;
+
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.zonas_sucursales_restaurantes z
+            WHERE z.nro_restaurante = @nro_restaurante
+              AND z.nro_sucursal    = @nro_sucursal
+              AND z.cod_zona        = @cod_zona
+              AND z.habilitada      = 1
+        )
+            THROW 51015, 'La zona no existe o no está habilitada en Ristorino.', 1;
+
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.turnos_sucursales_restaurantes t
+            WHERE t.nro_restaurante = @nro_restaurante
+              AND t.nro_sucursal    = @nro_sucursal
+              AND t.hora_desde      = @hora_reserva
+              AND t.habilitado      = 1
+        )
+            THROW 51016, 'El turno (hora_desde) no existe o no está habilitado en Ristorino.', 1;
+
+        /* 5) Calcular nro_reserva incremental por cliente */
+        DECLARE @nro_reserva INT;
+
+SELECT @nro_reserva = ISNULL(MAX(r.nro_reserva), 0) + 1
+FROM dbo.reservas_restaurantes r
+WHERE r.nro_cliente = @nro_cliente;
+
+/* 6) Insertar reserva */
+INSERT INTO dbo.reservas_restaurantes
+(
+    nro_cliente,
+    nro_reserva,
+    cod_reserva_sucursal,
+    fecha_reserva,
+    hora_reserva,
+    nro_restaurante,
+    nro_sucursal,
+    cod_zona,
+    hora_desde,
+    cant_adultos,
+    cant_menores,
+    cod_estado,
+    fecha_cancelacion,
+    costo_reserva
+)
+VALUES
+    (
+        @nro_cliente,
+        @nro_reserva,
+        @cod_reserva_sucursal,
+        @fecha_reserva,
+        @hora_reserva,
+        @nro_restaurante,
+        @nro_sucursal,
+        @cod_zona,
+        @hora_reserva,          -- hora_desde = hora_reserva
+        @cant_adultos,
+        ISNULL(@cant_menores,0),
+        @cod_estado,
+        NULL,
+        @costo_reserva
+    );
+
+/* 7) Devolver fila insertada */
+SELECT
+    nro_cliente, nro_reserva, cod_reserva_sucursal,
+    fecha_reserva, hora_reserva,
+    nro_restaurante, nro_sucursal, cod_zona,
+    hora_desde, cant_adultos, cant_menores,
+    cod_estado, fecha_cancelacion, costo_reserva
+FROM dbo.reservas_restaurantes
+WHERE nro_cliente = @nro_cliente
+  AND nro_reserva = @nro_reserva;
+
+COMMIT;
+END TRY
+BEGIN CATCH
+IF XACT_STATE() <> 0 ROLLBACK;
+
+        -- Si chocó UNIQUE por cod_reserva_sucursal (carrera), devolver la existente
+        IF ERROR_NUMBER() IN (2627, 2601)
+           AND (CHARINDEX('UQ_reservas_restaurantes_cod', ERROR_MESSAGE()) > 0
+                OR CHARINDEX('cod_reserva_sucursal', ERROR_MESSAGE()) > 0)
+BEGIN
+            DECLARE @cod_reserva_sucursal2 NVARCHAR(50);
+            SET @cod_reserva_sucursal2 = CONCAT(@cod_reserva_restaurante, '-', CONVERT(NVARCHAR(10), @nro_sucursal));
+
+SELECT TOP 1
+                nro_cliente, nro_reserva, cod_reserva_sucursal,
+       fecha_reserva, hora_reserva,
+       nro_restaurante, nro_sucursal, cod_zona,
+       hora_desde, cant_adultos, cant_menores,
+       cod_estado, fecha_cancelacion, costo_reserva
+FROM dbo.reservas_restaurantes
+WHERE cod_reserva_sucursal = @cod_reserva_sucursal2;
+RETURN;
+END
+
+        ;THROW
+END CATCH
+END;
+GO
+

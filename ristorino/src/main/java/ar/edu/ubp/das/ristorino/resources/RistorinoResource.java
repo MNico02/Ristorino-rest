@@ -4,6 +4,7 @@ import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.DisponibilidadService;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
+import ar.edu.ubp.das.ristorino.service.ReservaService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,9 @@ public class RistorinoResource {
     private GeminiService geminiService;
     @Autowired
     private DisponibilidadService disponibilidadService;
+    @Autowired
+    private ReservaService reservaService;
+
 
     @PostMapping("/registrarCliente")
     public ResponseEntity<Map<String, String>> registrarCliente(
@@ -60,14 +64,15 @@ public class RistorinoResource {
     * Consume el servicio del restaurante y registra una reserva
     * recive un reservaBean y si todo sale bien obtiene un codigo de reserva por parte del restuarnte
     * */
-    @PostMapping("/RegistrarReserva")
-    public ResponseEntity<Map<String, String>> insertarReserva(@RequestBody ReservaBean reserva) {
+    @PostMapping("/registrarReserva")
+    public ResponseEntity<Map<String, String>> registrarReserva(
+            @RequestBody ReservaBean reserva) {
 
-        String codReserva = new Httpful("http://localhost:8085/api/v1/restaurante1").path("/confirmarReserva").method(HttpMethod.GET)
-                .bearer("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.S3xN0RG6Gf9QMRfVL3YRHLUaQbqewtZTXfzxQ9-9gak")
-                .execute(new TypeToken<List<ReservaBean>>() {}.getType());
+        String codigoReserva = reservaService.registrarReserva(reserva);
+
         Map<String, String> response = new HashMap<>();
-        response.put("codReserva", codReserva);
+        response.put("codReserva", codigoReserva);
+
         return ResponseEntity.ok(response);
     }
     @PostMapping("/consultarDisponibilidad")

@@ -53,7 +53,21 @@ public class RistorinoRepository {
         }
 
     }
+    public Optional<SolicitudClienteBean> getClienteCorreo(String correo) {
 
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("correo", correo);
+
+        SolicitudClienteBean cliente = jdbcCallFactory.executeSingle(
+                "get_cliente_por_correo",
+                "dbo",
+                params,
+                "result",
+                SolicitudClienteBean.class
+        );
+
+        return Optional.ofNullable(cliente);
+    }
 
     public String login(LoginBean loginBean) {
         SqlParameterSource params = new MapSqlParameterSource()
@@ -545,7 +559,42 @@ public class RistorinoRepository {
 
         return new ArrayList<>(categoriasMap.values());
     }
+    public ReservaConfirmadaBean insReservaConfirmadaRistorino(
+            ConfirmarReservaResponseBean body,
+            ReservaBean reservaBean,
+            int nroRestaurante
+    ) {
+        if (body == null) throw new IllegalArgumentException("body null");
+        if (!body.isSuccess()) throw new RuntimeException("No confirmada: " + body.getMensaje());
+        if (body.getCodReserva() == null || body.getCodReserva().isBlank())
+            throw new IllegalArgumentException("codReserva vacío");
 
+        if (reservaBean == null) throw new IllegalArgumentException("reservaBean null");
+
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("correo", reservaBean.getCorreo(), Types.NVARCHAR)
+                .addValue("cod_reserva_restaurante", body.getCodReserva(), Types.NVARCHAR)
+                .addValue("fecha_reserva", java.sql.Date.valueOf(reservaBean.getFechaReserva()), Types.DATE)
+                .addValue("hora_reserva", java.sql.Time.valueOf(reservaBean.getHoraReserva()), Types.TIME)
+                .addValue("nro_restaurante", nroRestaurante, Types.INTEGER)
+                .addValue("nro_sucursal", reservaBean.getIdSucursal(), Types.INTEGER)
+                .addValue("cod_zona", reservaBean.getCodZona(), Types.INTEGER)
+                .addValue("cant_adultos", reservaBean.getCantAdultos(), Types.INTEGER)
+                .addValue("cant_menores", reservaBean.getCantMenores(), Types.INTEGER)
+                .addValue("costo_reserva", BigDecimal.valueOf((double)reservaBean.getCostoReserva()), Types.DECIMAL)
+                .addValue("cod_estado", 1, Types.INTEGER);
+
+        ReservaConfirmadaBean saved = jdbcCallFactory.executeSingle(
+                "ins_reserva_confirmada_ristorino",
+                "dbo",
+                params,
+                "result",
+                ReservaConfirmadaBean.class
+        );
+
+        if (saved == null) throw new RuntimeException("SP no devolvió fila insertada");
+        return saved;
+    }
 
 
 }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public class ReservaBean {
+public class ReservaSolicitudBean {
     private String codSucursalRestaurante;
     private String correo;
     private int idSucursal;
@@ -17,7 +17,6 @@ public class ReservaBean {
     private int cantMenores;
     private int codZona;
     private float costoReserva;
-
 
     public String getCodSucursalRestaurante() {
         return codSucursalRestaurante;
