@@ -7,12 +7,21 @@ import java.time.LocalDate;
 
 
 public class SoliHorarioBean {
+    private String codSucursalRestaurante;
     private int idSucursal;
     private int codZona;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate fecha;
     private int cantComensales;
     private boolean menores;
+    public String getCodSucursalRestaurante() {
+        return codSucursalRestaurante;
+    }
+
+    public void setCodSucursalRestaurante(String codSucursalRestaurante) {
+        this.codSucursalRestaurante = codSucursalRestaurante;
+    }
+
 
     public int getIdSucursal() {
         return idSucursal;

@@ -2,6 +2,7 @@ package ar.edu.ubp.das.ristorino.resources;
 
 import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
+import ar.edu.ubp.das.ristorino.service.DisponibilidadService;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,8 @@ public class RistorinoResource {
     private RistorinoRepository ristorinoRepository;
     @Autowired
     private GeminiService geminiService;
+    @Autowired
+    private DisponibilidadService disponibilidadService;
 
     @PostMapping("/registrarCliente")
     public ResponseEntity<Map<String, String>> registrarCliente(
@@ -67,12 +70,9 @@ public class RistorinoResource {
         response.put("codReserva", codReserva);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/consultarDisponibilidad")
-    public ResponseEntity<List<HorarioBean>> obtenerHorarios(@RequestBody SoliHorarioBean soliHorarioBean) {
-        List<HorarioBean> horarios = new Httpful("http://localhost:8085/api/v1/restaurante1").path("/consultarDisponibilidad").method(HttpMethod.GET)
-                .bearer("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.S3xN0RG6Gf9QMRfVL3YRHLUaQbqewtZTXfzxQ9-9gak")
-                .execute(new TypeToken<List<HorarioBean>>() {}.getType());
-        return ResponseEntity.ok(horarios);
+    @PostMapping("/consultarDisponibilidad")
+    public ResponseEntity<List<HorarioBean>> consultarDisponibilidad(@RequestBody SoliHorarioBean soliHorarioBean) {
+        return ResponseEntity.ok(disponibilidadService.obtenerDisponibilidad(soliHorarioBean));
     }
 
     /*
