@@ -50,7 +50,8 @@ public class SecurityConfig {
                                 "/ristorino/registrarClickPromocion",
                                 "/ristorino/obtenerRestaurante/**",
                                 "/ristorino/ia/generarContenidosPromocionales",
-                                "/ristorino/categoriasPreferencias"
+                                "/ristorino/categoriasPreferencias",
+                                "/ristorino/consultarDisponibilidad"
 
 
 

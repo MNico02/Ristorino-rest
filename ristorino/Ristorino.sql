@@ -2654,3 +2654,8 @@ END CATCH
 END;
 GO
 
+INSERT INTO dbo.estados_reservas (cod_estado, nom_estado)
+VALUES
+ (1, 'CONFIRMADA'),
+ (2, 'CANCELADA'),
+ (3, 'PENDIENTE');
