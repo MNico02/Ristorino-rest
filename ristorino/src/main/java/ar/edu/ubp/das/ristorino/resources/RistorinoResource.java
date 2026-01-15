@@ -126,6 +126,15 @@ public class RistorinoResource {
         return ResponseEntity.ok(resultado);
 
     }
+
+    @GetMapping("/listarRestaurantesHome")
+    public ResponseEntity<List<RestauranteHomeBean>> listarRestaurantesHome() {
+        return ResponseEntity.ok(
+                ristorinoRepository.listarRestaurantesHome()
+        );
+    }
+
+
     /*
     * Obtiene desde la BD de ristorino toda la info, menos el contenido promocional, de un restaurante solicitado por id
     * recive el numero de restaurante y devuelve un restauranteBean
@@ -133,8 +142,11 @@ public class RistorinoResource {
     @GetMapping("/obtenerRestaurante/{nro}")
     public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable String nro) throws JsonProcessingException {
         RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
+        System.out.println("restauranteBeannro = " + restauranteBean.getNroRestaurante());
         return ResponseEntity.ok(restauranteBean);
     }
+
+
 
 
     /*

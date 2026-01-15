@@ -4,6 +4,7 @@ import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
 import ar.edu.ubp.das.ristorino.service.GeminiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -303,6 +304,66 @@ public class RistorinoRepository {
                 .addValue("nro_sucursal", idSucursal);
 
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
+    }
+
+    public List<RestauranteHomeBean> listarRestaurantesHome() {
+
+        List<Map<String, Object>> rs =
+                jdbcCallFactory.executeList(
+                        "sp_listar_restaurantes_home",
+                        "dbo",
+                        new MapSqlParameterSource()
+                );
+
+        List<RestauranteHomeBean> restaurantes = new ArrayList<>();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        if (rs != null) {
+            for (Map<String, Object> row : rs) {
+
+                RestauranteHomeBean restaurante = new RestauranteHomeBean();
+                restaurante.setNroRestaurante(getStr(row.get("nro_restaurante")));
+                restaurante.setRazonSocial(getStr(row.get("razon_social")));
+
+                String categoriasJson = getStr(row.get("categorias_json"));
+
+                if (categoriasJson != null && !categoriasJson.isEmpty()) {
+                    try {
+                    /*
+                      JSON viene así:
+                      [
+                        { "categoria": "ESTILOS", "valores": "Casual,Familiar" },
+                        ...
+                      ]
+                    */
+                        List<Map<String, String>> lista =
+                                mapper.readValue(categoriasJson, new TypeReference<>() {});
+
+                        Map<String, List<String>> categorias = new LinkedHashMap<>();
+
+                        for (Map<String, String> c : lista) {
+                            String categoria = c.get("categoria");
+                            String valores = c.get("valores");
+
+                            categorias.put(
+                                    categoria,
+                                    Arrays.asList(valores.split(","))
+                            );
+                        }
+
+                        restaurante.setCategorias(categorias);
+
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error parseando categorias_json", e);
+                    }
+                }
+
+                restaurantes.add(restaurante);
+            }
+        }
+
+        return restaurantes;
     }
 
     public RestauranteBean obtenerRestaurantePorId(String nroRestaurante) throws JsonProcessingException {

@@ -51,7 +51,8 @@ public class SecurityConfig {
                                 "/ristorino/obtenerRestaurante/**",
                                 "/ristorino/ia/generarContenidosPromocionales",
                                 "/ristorino/categoriasPreferencias",
-                                "/ristorino/consultarDisponibilidad"
+                                "/ristorino/consultarDisponibilidad",
+                                "/ristorino/listarRestaurantesHome"
 
 
 

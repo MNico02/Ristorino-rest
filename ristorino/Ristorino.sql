@@ -1481,32 +1481,24 @@ GO
 
 
 
-go
+GO
 CREATE OR ALTER PROCEDURE dbo.get_restaurante_info
-    @cod_restaurante  VARCHAR(1024)   -- <- ahora recibe el código HEX cifrado
+    @cod_restaurante VARCHAR(1024)   -- código cifrado (HEX)
     AS
 BEGIN
     SET NOCOUNT ON;
 
     ------------------------------------------------------------
-    -- 1) Resolver nro_restaurante real a partir del código HEX
+    -- 1) Resolver nro_restaurante real desde el código cifrado
     ------------------------------------------------------------
     DECLARE @cod_rest_bin VARBINARY(1024) =
         CONVERT(VARBINARY(1024), '0x' + @cod_restaurante, 1);
 
     DECLARE @nro_restaurante INT;
 
-    /*
-      Estrategia: probamos desencriptar @cod_rest_bin usando, fila por fila,
-      la passphrase = CONVERT(VARCHAR(20), r.nro_restaurante).
-      Solo para la fila correcta DECRYPTBYPASSPHRASE devuelve el texto original,
-      que es el mismo nro_restaurante, y el WHERE matchea.
-      Hacemos esta resolución una sola vez y luego usamos @nro_restaurante
-      (sargable) en los SELECTs siguientes.
-    */
 SELECT TOP (1)
             @nro_restaurante = r.nro_restaurante
-FROM dbo.restaurantes AS r
+FROM dbo.restaurantes r
 WHERE r.nro_restaurante = CONVERT(
         INT,
         CONVERT(VARCHAR(1024),
@@ -1517,78 +1509,58 @@ WHERE r.nro_restaurante = CONVERT(
         )
                           );
 
--- Si no lo encontró, devolvemos conjuntos vacíos (o podrías RAISERROR)
+------------------------------------------------------------
+-- 2) Si no se pudo resolver → devolver RS vacíos
+------------------------------------------------------------
 IF @nro_restaurante IS NULL
 BEGIN
-        -- RS1: Datos del restaurante (vacío)
-SELECT CAST(NULL AS INT) AS nro_restaurante,
-       CAST(NULL AS VARCHAR(200)) AS razon_social
+        -- RS1
+SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
+       CAST(NULL AS VARCHAR(200))  AS razon_social
     WHERE 1 = 0;
 
--- RS2: Sucursales (vacío)
-SELECT CAST(NULL AS INT)  AS nro_restaurante,
-       CAST(NULL AS INT)  AS nro_sucursal,
-       CAST(NULL AS VARCHAR(100)) AS nom_sucursal,
-       CAST(NULL AS VARCHAR(100)) AS calle,
-       CAST(NULL AS INT)  AS nro_calle,
-       CAST(NULL AS VARCHAR(100)) AS barrio,
-       CAST(NULL AS INT)  AS nro_localidad,
-       CAST(NULL AS VARCHAR(100)) AS nom_localidad,
-       CAST(NULL AS CHAR(2)) AS cod_provincia,
-       CAST(NULL AS VARCHAR(100)) AS nom_provincia,
-       CAST(NULL AS VARCHAR(10)) AS cod_postal,
-       CAST(NULL AS VARCHAR(200)) AS telefonos,
-       CAST(NULL AS INT)  AS total_comensales,
-       CAST(NULL AS INT)  AS min_tolerencia_reserva,
-       CAST(NULL AS VARCHAR(100)) AS cod_sucursal_restaurante
+-- RS2
+SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
+       CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
 
--- RS3: Turnos (vacío)
-SELECT CAST(NULL AS INT) AS nro_restaurante,
-       CAST(NULL AS INT) AS nro_sucursal,
-       CAST(NULL AS TIME) AS hora_desde,
-       CAST(NULL AS TIME) AS hora_hasta,
-       CAST(NULL AS BIT) AS habilitado
+-- RS3
+SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
+       CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
 
--- RS4: Zonas (vacío)
-SELECT CAST(NULL AS INT) AS nro_restaurante,
-       CAST(NULL AS INT) AS nro_sucursal,
-       CAST(NULL AS VARCHAR(20)) AS cod_zona,
-       CAST(NULL AS VARCHAR(100)) AS desc_zona,
-       CAST(NULL AS INT) AS cant_comensales,
-       CAST(NULL AS BIT) AS permite_menores,
-       CAST(NULL AS BIT) AS habilitada
+-- RS4
+SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
+       CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
 
--- RS5: Preferencias (vacío)
-SELECT CAST(NULL AS INT) AS nro_restaurante,
-       CAST(NULL AS INT) AS nro_sucursal,
-       CAST(NULL AS VARCHAR(10)) AS cod_categoria,
-       CAST(NULL AS VARCHAR(100)) AS nom_categoria,
-       CAST(NULL AS INT) AS nro_valor_dominio,
-       CAST(NULL AS VARCHAR(100)) AS nom_valor_dominio,
-       CAST(NULL AS INT) AS nro_preferencia,
-       CAST(NULL AS VARCHAR(4000)) AS observaciones
+-- RS5
+SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
+       CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
 
 RETURN;
-END
+END;
+
+    ------------------------------------------------------------
+    -- 3) Reutilizamos el mismo código cifrado (NO re-ciframos)
+    ------------------------------------------------------------
+    DECLARE @nro_restaurante_cifrado VARCHAR(1024) = @cod_restaurante;
 
     /* =========================================================
        RS1: Datos del restaurante
        ========================================================= */
 SELECT
-    r.nro_restaurante,
+    @nro_restaurante_cifrado AS nro_restaurante,
     r.razon_social
-FROM dbo.restaurantes AS r
+FROM dbo.restaurantes r
 WHERE r.nro_restaurante = @nro_restaurante;
 
 /* =========================================================
-   RS2: Sucursales + Localidad/Provincia
+   RS2: Sucursales + Localidad / Provincia
    ========================================================= */
 SELECT
-    s.nro_restaurante,
+    @nro_restaurante_cifrado AS nro_restaurante,
     s.nro_sucursal,
     s.nom_sucursal,
     s.calle,
@@ -1603,47 +1575,47 @@ SELECT
     s.total_comensales,
     s.min_tolerencia_reserva,
     s.cod_sucursal_restaurante
-FROM dbo.sucursales_restaurantes AS s
-         INNER JOIN dbo.localidades AS l
+FROM dbo.sucursales_restaurantes s
+         INNER JOIN dbo.localidades l
                     ON l.nro_localidad = s.nro_localidad
-         INNER JOIN dbo.provincias AS p
+         INNER JOIN dbo.provincias p
                     ON p.cod_provincia = l.cod_provincia
 WHERE s.nro_restaurante = @nro_restaurante
 ORDER BY s.nro_sucursal;
 
 /* =========================================================
-   RS3: Turnos por sucursal
+   RS3: Turnos
    ========================================================= */
 SELECT
-    t.nro_restaurante,
+    @nro_restaurante_cifrado AS nro_restaurante,
     t.nro_sucursal,
     t.hora_desde,
     t.hora_hasta,
     t.habilitado
-FROM dbo.turnos_sucursales_restaurantes AS t
+FROM dbo.turnos_sucursales_restaurantes t
 WHERE t.nro_restaurante = @nro_restaurante
 ORDER BY t.nro_sucursal, t.hora_desde;
 
 /* =========================================================
-   RS4: Zonas por sucursal
+   RS4: Zonas
    ========================================================= */
 SELECT
-    z.nro_restaurante,
+    @nro_restaurante_cifrado AS nro_restaurante,
     z.nro_sucursal,
     z.cod_zona,
     z.desc_zona,
     z.cant_comensales,
     z.permite_menores,
     z.habilitada
-FROM dbo.zonas_sucursales_restaurantes AS z
+FROM dbo.zonas_sucursales_restaurantes z
 WHERE z.nro_restaurante = @nro_restaurante
 ORDER BY z.nro_sucursal, z.cod_zona;
 
 /* =========================================================
-   RS5: Preferencias por sucursal
+   RS5: Preferencias
    ========================================================= */
 SELECT
-    pr.nro_restaurante,
+    @nro_restaurante_cifrado AS nro_restaurante,
     pr.nro_sucursal,
     pr.cod_categoria,
     cp.nom_categoria,
@@ -1651,18 +1623,19 @@ SELECT
     dcp.nom_valor_dominio,
     pr.nro_preferencia,
     pr.observaciones
-FROM dbo.preferencias_restaurantes AS pr
-         INNER JOIN dbo.dominio_categorias_preferencias AS dcp
-                    ON dcp.cod_categoria       = pr.cod_categoria
-                        AND dcp.nro_valor_dominio   = pr.nro_valor_dominio
-         INNER JOIN dbo.categorias_preferencias AS cp
-                    ON cp.cod_categoria        = pr.cod_categoria
+FROM dbo.preferencias_restaurantes pr
+         INNER JOIN dbo.categorias_preferencias cp
+                    ON cp.cod_categoria = pr.cod_categoria
+         INNER JOIN dbo.dominio_categorias_preferencias dcp
+                    ON dcp.cod_categoria = pr.cod_categoria
+                        AND dcp.nro_valor_dominio = pr.nro_valor_dominio
 WHERE pr.nro_restaurante = @nro_restaurante
   AND pr.nro_sucursal IS NOT NULL
-ORDER BY pr.nro_sucursal, pr.cod_categoria, pr.nro_valor_dominio, pr.nro_preferencia;
+ORDER BY pr.nro_sucursal, pr.cod_categoria, pr.nro_valor_dominio;
 
 END
 GO
+
 
 CREATE OR ALTER PROCEDURE dbo.sp_clicks_pendientes
     @nro_restaurante INT = NULL,
@@ -2659,3 +2632,50 @@ VALUES
  (1, 'CONFIRMADA'),
  (2, 'CANCELADA'),
  (3, 'PENDIENTE');
+
+go
+CREATE OR ALTER PROCEDURE dbo.sp_listar_restaurantes_home
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT
+    -- 🔐 cifrado estable
+    CONVERT(
+            VARCHAR(1024),
+            ENCRYPTBYPASSPHRASE(
+                    CONVERT(VARCHAR(20), r.nro_restaurante),
+                    CONVERT(VARCHAR(20), r.nro_restaurante)
+            ),
+            2
+    ) AS nro_restaurante,
+
+    r.razon_social,
+
+    -- 📦 categorías agrupadas SIN duplicados
+    (
+        SELECT
+            x.nom_categoria AS categoria,
+            STRING_AGG(x.nom_valor_dominio, ',') AS valores
+        FROM (
+                 SELECT DISTINCT
+                     cp.nom_categoria,
+                     dcp.nom_valor_dominio
+                 FROM preferencias_restaurantes pr
+                          INNER JOIN categorias_preferencias cp
+                                     ON cp.cod_categoria = pr.cod_categoria
+                          INNER JOIN dominio_categorias_preferencias dcp
+                                     ON dcp.cod_categoria = pr.cod_categoria
+                                         AND dcp.nro_valor_dominio = pr.nro_valor_dominio
+                 WHERE pr.nro_restaurante = r.nro_restaurante
+             ) x
+        GROUP BY x.nom_categoria
+        FOR JSON PATH
+        ) AS categorias_json
+
+FROM restaurantes r
+ORDER BY r.razon_social;
+END
+GO
+
+--EXEC dbo.sp_listar_restaurantes_home
