@@ -1035,24 +1035,24 @@ ELSE
 END;
 GO
 
-
 CREATE OR ALTER PROCEDURE dbo.recomendar_restaurantes
     @tipoComida NVARCHAR(120) = NULL,
     @ciudad NVARCHAR(120) = NULL,
     @provincia NVARCHAR(120) = NULL,
-    @momentoDelDia NVARCHAR(20) = NULL,     -- ej: 'mañana', 'mediodía', 'tarde', 'noche'
-    @rangoPrecio NVARCHAR(50) = NULL,       -- ej: 'bajo', 'medio', 'alto'
+    @momentoDelDia NVARCHAR(20) = NULL,
+    @rangoPrecio NVARCHAR(50) = NULL,
     @cantidadPersonas INT = NULL,
-    @tieneMenores NVARCHAR(10) = NULL,      -- 'si', 'no'
+    @tieneMenores NVARCHAR(10) = NULL,
     @restriccionesAlimentarias NVARCHAR(120) = NULL,
     @preferenciasAmbiente NVARCHAR(120) = NULL,
-    @nroCliente INT = NULL                  -- opcional: para preferencias del cliente
+    @nombreRestaurante NVARCHAR(200) = NULL,   -- 👈 NUEVO
+    @nroCliente INT = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
 
     /* ============================================================
-       1) Normalizar parámetros de texto
+       1) Normalizar parámetros
        ============================================================*/
     SET @tipoComida = NULLIF(LTRIM(RTRIM(@tipoComida)), '');
     SET @ciudad = NULLIF(LTRIM(RTRIM(@ciudad)), '');
@@ -1062,9 +1062,10 @@ BEGIN
     SET @tieneMenores = NULLIF(LTRIM(RTRIM(@tieneMenores)), '');
     SET @restriccionesAlimentarias = NULLIF(LTRIM(RTRIM(@restriccionesAlimentarias)), '');
     SET @preferenciasAmbiente = NULLIF(LTRIM(RTRIM(@preferenciasAmbiente)), '');
+    SET @nombreRestaurante = NULLIF(LTRIM(RTRIM(@nombreRestaurante)), '');
 
     /* ============================================================
-       2) Determinar rango horario según momento del día
+       2) Rango horario
        ============================================================*/
     DECLARE @horaDesde TIME(0) = NULL;
     DECLARE @horaHasta TIME(0) = NULL;
@@ -1078,18 +1079,19 @@ BEGIN
 END
 
     /* ============================================================
-       3) Determinar provincia si no fue pasada pero sí la ciudad
+       3) Resolver provincia por ciudad
        ============================================================*/
     IF @provincia IS NULL AND @ciudad IS NOT NULL
 BEGIN
 SELECT TOP 1 @provincia = p.nom_provincia
 FROM dbo.localidades l
          INNER JOIN dbo.provincias p ON l.cod_provincia = p.cod_provincia
-WHERE LOWER(l.nom_localidad) COLLATE Latin1_General_CI_AI LIKE '%' + LOWER(@ciudad) + '%';
+WHERE LOWER(l.nom_localidad) COLLATE Latin1_General_CI_AI
+          LIKE '%' + LOWER(@ciudad) + '%';
 END;
 
     /* ============================================================
-       4) Buscar coincidencias principales
+       4) Candidatos
        ============================================================*/
     ;WITH candidatos AS (
     SELECT
@@ -1106,21 +1108,32 @@ END;
         s.nom_sucursal,
         l.nom_localidad,
         p.nom_provincia,
-        s.total_comensales,
-        z.cod_zona,
         z.desc_zona,
-        z.cant_comensales,
-        z.permite_menores,
         t.hora_desde,
         t.hora_hasta,
 
-        /* --- PUNTOS DE COINCIDENCIA (score parcial) --- */
+        /* --- COINCIDENCIAS --- */
         CASE
-            WHEN @tipoComida IS NOT NULL AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI LIKE '%' + @tipoComida + '%' THEN 1 ELSE 0 END
+            WHEN @tipoComida IS NOT NULL
+                AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
+                     LIKE '%' + @tipoComida + '%' THEN 1 ELSE 0 END
             + CASE
-                  WHEN @preferenciasAmbiente IS NOT NULL AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI LIKE '%' + @preferenciasAmbiente + '%' THEN 1 ELSE 0 END
+                  WHEN @preferenciasAmbiente IS NOT NULL
+                      AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
+                           LIKE '%' + @preferenciasAmbiente + '%' THEN 1 ELSE 0 END
             + CASE
-                  WHEN @restriccionesAlimentarias IS NOT NULL AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI LIKE '%' + @restriccionesAlimentarias + '%' THEN 1 ELSE 0 END
+                  WHEN @restriccionesAlimentarias IS NOT NULL
+                      AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
+                           LIKE '%' + @restriccionesAlimentarias + '%' THEN 1 ELSE 0 END
+            + CASE
+                  WHEN @nombreRestaurante IS NOT NULL
+                      AND (
+                           LOWER(r.razon_social) COLLATE Latin1_General_CI_AI
+                               LIKE '%' + LOWER(@nombreRestaurante) + '%'
+                               OR LOWER(s.nom_sucursal) COLLATE Latin1_General_CI_AI
+                               LIKE '%' + LOWER(@nombreRestaurante) + '%'
+                           )
+                      THEN 1 ELSE 0 END
             AS coincidencias
 
     FROM dbo.restaurantes r
@@ -1131,9 +1144,11 @@ END;
              INNER JOIN dbo.provincias p
                         ON l.cod_provincia = p.cod_provincia
              LEFT JOIN dbo.zonas_sucursales_restaurantes z
-                       ON s.nro_restaurante = z.nro_restaurante AND s.nro_sucursal = z.nro_sucursal
+                       ON s.nro_restaurante = z.nro_restaurante
+                           AND s.nro_sucursal = z.nro_sucursal
              LEFT JOIN dbo.turnos_sucursales_restaurantes t
-                       ON s.nro_restaurante = t.nro_restaurante AND s.nro_sucursal = t.nro_sucursal
+                       ON s.nro_restaurante = t.nro_restaurante
+                           AND s.nro_sucursal = t.nro_sucursal
              LEFT JOIN dbo.preferencias_restaurantes prr
                        ON r.nro_restaurante = prr.nro_restaurante
              LEFT JOIN dbo.dominio_categorias_preferencias dp
@@ -1141,17 +1156,27 @@ END;
                            AND prr.nro_valor_dominio = dp.nro_valor_dominio
 
     WHERE
-        /* -------- FILTROS DINÁMICOS -------- */
         (@ciudad IS NULL OR LOWER(l.nom_localidad) COLLATE Latin1_General_CI_AI LIKE '%' + LOWER(@ciudad) + '%')
       AND (@provincia IS NULL OR LOWER(p.nom_provincia) COLLATE Latin1_General_CI_AI LIKE '%' + LOWER(@provincia) + '%')
-      AND (@horaDesde IS NULL OR @horaHasta IS NULL OR (t.hora_desde <= @horaHasta AND t.hora_hasta >= @horaDesde))
+      AND (@horaDesde IS NULL OR @horaHasta IS NULL
+        OR (t.hora_desde <= @horaHasta AND t.hora_hasta >= @horaDesde))
       AND (@tieneMenores IS NULL
         OR (@tieneMenores = 'si' AND z.permite_menores = 1)
         OR (@tieneMenores = 'no' AND z.permite_menores = 0))
-      AND (@cantidadPersonas IS NULL OR z.cant_comensales >= @cantidadPersonas OR s.total_comensales >= @cantidadPersonas)
+      AND (@cantidadPersonas IS NULL
+        OR z.cant_comensales >= @cantidadPersonas
+        OR s.total_comensales >= @cantidadPersonas)
+      AND (
+        @nombreRestaurante IS NULL
+            OR LOWER(r.razon_social) COLLATE Latin1_General_CI_AI
+            LIKE '%' + LOWER(@nombreRestaurante) + '%'
+            OR LOWER(s.nom_sucursal) COLLATE Latin1_General_CI_AI
+            LIKE '%' + LOWER(@nombreRestaurante) + '%'
+        )
 )
+
      SELECT TOP 10
-         nro_restaurante,
+        nro_restaurante,
              nro_sucursal,
             razon_social,
             nom_sucursal,
@@ -1162,12 +1187,18 @@ END;
             MAX(hora_hasta) AS hora_hasta,
             MAX(coincidencias) AS coincidencias
      FROM candidatos
-     GROUP BY  nro_restaurante, nro_sucursal, razon_social, nom_sucursal, nom_localidad, nom_provincia
-     ORDER BY MAX(coincidencias) DESC, razon_social;
+     GROUP BY
+         nro_restaurante,
+         nro_sucursal,
+         razon_social,
+         nom_sucursal,
+         nom_localidad,
+         nom_provincia
+     ORDER BY
+         MAX(coincidencias) DESC,
+         razon_social;
 END;
 GO
-
-
 /*EXEC dbo.recomendar_restaurantes
     @tipoComida = N'italiana',
    @ciudad = N'Córdoba',
@@ -1439,23 +1470,50 @@ go */
 
 
 
-go
+GO
 CREATE OR ALTER PROCEDURE dbo.get_promociones
-    @nro_restaurante INT = NULL,
+    @cod_restaurante VARCHAR(1024) = NULL,  -- 👈 AHORA CIFRADO
     @nro_sucursal    INT = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
 
-SELECT
+    ------------------------------------------------------------
+    -- 1) Resolver nro_restaurante REAL desde el código cifrado
+    ------------------------------------------------------------
+    DECLARE @nro_restaurante INT = NULL;
 
+    IF @cod_restaurante IS NOT NULL
+BEGIN
+        DECLARE @cod_rest_bin VARBINARY(1024) =
+            CONVERT(VARBINARY(1024), '0x' + @cod_restaurante, 1);
+
+SELECT TOP (1)
+            @nro_restaurante = r.nro_restaurante
+FROM dbo.restaurantes r
+WHERE r.nro_restaurante = CONVERT(
+        INT,
+        CONVERT(VARCHAR(1024),
+                DECRYPTBYPASSPHRASE(
+                        CONVERT(VARCHAR(20), r.nro_restaurante),
+                        @cod_rest_bin
+                )
+        )
+                          );
+END
+
+    ------------------------------------------------------------
+    -- 2) Promociones
+    ------------------------------------------------------------
+SELECT
+    -- 🔐 DEVOLVEMOS SIEMPRE CIFRADO
     nro_restaurante = CONVERT(
             VARCHAR(1024),
             ENCRYPTBYPASSPHRASE(
-                    CONVERT(VARCHAR(20), cr.nro_restaurante), -- passphrase
-                    CONVERT(VARCHAR(20), cr.nro_restaurante)  -- texto claro
+                    CONVERT(VARCHAR(20), cr.nro_restaurante),
+                    CONVERT(VARCHAR(20), cr.nro_restaurante)
             ),
-            2  -- salida en hex (sin 0x)
+            2
                       ),
     cr.nro_contenido,
     cr.nro_sucursal,
@@ -1463,21 +1521,16 @@ SELECT
     cr.imagen_promocional,
     cr.fecha_ini_vigencia,
     cr.fecha_fin_vigencia
--- cr.nro_idioma,
--- cr.costo_click,
--- cr.cod_contenido_restaurante
 FROM dbo.contenidos_restaurantes cr
-WHERE (@nro_restaurante IS NULL OR cr.nro_restaurante = @nro_restaurante)
-  AND (@nro_sucursal    IS NULL OR cr.nro_sucursal    = @nro_sucursal)
-ORDER BY cr.nro_restaurante,
-         cr.nro_sucursal,
-         cr.nro_contenido;
+WHERE
+    (@nro_restaurante IS NULL OR cr.nro_restaurante = @nro_restaurante)
+  AND (@nro_sucursal IS NULL OR cr.nro_sucursal = @nro_sucursal)
+ORDER BY
+    cr.nro_restaurante,
+    cr.nro_sucursal,
+    cr.nro_contenido;
 END
 GO
-
-/*EXEC dbo.get_promociones
-    @nro_restaurante = 1,
-    @nro_sucursal = 2;*/
 
 
 
@@ -1796,158 +1849,6 @@ END CATCH
 END;
 GO
 
-
-
-GO
-CREATE OR ALTER PROCEDURE dbo.recomendar_restaurantes
-    @tipoComida NVARCHAR(120) = NULL,
-    @ciudad NVARCHAR(120) = NULL,
-    @provincia NVARCHAR(120) = NULL,
-    @momentoDelDia NVARCHAR(20) = NULL,
-    @rangoPrecio NVARCHAR(50) = NULL,
-    @cantidadPersonas INT = NULL,
-    @tieneMenores NVARCHAR(10) = NULL,
-    @restriccionesAlimentarias NVARCHAR(120) = NULL,
-    @preferenciasAmbiente NVARCHAR(120) = NULL,
-    @nroCliente INT = NULL
-    AS
-BEGIN
-    SET NOCOUNT ON;
-
-    /* ===============================
-       1) Normalizar textos
-       =============================== */
-    SET @tipoComida = NULLIF(LTRIM(RTRIM(@tipoComida)), '');
-    SET @ciudad = NULLIF(LTRIM(RTRIM(@ciudad)), '');
-    SET @provincia = NULLIF(LTRIM(RTRIM(@provincia)), '');
-    SET @momentoDelDia = NULLIF(LTRIM(RTRIM(@momentoDelDia)), '');
-    SET @tieneMenores = NULLIF(LTRIM(RTRIM(@tieneMenores)), '');
-    SET @restriccionesAlimentarias = NULLIF(LTRIM(RTRIM(@restriccionesAlimentarias)), '');
-    SET @preferenciasAmbiente = NULLIF(LTRIM(RTRIM(@preferenciasAmbiente)), '');
-
-    /* ===============================
-       2) Rango horario
-       =============================== */
-    DECLARE @horaDesde TIME = NULL;
-    DECLARE @horaHasta TIME = NULL;
-
-    IF @momentoDelDia IS NOT NULL
-BEGIN
-        IF LOWER(@momentoDelDia) LIKE '%mañ%' BEGIN SET @horaDesde = '08:00'; SET @horaHasta = '11:59'; END;
-        IF LOWER(@momentoDelDia) LIKE '%med%' BEGIN SET @horaDesde = '12:00'; SET @horaHasta = '15:30'; END;
-        IF LOWER(@momentoDelDia) LIKE '%tar%' BEGIN SET @horaDesde = '16:00'; SET @horaHasta = '18:59'; END;
-        IF LOWER(@momentoDelDia) LIKE '%noch%' BEGIN SET @horaDesde = '19:00'; SET @horaHasta = '23:59'; END;
-END
-
-    /* ===============================
-       3) CTE restaurantes cifrados
-       =============================== */
-    ;WITH restaurantes_cifrados AS (
-    SELECT
-        r.nro_restaurante,
-        CONVERT(
-                VARCHAR(1024),
-                ENCRYPTBYPASSPHRASE(
-                        CONVERT(VARCHAR(20), r.nro_restaurante),
-                        CONVERT(VARCHAR(20), r.nro_restaurante)
-                ),
-                2
-        ) AS nro_restaurante_cifrado
-    FROM dbo.restaurantes r
-),
-
-          candidatos AS (
-              SELECT
-                  rc.nro_restaurante_cifrado      AS nro_restaurante,
-                  r.razon_social,
-                  s.nro_sucursal,
-                  s.nom_sucursal,
-                  l.nom_localidad,
-                  p.nom_provincia,
-                  z.desc_zona,
-                  z.permite_menores,
-                  z.cant_comensales,
-                  t.hora_desde,
-                  t.hora_hasta,
-
-                  /* ===== SCORE ===== */
-                  (
-                      CASE WHEN @tipoComida IS NOT NULL
-                          AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI LIKE '%' + @tipoComida + '%'
-                               THEN 1 ELSE 0 END
-                          + CASE WHEN @preferenciasAmbiente IS NOT NULL
-                          AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI LIKE '%' + @preferenciasAmbiente + '%'
-                                     THEN 1 ELSE 0 END
-                          + CASE WHEN @restriccionesAlimentarias IS NOT NULL
-                          AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI LIKE '%' + @restriccionesAlimentarias + '%'
-                                     THEN 1 ELSE 0 END
-                      ) AS coincidencias
-
-              FROM dbo.restaurantes r
-                       INNER JOIN restaurantes_cifrados rc
-                                  ON rc.nro_restaurante = r.nro_restaurante
-                       INNER JOIN dbo.sucursales_restaurantes s
-                                  ON r.nro_restaurante = s.nro_restaurante
-                       INNER JOIN dbo.localidades l
-                                  ON s.nro_localidad = l.nro_localidad
-                       INNER JOIN dbo.provincias p
-                                  ON l.cod_provincia = p.cod_provincia
-                       LEFT JOIN dbo.zonas_sucursales_restaurantes z
-                                 ON s.nro_restaurante = z.nro_restaurante
-                                     AND s.nro_sucursal = z.nro_sucursal
-                       LEFT JOIN dbo.turnos_sucursales_restaurantes t
-                                 ON s.nro_restaurante = t.nro_restaurante
-                                     AND s.nro_sucursal = t.nro_sucursal
-                       LEFT JOIN dbo.preferencias_restaurantes pr
-                                 ON r.nro_restaurante = pr.nro_restaurante
-                       LEFT JOIN dbo.dominio_categorias_preferencias dp
-                                 ON pr.cod_categoria = dp.cod_categoria
-                                     AND pr.nro_valor_dominio = dp.nro_valor_dominio
-
-              WHERE
-                  (@ciudad IS NULL OR l.nom_localidad COLLATE Latin1_General_CI_AI LIKE '%' + @ciudad + '%')
-                AND (@provincia IS NULL OR p.nom_provincia COLLATE Latin1_General_CI_AI LIKE '%' + @provincia + '%')
-                AND (@horaDesde IS NULL OR t.hora_desde <= @horaHasta)
-                AND (@horaHasta IS NULL OR t.hora_hasta >= @horaDesde)
-                AND (
-                  @tieneMenores IS NULL
-                      OR (@tieneMenores = 'si' AND z.permite_menores = 1)
-                      OR (@tieneMenores = 'no' AND z.permite_menores = 0)
-                  )
-                AND (
-                  @cantidadPersonas IS NULL
-                      OR z.cant_comensales >= @cantidadPersonas
-                      OR s.total_comensales >= @cantidadPersonas
-                  )
-          )
-
-     /* ===============================
-        RESULTADO FINAL
-        =============================== */
-     SELECT TOP 10
-        nro_restaurante,
-             nro_sucursal,
-            razon_social,
-            nom_sucursal,
-            nom_localidad,
-            nom_provincia,
-            MAX(desc_zona) AS desc_zona,
-            MIN(hora_desde) AS hora_desde,
-            MAX(hora_hasta) AS hora_hasta,
-            MAX(coincidencias) AS coincidencias
-     FROM candidatos
-     GROUP BY
-         nro_restaurante,
-         nro_sucursal,
-         razon_social,
-         nom_sucursal,
-         nom_localidad,
-         nom_provincia
-     ORDER BY
-         MAX(coincidencias) DESC,
-         razon_social;
-END
-GO
 
 
 

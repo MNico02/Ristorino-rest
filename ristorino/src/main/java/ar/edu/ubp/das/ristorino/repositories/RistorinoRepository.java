@@ -117,7 +117,8 @@ public class RistorinoRepository {
                 .addValue("tieneMenores", filtro.getTieneMenores())
                 .addValue("restriccionesAlimentarias", filtro.getRestriccionesAlimentarias())
                 .addValue("preferenciasAmbiente", filtro.getPreferenciasAmbiente())
-                .addValue("nroCliente", filtro.getNroCliente());
+                .addValue("nroCliente", filtro.getNroCliente())
+                .addValue("nombreRestaurante", filtro.getNombreRestaurante());
 
         try {
 
@@ -298,10 +299,10 @@ public class RistorinoRepository {
         }
     }
 
-    public List<PromocionBean> obtenerPromociones(Integer idRestaurante, Integer idSucursal) {
+    public List<PromocionBean> obtenerPromociones(String codRestaurante, Integer nroSucursal) {
         SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("nro_restaurante", idRestaurante)
-                .addValue("nro_sucursal", idSucursal);
+                .addValue("cod_restaurante", codRestaurante)
+                .addValue("nro_sucursal", nroSucursal);
 
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
     }

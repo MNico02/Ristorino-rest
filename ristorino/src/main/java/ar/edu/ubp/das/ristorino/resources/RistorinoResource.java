@@ -121,8 +121,8 @@ public class RistorinoResource {
     * recive idRestaurante e idSucural devuelve una lista de las promociones
     * */
     @GetMapping("/obtenerPromociones")
-    public ResponseEntity<List<PromocionBean>> obtenerPromociones(@RequestParam(required = false) Integer idRestaurante, @RequestParam(required = false) Integer idSucursal) {
-        List<PromocionBean> resultado = ristorinoRepository.obtenerPromociones(idRestaurante, idSucursal);
+    public ResponseEntity<List<PromocionBean>> obtenerPromociones(@RequestParam(required = false) String nroRestaurante, @RequestParam(required = false) Integer nroSucursal) {
+        List<PromocionBean> resultado = ristorinoRepository.obtenerPromociones(nroRestaurante, nroSucursal);
         return ResponseEntity.ok(resultado);
 
     }

@@ -16,7 +16,7 @@ import java.util.Map;
 public class GeminiService {
 
 
-    private static final String API_KEY = "AIzaSyCHRltYNKu5o3hKCRYHt2Z7L7alb_myQGM";
+    private static final String API_KEY = "AIzaSyDYfTEq-uOyfIGXUr3ocfbw0I9d4mccH3U";
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
@@ -24,6 +24,7 @@ public class GeminiService {
 
         String prompt = """
             Analiza el siguiente texto del usuario que busca un restaurante.
+            Si el texto menciona el nombre de un restaurante o una sucursal,completá el campo "nombreRestaurante".
             Devuelve SOLO un JSON **válido** con los siguientes campos exactamente:
             {
               "tipoComida": "",
@@ -34,7 +35,8 @@ public class GeminiService {
               "tieneMenores": "",
               "restriccionesAlimentarias": "",
               "preferenciasAmbiente": "",
-              "cantidadPersonas": ""
+              "cantidadPersonas": "",
+              "nombreRestaurante": ""
             }
             Texto: "%s"
         """.formatted(textoUsuario);

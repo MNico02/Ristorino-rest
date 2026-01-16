@@ -12,6 +12,7 @@ public class FiltroRecomendacionBean {
     private String restriccionesAlimentarias;
     private String preferenciasAmbiente;
     private Integer nroCliente;
+    private String nombreRestaurante;
 
     // --- Getters y Setters ---
     public String getTipoComida() { return tipoComida; }
@@ -43,4 +44,11 @@ public class FiltroRecomendacionBean {
 
     public Integer getNroCliente() { return nroCliente; }
     public void setNroCliente(Integer nroCliente) { this.nroCliente = nroCliente; }
+
+    public String getNombreRestaurante() {
+        return nombreRestaurante;
+    }
+    public void setNombreRestaurante(String nombreRestaurante) {
+        this.nombreRestaurante = nombreRestaurante;
+    }
 }
