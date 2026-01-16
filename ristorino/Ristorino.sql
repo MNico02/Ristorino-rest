@@ -2612,3 +2612,378 @@ END
 GO
 
 --EXEC dbo.sp_listar_restaurantes_home
+
+CREATE OR ALTER PROCEDURE dbo.obtener_reservas_cliente_por_correo
+    (
+    @correo_cliente NVARCHAR(255)
+    )
+    AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    --------------------------------------------------------
+    -- 1) Obtener nro_cliente válido
+    --------------------------------------------------------
+    DECLARE @nro_cliente INT;
+
+SELECT
+    @nro_cliente = c.nro_cliente
+FROM dbo.clientes c
+WHERE c.correo = @correo_cliente
+  AND c.habilitado = 1;
+
+IF @nro_cliente IS NULL
+BEGIN
+        RAISERROR('El cliente no existe o está deshabilitado.', 16, 1);
+        RETURN;
+END;
+
+    --------------------------------------------------------
+    -- 2) Obtener reservas del cliente
+    --------------------------------------------------------
+SELECT
+    -- Cliente
+    r.nro_cliente,
+
+    -- Reserva
+    r.nro_reserva,
+    r.cod_reserva_sucursal,
+    r.fecha_reserva,
+    r.hora_reserva,
+    r.fecha_cancelacion,
+    r.costo_reserva,
+    r.cant_adultos,
+    r.cant_menores,
+
+    -- Estado
+    r.cod_estado,
+    er.nom_estado,
+
+    -- Restaurante
+    r.nro_restaurante,
+    res.razon_social AS nombre_restaurante,
+
+    -- Sucursal
+    r.nro_sucursal,
+    sr.nom_sucursal AS nombre_sucursal,
+
+    -- Zona / Turno (útil para mostrar detalle)
+    r.cod_zona,
+    r.hora_desde
+
+FROM dbo.reservas_restaurantes r
+
+         INNER JOIN dbo.estados_reservas er
+                    ON er.cod_estado = r.cod_estado
+
+         INNER JOIN dbo.restaurantes res
+                    ON res.nro_restaurante = r.nro_restaurante
+
+         INNER JOIN dbo.sucursales_restaurantes sr
+                    ON sr.nro_restaurante = r.nro_restaurante
+                        AND sr.nro_sucursal = r.nro_sucursal
+
+WHERE r.nro_cliente = @nro_cliente
+
+ORDER BY
+    r.fecha_reserva DESC,
+    r.hora_reserva DESC;
+END;
+GO
+
+ CREATE OR ALTER PROCEDURE dbo.cancelar_reserva_ristorino_por_codigo
+    @cod_reserva_sucursal NVARCHAR(50)
+    AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE
+@nro_cliente INT,
+        @nro_reserva INT,
+        @cod_estado INT,
+        @fecha_cancelacion DATETIME;
+
+BEGIN TRY
+
+SELECT
+    @nro_cliente = r.nro_cliente,
+    @nro_reserva = r.nro_reserva,
+    @cod_estado = r.cod_estado,
+    @fecha_cancelacion = r.fecha_cancelacion
+FROM dbo.reservas_restaurantes r
+WHERE r.cod_reserva_sucursal = @cod_reserva_sucursal;
+
+IF (@nro_cliente IS NULL)
+BEGIN
+SELECT CAST(0 AS BIT) AS success,
+       'NOT_FOUND' AS status,
+       'Reserva no encontrada en Ristorino.' AS message;
+RETURN;
+END
+
+        /* Idempotencia */
+        IF (@cod_estado = 2 OR @fecha_cancelacion IS NOT NULL)
+BEGIN
+SELECT CAST(1 AS BIT) AS success,
+       'ALREADY_CANCELLED' AS status,
+       'La reserva ya estaba cancelada en Ristorino.' AS message;
+RETURN;
+END
+
+BEGIN TRAN;
+
+UPDATE dbo.reservas_restaurantes
+SET fecha_cancelacion = GETDATE(),
+    cod_estado = 2
+WHERE nro_cliente = @nro_cliente
+  AND nro_reserva = @nro_reserva;
+
+COMMIT;
+
+SELECT CAST(1 AS BIT) AS success,
+       'CANCELLED' AS status,
+       'Cancelación reflejada en Ristorino.' AS message;
+
+END TRY
+BEGIN CATCH
+IF @@TRANCOUNT > 0 ROLLBACK;
+
+        DECLARE @msg NVARCHAR(4000) = ERROR_MESSAGE();
+SELECT CAST(0 AS BIT) AS success,
+       'ERROR' AS status,
+       @msg AS message;
+END CATCH
+END;
+GO
+
+CREATE OR ALTER PROCEDURE dbo.get_zonas_sucursal
+    @nro_restaurante INT,
+    @nro_sucursal    INT
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Validación básica: que exista la sucursal
+    IF NOT EXISTS (
+        SELECT 1
+        FROM dbo.sucursales_restaurantes sr
+        WHERE sr.nro_restaurante = @nro_restaurante
+          AND sr.nro_sucursal    = @nro_sucursal
+    )
+BEGIN
+        -- Devuelve vacío (podés THROW si preferís)
+SELECT
+    CAST(NULL AS INT)          AS codZona,
+    CAST(NULL AS NVARCHAR(150)) AS nomZona,
+    CAST(NULL AS INT)          AS cantComensales,
+    CAST(NULL AS BIT)          AS permiteMenores,
+    CAST(NULL AS BIT)          AS habilitada
+    WHERE 1 = 0;
+RETURN;
+END
+
+SELECT
+    z.cod_zona        AS codZona,
+    z.desc_zona AS nomZona,
+    ISNULL(z.cant_comensales, 0) AS cantComensales,
+    ISNULL(z.permite_menores, 1) AS permiteMenores,
+    ISNULL(z.habilitada, 1)      AS habilitada
+FROM dbo.zonas_sucursales_restaurantes z
+         LEFT JOIN dbo.idiomas_zonas_suc_restaurantes iz
+                   ON iz.nro_restaurante = z.nro_restaurante
+                       AND iz.nro_sucursal    = z.nro_sucursal
+                       AND iz.cod_zona        = z.cod_zona
+                       AND iz.nro_idioma      = 1   -- 👈 ajustá idioma si corresponde
+WHERE z.nro_restaurante = @nro_restaurante
+  AND z.nro_sucursal    = @nro_sucursal
+ORDER BY z.cod_zona;
+END
+GO
+
+
+
+CREATE OR ALTER PROCEDURE dbo.modificar_reserva_ristorino_por_codigo_sucursal
+    @cod_reserva_sucursal NVARCHAR(50),
+
+    @fecha_reserva  DATE,
+    @hora_reserva   TIME(0),
+    @cod_zona       INT,
+    @cant_adultos   INT,
+    @cant_menores   INT
+    AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE
+        -- datos actuales
+@nro_restaurante   INT,
+        @nro_sucursal      INT,
+        @fecha_actual      DATE,
+        @hora_actual       TIME(0),
+        @cod_estado        INT,
+
+        -- tolerancia
+        @min_tolerencia    INT,
+        @ahora             DATETIME = GETDATE(),
+        @inicio_reserva    DATETIME,
+        @minutos_antes     INT,
+
+        -- validaciones
+        @cant_personas     INT;
+
+BEGIN TRY
+        ------------------------------------------------------------
+        -- 1) Validaciones básicas
+        ------------------------------------------------------------
+IF @cod_reserva_sucursal IS NULL OR LTRIM(RTRIM(@cod_reserva_sucursal)) = ''
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'INVALID' AS status,
+       'cod_reserva_sucursal es obligatorio.' AS message;
+RETURN;
+END
+
+        SET @cant_personas = ISNULL(@cant_adultos,0) + ISNULL(@cant_menores,0);
+
+        IF @cant_personas <= 0
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'INVALID' AS status,
+       'La cantidad de personas debe ser mayor a 0.' AS message;
+RETURN;
+END
+
+        IF @fecha_reserva IS NULL OR @hora_reserva IS NULL
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'INVALID' AS status,
+       'Debe informar fecha_reserva y hora_reserva.' AS message;
+RETURN;
+END
+
+        ------------------------------------------------------------
+        -- 2) Buscar reserva actual en Ristorino
+        ------------------------------------------------------------
+SELECT
+    @nro_restaurante = rr.nro_restaurante,
+    @nro_sucursal    = rr.nro_sucursal,
+    @fecha_actual    = rr.fecha_reserva,
+    @hora_actual     = rr.hora_reserva,
+    @cod_estado      = rr.cod_estado
+FROM dbo.reservas_restaurantes rr
+WHERE rr.cod_reserva_sucursal = @cod_reserva_sucursal;
+
+IF @nro_restaurante IS NULL
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'NOT_FOUND' AS status,
+       'Reserva no encontrada en Ristorino.' AS message;
+RETURN;
+END
+
+        ------------------------------------------------------------
+        -- 3) (Opcional recomendado) Solo permitir modificar si está pendiente
+        --    Ajustá el valor según tu tabla estados_reservas.
+        --    Si no querés esta regla, comentá este bloque.
+        ------------------------------------------------------------
+        IF @cod_estado <> 1
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'NOT_ALLOWED' AS status,
+       'Solo se pueden modificar reservas pendientes.' AS message;
+RETURN;
+END
+
+        ------------------------------------------------------------
+        -- 4) Validar tolerancia mínima (igual que cancelar)
+        --    Se calcula contra la FECHA/HORA ACTUAL de la reserva.
+        --    (si preferís contra la nueva, te lo ajusto)
+        ------------------------------------------------------------
+SELECT @min_tolerencia = s.min_tolerencia_reserva
+FROM dbo.sucursales_restaurantes s
+WHERE s.nro_restaurante = @nro_restaurante
+  AND s.nro_sucursal    = @nro_sucursal;
+
+IF (@min_tolerencia IS NULL) SET @min_tolerencia = 0;
+
+        SET @inicio_reserva =
+            DATEADD(SECOND, 0,
+              DATEADD(DAY, DATEDIFF(DAY, 0, @fecha_actual),
+              CAST(@hora_actual AS DATETIME)));
+
+        SET @minutos_antes = DATEDIFF(MINUTE, @ahora, @inicio_reserva);
+
+        IF (@minutos_antes < @min_tolerencia)
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'NOT_ALLOWED' AS status,
+       CONCAT('No se puede modificar: tolerancia mínima ', @min_tolerencia,
+              ' min. Faltan ', @minutos_antes, ' min para la reserva.') AS message;
+RETURN;
+END
+
+        ------------------------------------------------------------
+        -- 5) Validar FKs: zona y turno existen para la sucursal/restaurante
+        --    (esto evita errores FK y devuelve mensajes más claros)
+        ------------------------------------------------------------
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.zonas_sucursales_restaurantes z
+            WHERE z.nro_restaurante = @nro_restaurante
+              AND z.nro_sucursal    = @nro_sucursal
+              AND z.cod_zona        = @cod_zona
+        )
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'INVALID_ZONE' AS status,
+       'La zona no existe para esa sucursal en Ristorino.' AS message;
+RETURN;
+END
+
+        -- En tu tabla el turno FK es por hora_desde, y normalmente coincide con la hora elegida.
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dbo.turnos_sucursales_restaurantes t
+            WHERE t.nro_restaurante = @nro_restaurante
+              AND t.nro_sucursal    = @nro_sucursal
+              AND t.hora_desde      = @hora_reserva
+        )
+BEGIN
+SELECT CAST(0 AS BIT) AS success, 'INVALID_TURNO' AS status,
+       'El turno (hora) no existe para esa sucursal en Ristorino.' AS message;
+RETURN;
+END
+
+        ------------------------------------------------------------
+        -- 6) Actualizar reserva (incluye hora_desde para mantener FK)
+        ------------------------------------------------------------
+BEGIN TRAN;
+
+UPDATE dbo.reservas_restaurantes
+SET
+    fecha_reserva = @fecha_reserva,
+    hora_reserva  = @hora_reserva,
+    cod_zona      = @cod_zona,
+    hora_desde    = @hora_reserva,   -- ✅ mantener consistencia con FK de turnos
+    cant_adultos  = @cant_adultos,
+    cant_menores  = @cant_menores
+WHERE cod_reserva_sucursal = @cod_reserva_sucursal;
+
+IF @@ROWCOUNT = 0
+BEGIN
+ROLLBACK;
+SELECT CAST(0 AS BIT) AS success, 'NOT_UPDATED' AS status,
+       'No se pudo actualizar la reserva en Ristorino.' AS message;
+RETURN;
+END
+
+COMMIT;
+
+SELECT CAST(1 AS BIT) AS success, 'UPDATED' AS status,
+       'Reserva actualizada en Ristorino.' AS message;
+
+END TRY
+BEGIN CATCH
+IF @@TRANCOUNT > 0 ROLLBACK;
+
+SELECT CAST(0 AS BIT) AS success, 'ERROR' AS status,
+       ERROR_MESSAGE() AS message;
+END CATCH
+END;
+GO

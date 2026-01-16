@@ -485,6 +485,233 @@ public class RistorinoRepository {
         return restaurante;
     }
 
+    public List<CategoriaPreferenciaBean> obtenerCategoriasPreferencias() {
+
+        Map<String, Object> out =
+                jdbcCallFactory.executeWithOutputs(
+                        "get_categorias_preferencias",
+                        "dbo",
+                        new MapSqlParameterSource()
+                );
+
+        // RS1: Categorías
+        List<Map<String, Object>> rs1 = castRS(out.get("#result-set-1"));
+        Map<Integer, CategoriaPreferenciaBean> categoriasMap = new LinkedHashMap<>();
+
+        if (rs1 != null) {
+            for (Map<String, Object> row : rs1) {
+                CategoriaPreferenciaBean c = new CategoriaPreferenciaBean();
+                Integer codCategoria = getInt(row.get("cod_categoria"));
+
+                c.setCodCategoria(codCategoria);
+                c.setNomCategoria(getStr(row.get("nom_categoria")));
+                c.setDominios(new ArrayList<>());
+
+                categoriasMap.put(codCategoria, c);
+            }
+        }
+
+        // RS2: Dominios
+        List<Map<String, Object>> rs2 = castRS(out.get("#result-set-2"));
+        if (rs2 != null) {
+            for (Map<String, Object> row : rs2) {
+                Integer codCategoria = getInt(row.get("cod_categoria"));
+
+                DominioCategoriaPreferenciaBean d =
+                        new DominioCategoriaPreferenciaBean();
+                d.setNroValorDominio(getInt(row.get("nro_valor_dominio")));
+                d.setNomValorDominio(getStr(row.get("nom_valor_dominio")));
+
+                CategoriaPreferenciaBean c = categoriasMap.get(codCategoria);
+                if (c != null) {
+                    c.getDominios().add(d);
+                }
+            }
+        }
+
+        return new ArrayList<>(categoriasMap.values());
+    }
+
+    public ReservaConfirmadaBean insReservaConfirmadaRistorino(ConfirmarReservaResponseBean body, ReservaBean reservaBean, int nroRestaurante) {
+        if (body == null) throw new IllegalArgumentException("body null");
+        if (!body.isSuccess()) throw new RuntimeException("No confirmada: " + body.getMensaje());
+        if (body.getCodReserva() == null || body.getCodReserva().isBlank())
+            throw new IllegalArgumentException("codReserva vacío");
+
+        if (reservaBean == null) throw new IllegalArgumentException("reservaBean null");
+
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("correo", reservaBean.getCorreo(), Types.NVARCHAR)
+                .addValue("cod_reserva_restaurante", body.getCodReserva(), Types.NVARCHAR)
+                .addValue("fecha_reserva", java.sql.Date.valueOf(reservaBean.getFechaReserva()), Types.DATE)
+                .addValue("hora_reserva", java.sql.Time.valueOf(reservaBean.getHoraReserva()), Types.TIME)
+                .addValue("nro_restaurante", nroRestaurante, Types.INTEGER)
+                .addValue("nro_sucursal", reservaBean.getIdSucursal(), Types.INTEGER)
+                .addValue("cod_zona", reservaBean.getCodZona(), Types.INTEGER)
+                .addValue("cant_adultos", reservaBean.getCantAdultos(), Types.INTEGER)
+                .addValue("cant_menores", reservaBean.getCantMenores(), Types.INTEGER)
+                .addValue("costo_reserva", BigDecimal.valueOf((double)reservaBean.getCostoReserva()), Types.DECIMAL)
+                .addValue("cod_estado", 1, Types.INTEGER);
+
+        ReservaConfirmadaBean saved = jdbcCallFactory.executeSingle(
+                "ins_reserva_confirmada_ristorino",
+                "dbo",
+                params,
+                "result",
+                ReservaConfirmadaBean.class
+        );
+
+        if (saved == null) throw new RuntimeException("SP no devolvió fila insertada");
+        return saved;
+    }
+
+    public Map<String, Object> modificarReservaRistorino(ModificarReservaReqBean req) {
+
+        Map<String, Object> resp = new HashMap<>();
+
+        // 1) Validaciones mínimas (evita NPE y errores de parse)
+        if (req == null) {
+            resp.put("success", false);
+            resp.put("status", "INVALID");
+            resp.put("message", "Request nulo.");
+            return resp;
+        }
+
+        if (req.getCodReservaSucursal() == null || req.getCodReservaSucursal().isBlank()) {
+            resp.put("success", false);
+            resp.put("status", "INVALID");
+            resp.put("message", "codReservaSucursal es obligatorio.");
+            return resp;
+        }
+
+        if (req.getFechaReserva() == null) {
+            resp.put("success", false);
+            resp.put("status", "INVALID");
+            resp.put("message", "fechaReserva es obligatoria.");
+            return resp;
+        }
+
+        if (req.getHoraReserva() == null) {
+            resp.put("success", false);
+            resp.put("status", "INVALID");
+            resp.put("message", "horaReserva es obligatoria.");
+            return resp;
+        }
+
+        // 2) Armar params para el SP (OJO: nombres en snake_case como el SP)
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("cod_reserva_sucursal", req.getCodReservaSucursal(), Types.VARCHAR)
+                .addValue("fecha_reserva", java.sql.Date.valueOf(req.getFechaReserva()), Types.DATE)
+                .addValue("hora_reserva", java.sql.Time.valueOf(req.getHoraReserva()), Types.TIME)
+                .addValue("cod_zona", req.getCodZona(), Types.INTEGER)
+                .addValue("cant_adultos", req.getCantAdultos(), Types.INTEGER)
+                .addValue("cant_menores", req.getCantMenores(), Types.INTEGER);
+
+        try {
+            Map<String, Object> out =
+                    jdbcCallFactory.executeWithOutputs("modificar_reserva_ristorino_por_codigo_sucursal", "dbo", params);
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> rs =
+                    (List<Map<String, Object>>) out.get("#result-set-1");
+
+            if (rs == null || rs.isEmpty()) {
+                resp.put("success", false);
+                resp.put("status", "ERROR");
+                resp.put("message", "El SP no devolvió resultado (#result-set-1 vacío).");
+                return resp;
+            }
+
+            Map<String, Object> row = rs.get(0);
+
+            // 3) Parsear success/status/message del SP
+            boolean success = false;
+            Object vSuccess = row.get("success");
+            if (vSuccess instanceof Boolean) success = (Boolean) vSuccess;
+            else if (vSuccess instanceof Number) success = ((Number) vSuccess).intValue() == 1;
+            else if (vSuccess != null) {
+                String s = vSuccess.toString();
+                success = "1".equals(s) || "true".equalsIgnoreCase(s);
+            }
+
+            String status = row.get("status") != null ? row.get("status").toString() : "UNKNOWN";
+            String message = row.get("message") != null ? row.get("message").toString() : "Sin mensaje.";
+
+            resp.put("success", success);
+            resp.put("status", status);
+            resp.put("message", message);
+
+            return resp;
+
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("status", "ERROR");
+            resp.put("message", "Error ejecutando SP en Ristorino: " + e.getMessage());
+            return resp;
+        }
+    }
+
+    public List<ReservaClienteBean> getReservasCliente(String correo) {   System.out.println("correo: " + correo);
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("correo_cliente", correo);
+
+        return jdbcCallFactory.executeQuery(
+                "obtener_reservas_cliente_por_correo",
+                "dbo",
+                params,
+                "#result-set-1",
+                ReservaClienteBean.class
+        );
+
+    }
+
+    public List<ZonaBean> getZonasSucursal(int nroRestaurante, int nroSucursal) {
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_restaurante", nroRestaurante)
+                .addValue("nro_sucursal", nroSucursal);
+
+        List<Map<String, Object>> rs = jdbcCallFactory.executeQueryAsMap(
+                "get_zonas_sucursal",
+                "dbo",
+                params,
+                "result"
+        );
+
+        List<ZonaBean> out = new ArrayList<>();
+        for (Map<String, Object> row : rs) {
+            ZonaBean z = new ZonaBean();
+
+            z.setCodZona(getInt(row.get("codZona")));
+            z.setDescZona(getStr(row.get("nomZona"))); // <-- alias del SP
+            z.setCantComensales(getInt(row.get("cantComensales")));
+            z.setPermiteMenores(getBool(row.get("permiteMenores")));
+            z.setHabilitada(getBool(row.get("habilitada")));
+
+            out.add(z);
+        }
+        return out;
+    }
+
+    public Map<String, Object> cancelarReservaRistorinoPorCodigo(String codReservaSucursal) {
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("cod_reserva_sucursal", codReservaSucursal);
+
+        // El nombre del resultset puede ser cualquiera, pero tiene que coincidir
+        // con el que usa returningResultSet(resultSetName, ...)
+        List<Map<String, Object>> rs = jdbcCallFactory.executeQueryAsMap(
+                "cancelar_reserva_ristorino_por_codigo",
+                "dbo",
+                params,
+                "result"
+        );
+
+        // Spring siempre devuelve una lista. Tomamos el primer registro
+        return rs.isEmpty()
+                ? Map.of("success", false, "status", "ERROR", "message", "SP no devolvió resultado.")
+                : rs.get(0);
+    }
 
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> castRS(Object o) {
@@ -572,90 +799,6 @@ public class RistorinoRepository {
         } catch (Exception e) {
             return null;
         }
-    }
-
-
-    public List<CategoriaPreferenciaBean> obtenerCategoriasPreferencias() {
-
-        Map<String, Object> out =
-                jdbcCallFactory.executeWithOutputs(
-                        "get_categorias_preferencias",
-                        "dbo",
-                        new MapSqlParameterSource()
-                );
-
-        // RS1: Categorías
-        List<Map<String, Object>> rs1 = castRS(out.get("#result-set-1"));
-        Map<Integer, CategoriaPreferenciaBean> categoriasMap = new LinkedHashMap<>();
-
-        if (rs1 != null) {
-            for (Map<String, Object> row : rs1) {
-                CategoriaPreferenciaBean c = new CategoriaPreferenciaBean();
-                Integer codCategoria = getInt(row.get("cod_categoria"));
-
-                c.setCodCategoria(codCategoria);
-                c.setNomCategoria(getStr(row.get("nom_categoria")));
-                c.setDominios(new ArrayList<>());
-
-                categoriasMap.put(codCategoria, c);
-            }
-        }
-
-        // RS2: Dominios
-        List<Map<String, Object>> rs2 = castRS(out.get("#result-set-2"));
-        if (rs2 != null) {
-            for (Map<String, Object> row : rs2) {
-                Integer codCategoria = getInt(row.get("cod_categoria"));
-
-                DominioCategoriaPreferenciaBean d =
-                        new DominioCategoriaPreferenciaBean();
-                d.setNroValorDominio(getInt(row.get("nro_valor_dominio")));
-                d.setNomValorDominio(getStr(row.get("nom_valor_dominio")));
-
-                CategoriaPreferenciaBean c = categoriasMap.get(codCategoria);
-                if (c != null) {
-                    c.getDominios().add(d);
-                }
-            }
-        }
-
-        return new ArrayList<>(categoriasMap.values());
-    }
-    public ReservaConfirmadaBean insReservaConfirmadaRistorino(
-            ConfirmarReservaResponseBean body,
-            ReservaBean reservaBean,
-            int nroRestaurante
-    ) {
-        if (body == null) throw new IllegalArgumentException("body null");
-        if (!body.isSuccess()) throw new RuntimeException("No confirmada: " + body.getMensaje());
-        if (body.getCodReserva() == null || body.getCodReserva().isBlank())
-            throw new IllegalArgumentException("codReserva vacío");
-
-        if (reservaBean == null) throw new IllegalArgumentException("reservaBean null");
-
-        SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("correo", reservaBean.getCorreo(), Types.NVARCHAR)
-                .addValue("cod_reserva_restaurante", body.getCodReserva(), Types.NVARCHAR)
-                .addValue("fecha_reserva", java.sql.Date.valueOf(reservaBean.getFechaReserva()), Types.DATE)
-                .addValue("hora_reserva", java.sql.Time.valueOf(reservaBean.getHoraReserva()), Types.TIME)
-                .addValue("nro_restaurante", nroRestaurante, Types.INTEGER)
-                .addValue("nro_sucursal", reservaBean.getIdSucursal(), Types.INTEGER)
-                .addValue("cod_zona", reservaBean.getCodZona(), Types.INTEGER)
-                .addValue("cant_adultos", reservaBean.getCantAdultos(), Types.INTEGER)
-                .addValue("cant_menores", reservaBean.getCantMenores(), Types.INTEGER)
-                .addValue("costo_reserva", BigDecimal.valueOf((double)reservaBean.getCostoReserva()), Types.DECIMAL)
-                .addValue("cod_estado", 1, Types.INTEGER);
-
-        ReservaConfirmadaBean saved = jdbcCallFactory.executeSingle(
-                "ins_reserva_confirmada_ristorino",
-                "dbo",
-                params,
-                "result",
-                ReservaConfirmadaBean.class
-        );
-
-        if (saved == null) throw new RuntimeException("SP no devolvió fila insertada");
-        return saved;
     }
 
 

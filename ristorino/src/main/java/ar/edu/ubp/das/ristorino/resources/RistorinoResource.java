@@ -2,14 +2,13 @@ package ar.edu.ubp.das.ristorino.resources;
 
 import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
-import ar.edu.ubp.das.ristorino.service.DisponibilidadService;
-import ar.edu.ubp.das.ristorino.service.GeminiService;
-import ar.edu.ubp.das.ristorino.service.ReservaService;
+import ar.edu.ubp.das.ristorino.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ar.edu.ubp.das.ristorino.utils.Httpful;
 import java.util.Map;
@@ -31,11 +30,14 @@ public class RistorinoResource {
     private DisponibilidadService disponibilidadService;
     @Autowired
     private ReservaService reservaService;
+    @Autowired
+    private CancelarReservaService cancelarReserva;
+    @Autowired
+    private ModificarReservaService modificarReservaService;
 
 
     @PostMapping("/registrarCliente")
-    public ResponseEntity<Map<String, String>> registrarCliente(
-            @RequestBody ClienteBean clienteBean) {
+    public ResponseEntity<Map<String, String>> registrarCliente(@RequestBody ClienteBean clienteBean) {
 
         String mensaje = ristorinoRepository.registrarCliente(clienteBean);
 
@@ -43,7 +45,6 @@ public class RistorinoResource {
                 .status(HttpStatus.CREATED)
                 .body(Map.of("mensaje", mensaje));
     }
-
 
     @PostMapping("/login")
     public ResponseEntity<Map<String,String>> logueo(@RequestBody LoginBean loginBean) {
@@ -60,13 +61,40 @@ public class RistorinoResource {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/zonasSucursal")
+    public ResponseEntity<List<ZonaBean>> obtenerZonasSucursal(@RequestParam int nroRestaurante, @RequestParam int nroSucursal) {
+        List<ZonaBean> zonasSucursal = ristorinoRepository.getZonasSucursal(nroRestaurante,nroSucursal);
+        return ResponseEntity.ok(zonasSucursal);
+    }
+
+    @GetMapping ("/misReservas")
+    public ResponseEntity<List<ReservaClienteBean>> obtenerReservasCliente(Authentication auth) {   String correo = auth.getName();
+        System.out.println("correo: " + correo);
+        List<ReservaClienteBean> reserva = ristorinoRepository.getReservasCliente(correo);
+        return ResponseEntity.ok(reserva);
+    }
+
+    @PostMapping("/cancelarReserva")
+    public ResponseEntity<Map<String, Object>> cancelarReserva(@RequestBody CancelarReservaBean req) {
+        return ResponseEntity.ok(cancelarReserva.cancelarReserva(req));
+    }
+
+    @PostMapping("/modificarReserva")
+    public ResponseEntity<Map<String, Object>> modificarReserva(@RequestBody ModificarReservaReqBean reserva) {
+
+        Map<String, Object> resp = modificarReservaService.modificarReserva(reserva);
+
+        boolean ok = Boolean.TRUE.equals(resp.get("success"));
+        return ok ? ResponseEntity.ok(resp) : ResponseEntity.badRequest().body(resp);
+    }
+
     /*
     * Consume el servicio del restaurante y registra una reserva
     * recive un reservaBean y si todo sale bien obtiene un codigo de reserva por parte del restuarnte
     * */
     @PostMapping("/registrarReserva")
-    public ResponseEntity<Map<String, String>> registrarReserva(
-            @RequestBody ReservaBean reserva) {
+    public ResponseEntity<Map<String, String>> registrarReserva(@RequestBody ReservaBean reserva) {
 
         String codigoReserva = reservaService.registrarReserva(reserva);
 
@@ -75,6 +103,7 @@ public class RistorinoResource {
 
         return ResponseEntity.ok(response);
     }
+
     @PostMapping("/consultarDisponibilidad")
     public ResponseEntity<List<HorarioBean>> consultarDisponibilidad(@RequestBody SoliHorarioBean soliHorarioBean) {
         return ResponseEntity.ok(disponibilidadService.obtenerDisponibilidad(soliHorarioBean));
@@ -98,6 +127,7 @@ public class RistorinoResource {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
     /*
     * Obtiene los contenidos pendientes, genera un texto promocional con la IA para cada uno, y lo registra en la BD.
     * Devuelve la cantidad de contenidos generados.
