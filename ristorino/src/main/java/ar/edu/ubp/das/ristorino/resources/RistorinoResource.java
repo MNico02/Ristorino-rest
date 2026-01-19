@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ar.edu.ubp.das.ristorino.utils.Httpful;
+
+import java.math.BigDecimal;
 import java.util.Map;
 
 import com.google.gson.reflect.TypeToken;
@@ -197,6 +199,43 @@ public class RistorinoResource {
         List<CategoriaPreferenciaBean> resultado =
                 ristorinoRepository.obtenerCategoriasPreferencias();
         return ResponseEntity.ok(resultado);
+    }
+
+
+    @PostMapping("/obtenerCosto")
+    public ResponseEntity<Map<String, Object>> obtenerCosto(@RequestBody CostoBean req) {
+
+        if (req.getTipoCosto() == null || req.getFecha() == null) {
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "success", false,
+                            "message", "tipoCosto y fecha son obligatorios"
+                    )
+            );
+        }
+
+        try {
+            BigDecimal monto =
+                    ristorinoRepository.obtenerCostoVigente(
+                            req.getTipoCosto(),
+                            req.getFecha()
+                    );
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "success", true,
+                            "monto", monto
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    Map.of(
+                            "success", false,
+                            "message", e.getMessage()
+                    )
+            );
+        }
     }
 
 

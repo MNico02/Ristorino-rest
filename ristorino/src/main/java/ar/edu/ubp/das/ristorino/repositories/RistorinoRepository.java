@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Types;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -800,6 +801,42 @@ public class RistorinoRepository {
             return null;
         }
     }
+
+    public BigDecimal obtenerCostoVigente(String tipoCosto, LocalDate fecha) {
+
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("tipo_costo", tipoCosto)
+                .addValue("fecha", java.sql.Date.valueOf(fecha));
+
+        Map<String, Object> out;
+
+        try {
+            out = jdbcCallFactory.executeWithOutputs(
+                    "obtener_costo_vigente",
+                    "dbo",
+                    params
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error obteniendo costo vigente: " + e.getMessage(), e);
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rs =
+                (List<Map<String, Object>>) out.get("#result-set-1");
+
+        if (rs == null || rs.isEmpty()) {
+            throw new RuntimeException("El SP no devolvió monto.");
+        }
+
+        Object montoObj = rs.get(0).get("monto");
+
+        if (montoObj instanceof BigDecimal) {
+            return (BigDecimal) montoObj;
+        }
+
+        return new BigDecimal(montoObj.toString());
+    }
+
 
 
 }
