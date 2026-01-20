@@ -16,16 +16,16 @@ import java.util.Map;
 public class GeminiService {
 
 
-    private static final String API_KEY = "AIzaSyA9BT4gfOUv8tJNf3PiqkMvSzJyMy5mu2g";
+    private static final String API_KEY = "";
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
     public FiltroRecomendacionBean interpretarTexto(String textoUsuario) throws Exception {
 
         String prompt = """
-            Analiza el siguiente texto del usuario que busca un restaurante.
+            Analiza el siguiente texto del usuario que busca un restaurante. El texto puede estar en ingles o español.
             Si el texto menciona el nombre de un restaurante o una sucursal,completá el campo "nombreRestaurante".
-            Devuelve SOLO un JSON **válido** con los siguientes campos exactamente:
+            Devuelve SOLO un JSON **válido** con los siguientes campos en español exactamente:
             {
               "tipoComida": "",
               "momentoDelDia": "",

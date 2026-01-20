@@ -178,9 +178,6 @@ public class RistorinoResource {
         return ResponseEntity.ok(restauranteBean);
     }
 
-
-
-
     /*
     * Se registra el click de una promocion en la base de datos de ristorino
     * Recive un clickBean y devuelve un json
@@ -237,8 +234,6 @@ public class RistorinoResource {
             );
         }
     }
-
-
 
 
 

@@ -469,6 +469,54 @@ GO
 INSERT INTO dbo.idiomas (nro_idioma, nom_idioma, cod_idioma) VALUES
                                                                  (1, N'Español', N'es-AR'),
                                                                  (2, N'English', N'en-US');
+INSERT INTO dbo.estados_reservas (cod_estado, nom_estado)
+VALUES (1,N'Pendiente'),
+       (2,N'Cancelada'),
+       (3,N'Sin Evaluar'),
+       (4,N'Evaluada')
+    INSERT INTO dbo.idiomas_estados(cod_estado,nro_idioma,estado) VALUES
+    (1,1,N'Pendiente'),
+    (1,2,N'Pending'),
+    (2,1,N'Cancelada'),
+    (2,2,N'Cancelled'),
+    (3,1,N'Sin Evaluar'),
+    (3,2,N'Not Yet Evaluated'),
+    (4,1,N'Evaluada'),
+    (4,2,N'Evaluated')
+
+---
+----
+----    CORRER PROCESO BATCH RESTAURANTE. Luego insertar los datos para los idiomas
+----
+----
+insert into idiomas_categorias_preferencias(cod_categoria,nro_idioma,categoria,desc_categoria) values
+    (1,1,N'ESTILOS',N''),
+    (1,2,N'STYLES',N''),
+    (2,1,N'ESPECIALIDADES',N''),
+    (2,2,N'SPECIALTIES',N''),
+    (3,1,N'TIPOS_COMIDAS',N''),
+    (3,2,N'TYPES_OF_FOOD',N'')
+
+insert into idiomas_dominio_cat_preferencias(cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio) values
+    (1,1,1,N'Casual',N''),
+    (1,1,2,N'Casual',N''),
+    (1,2,1,N'Familiar',N''),
+    (1,2,2,N'Family',N''),
+    (2,1,1,N'Vegetariano',N''),
+    (2,1,2,N'Vegetarian',N''),
+    (2,2,1,N'Celiaco',N''),
+    (2,2,2,N'Celiac',N''),
+    (3,1,1,N'Italiano tradicional',N''),
+    (3,1,2,N'Traditional italian',N'')
+
+insert into idiomas_zonas_suc_restaurantes (nro_restaurante, nro_sucursal, cod_zona,nro_idioma,zona,desc_zona) values
+    (1,1,1,1,N'Salon',N''),
+    (1,1,1,2,N'Lounge',N''),
+    (1,1,2,1,N'Terraza',N''),
+    (1,1,2,2,N'Terrace',N''),
+    (1,2,1,1,N'Salon',N''),
+    (1,2,1,2,N'Lounge',N''),
+    (1,2,2,1,N'Terraza',N''),
 
 /*
 -- restaurantes
@@ -1535,11 +1583,26 @@ GO
 
 
 GO
+GO
 CREATE OR ALTER PROCEDURE dbo.get_restaurante_info
-    @cod_restaurante VARCHAR(1024)   -- código cifrado (HEX)
+    @cod_restaurante VARCHAR(1024),   -- código cifrado (HEX)
+    @idioma_front    VARCHAR(10)      -- 'es', 'en', 'es_AR', 'en_US'
     AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    ------------------------------------------------------------
+    -- 0) Resolver nro_idioma (estático)
+    ------------------------------------------------------------
+    DECLARE @nro_idioma INT;
+
+    SET @nro_idioma =
+        CASE
+            WHEN @idioma_front LIKE 'es%' THEN 1
+            WHEN @idioma_front LIKE 'en%' THEN 2
+            ELSE 1 -- default español
+END;
 
     ------------------------------------------------------------
     -- 1) Resolver nro_restaurante real desde el código cifrado
@@ -1567,27 +1630,22 @@ WHERE r.nro_restaurante = CONVERT(
 ------------------------------------------------------------
 IF @nro_restaurante IS NULL
 BEGIN
-        -- RS1
 SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
        CAST(NULL AS VARCHAR(200))  AS razon_social
     WHERE 1 = 0;
 
--- RS2
 SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
        CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
 
--- RS3
 SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
        CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
 
--- RS4
 SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
        CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
 
--- RS5
 SELECT CAST(NULL AS VARCHAR(1024)) AS nro_restaurante,
        CAST(NULL AS INT) AS nro_sucursal
     WHERE 1 = 0;
@@ -1596,7 +1654,7 @@ RETURN;
 END;
 
     ------------------------------------------------------------
-    -- 3) Reutilizamos el mismo código cifrado (NO re-ciframos)
+    -- 3) Reutilizamos el mismo código cifrado
     ------------------------------------------------------------
     DECLARE @nro_restaurante_cifrado VARCHAR(1024) = @cod_restaurante;
 
@@ -1650,41 +1708,67 @@ WHERE t.nro_restaurante = @nro_restaurante
 ORDER BY t.nro_sucursal, t.hora_desde;
 
 /* =========================================================
-   RS4: Zonas
+   RS4: Zonas (multi-idioma)
    ========================================================= */
 SELECT
     @nro_restaurante_cifrado AS nro_restaurante,
     z.nro_sucursal,
     z.cod_zona,
-    z.desc_zona,
+
+    ISNULL(iz.zona, z.desc_zona)      AS zona,
+    ISNULL(iz.desc_zona, z.desc_zona) AS desc_zona,
+
     z.cant_comensales,
     z.permite_menores,
     z.habilitada
 FROM dbo.zonas_sucursales_restaurantes z
+         LEFT JOIN dbo.idiomas_zonas_suc_restaurantes iz
+                   ON iz.nro_restaurante = z.nro_restaurante
+                       AND iz.nro_sucursal    = z.nro_sucursal
+                       AND iz.cod_zona        = z.cod_zona
+                       AND iz.nro_idioma      = @nro_idioma
 WHERE z.nro_restaurante = @nro_restaurante
 ORDER BY z.nro_sucursal, z.cod_zona;
 
 /* =========================================================
-   RS5: Preferencias
+   RS5: Preferencias (categorías + dominio multi-idioma)
    ========================================================= */
 SELECT
     @nro_restaurante_cifrado AS nro_restaurante,
     pr.nro_sucursal,
     pr.cod_categoria,
-    cp.nom_categoria,
+
+    ISNULL(icp.categoria, cp.nom_categoria) AS nom_categoria,
+
     pr.nro_valor_dominio,
-    dcp.nom_valor_dominio,
+
+    ISNULL(idcp.valor_dominio, dcp.nom_valor_dominio) AS nom_valor_dominio,
+
     pr.nro_preferencia,
     pr.observaciones
 FROM dbo.preferencias_restaurantes pr
+
          INNER JOIN dbo.categorias_preferencias cp
                     ON cp.cod_categoria = pr.cod_categoria
+
          INNER JOIN dbo.dominio_categorias_preferencias dcp
-                    ON dcp.cod_categoria = pr.cod_categoria
+                    ON dcp.cod_categoria      = pr.cod_categoria
                         AND dcp.nro_valor_dominio = pr.nro_valor_dominio
+
+         LEFT JOIN dbo.idiomas_categorias_preferencias icp
+                   ON icp.cod_categoria = pr.cod_categoria
+                       AND icp.nro_idioma    = @nro_idioma
+
+         LEFT JOIN dbo.idiomas_dominio_cat_preferencias idcp
+                   ON idcp.cod_categoria      = pr.cod_categoria
+                       AND idcp.nro_valor_dominio = pr.nro_valor_dominio
+                       AND idcp.nro_idioma        = @nro_idioma
+
 WHERE pr.nro_restaurante = @nro_restaurante
   AND pr.nro_sucursal IS NOT NULL
-ORDER BY pr.nro_sucursal, pr.cod_categoria, pr.nro_valor_dominio;
+ORDER BY pr.nro_sucursal,
+         pr.cod_categoria,
+         pr.nro_valor_dominio;
 
 END
 GO
@@ -2568,10 +2652,27 @@ VALUES
 
 go
 CREATE OR ALTER PROCEDURE dbo.sp_listar_restaurantes_home
+    @idioma_front VARCHAR(10) = 'es'   -- 'es', 'en', 'es_AR', 'en_US'
     AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
+    ------------------------------------------------------------
+    -- 0) Resolver nro_idioma (estático)
+    ------------------------------------------------------------
+    DECLARE @nro_idioma INT;
+
+    SET @nro_idioma =
+        CASE
+            WHEN @idioma_front LIKE 'es%' THEN 1
+            WHEN @idioma_front LIKE 'en%' THEN 2
+            ELSE 1 -- default español
+END;
+
+    ------------------------------------------------------------
+    -- 1) Restaurantes para HOME
+    ------------------------------------------------------------
 SELECT
     -- 🔐 cifrado estable
     CONVERT(
@@ -2585,33 +2686,48 @@ SELECT
 
     r.razon_social,
 
-    -- 📦 categorías agrupadas SIN duplicados
+    -- 📦 categorías agrupadas SIN duplicados (multi-idioma)
     (
         SELECT
             x.nom_categoria AS categoria,
             STRING_AGG(x.nom_valor_dominio, ',') AS valores
         FROM (
                  SELECT DISTINCT
-                     cp.nom_categoria,
-                     dcp.nom_valor_dominio
-                 FROM preferencias_restaurantes pr
-                          INNER JOIN categorias_preferencias cp
+                     -- categoría según idioma
+                     ISNULL(icp.categoria, cp.nom_categoria) AS nom_categoria,
+
+                     -- valor de dominio según idioma
+                     ISNULL(idcp.valor_dominio, dcp.nom_valor_dominio) AS nom_valor_dominio
+                 FROM dbo.preferencias_restaurantes pr
+
+                          INNER JOIN dbo.categorias_preferencias cp
                                      ON cp.cod_categoria = pr.cod_categoria
-                          INNER JOIN dominio_categorias_preferencias dcp
-                                     ON dcp.cod_categoria = pr.cod_categoria
+
+                          INNER JOIN dbo.dominio_categorias_preferencias dcp
+                                     ON dcp.cod_categoria      = pr.cod_categoria
                                          AND dcp.nro_valor_dominio = pr.nro_valor_dominio
+
+                     -- categoría traducida
+                          LEFT JOIN dbo.idiomas_categorias_preferencias icp
+                                    ON icp.cod_categoria = pr.cod_categoria
+                                        AND icp.nro_idioma    = @nro_idioma
+
+                     -- dominio traducido
+                          LEFT JOIN dbo.idiomas_dominio_cat_preferencias idcp
+                                    ON idcp.cod_categoria      = pr.cod_categoria
+                                        AND idcp.nro_valor_dominio = pr.nro_valor_dominio
+                                        AND idcp.nro_idioma        = @nro_idioma
+
                  WHERE pr.nro_restaurante = r.nro_restaurante
              ) x
         GROUP BY x.nom_categoria
         FOR JSON PATH
         ) AS categorias_json
 
-FROM restaurantes r
+FROM dbo.restaurantes r
 ORDER BY r.razon_social;
 END
 GO
-
---EXEC dbo.sp_listar_restaurantes_home
 
 CREATE OR ALTER PROCEDURE dbo.obtener_reservas_cliente_por_correo
     (

@@ -11,6 +11,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
@@ -309,13 +310,10 @@ public class RistorinoRepository {
     }
 
     public List<RestauranteHomeBean> listarRestaurantesHome() {
-
+        String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
+        SqlParameterSource params = new MapSqlParameterSource().addValue("idioma_front",idiomaActual);
         List<Map<String, Object>> rs =
-                jdbcCallFactory.executeList(
-                        "sp_listar_restaurantes_home",
-                        "dbo",
-                        new MapSqlParameterSource()
-                );
+                jdbcCallFactory.executeList("sp_listar_restaurantes_home", "dbo", params);
 
         List<RestauranteHomeBean> restaurantes = new ArrayList<>();
 
@@ -369,8 +367,13 @@ public class RistorinoRepository {
     }
 
     public RestauranteBean obtenerRestaurantePorId(String nroRestaurante) throws JsonProcessingException {
-        SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("cod_restaurante", nroRestaurante);
+
+        String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
+
+
+            SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("cod_restaurante", nroRestaurante)
+                    .addValue("idioma_front",idiomaActual);
 
         // 👇 Cambiamos al nombre real del SP con 5 result sets
         Map<String, Object> out =
@@ -451,7 +454,7 @@ public class RistorinoRepository {
                 z.setCodZona(getInt(row.get("cod_zona")));
                 // El RS4 trae "desc_zona". Si tu bean tiene "nomZona", mapealo ahí:
                 // z.setNomZona(getStr(row.get("desc_zona")));
-                z.setDescZona(getStr(row.get("desc_zona")));
+                z.setDescZona(getStr(row.get("zona")));
                 z.setCantComensales(getInt(row.get("cant_comensales")));
                 z.setPermiteMenores(getBool(row.get("permite_menores")));
                 z.setHabilitada(getBool(row.get("habilitada")));
