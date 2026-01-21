@@ -107,8 +107,13 @@ public class RistorinoResource {
     }
 
     @PostMapping("/consultarDisponibilidad")
-    public ResponseEntity<List<HorarioBean>> consultarDisponibilidad(@RequestBody SoliHorarioBean soliHorarioBean) {
-        return ResponseEntity.ok(disponibilidadService.obtenerDisponibilidad(soliHorarioBean));
+    public ResponseEntity<DispoRespBean> consultarDisponibilidad(@RequestBody SoliHorarioBean soliHorarioBean) {
+        String tipoCosto = "RESERVA";
+        BigDecimal costo = ristorinoRepository.obtenerCostoVigente(tipoCosto,soliHorarioBean.getFecha());
+        DispoRespBean dispoRespBean = new DispoRespBean();
+        dispoRespBean.setHorarios(disponibilidadService.obtenerDisponibilidad(soliHorarioBean));
+        dispoRespBean.setCosto(costo);
+        return ResponseEntity.ok(dispoRespBean);
     }
 
     /*

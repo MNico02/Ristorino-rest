@@ -2927,7 +2927,8 @@ CREATE OR ALTER PROCEDURE dbo.modificar_reserva_ristorino_por_codigo_sucursal
     @hora_reserva   TIME(0),
     @cod_zona       INT,
     @cant_adultos   INT,
-    @cant_menores   INT
+    @cant_menores   INT,
+    @costo_reserva Decimal(12,2)
     AS
 BEGIN
     SET NOCOUNT ON;
@@ -3078,7 +3079,8 @@ SET
     cod_zona      = @cod_zona,
     hora_desde    = @hora_reserva,   -- ✅ mantener consistencia con FK de turnos
     cant_adultos  = @cant_adultos,
-    cant_menores  = @cant_menores
+    cant_menores  = @cant_menores,
+    costo_reserva = @costo_reserva
 WHERE cod_reserva_sucursal = @cod_reserva_sucursal;
 
 IF @@ROWCOUNT = 0

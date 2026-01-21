@@ -609,7 +609,8 @@ public class RistorinoRepository {
                 .addValue("hora_reserva", java.sql.Time.valueOf(req.getHoraReserva()), Types.TIME)
                 .addValue("cod_zona", req.getCodZona(), Types.INTEGER)
                 .addValue("cant_adultos", req.getCantAdultos(), Types.INTEGER)
-                .addValue("cant_menores", req.getCantMenores(), Types.INTEGER);
+                .addValue("cant_menores", req.getCantMenores(), Types.INTEGER)
+                .addValue("costo_reserva",req.getCostoReserva(), Types.DECIMAL);
 
         try {
             Map<String, Object> out =
@@ -731,6 +732,7 @@ public class RistorinoRepository {
                 ? Map.of("success", false, "status", "ERROR", "message", "SP no devolvió resultado.")
                 : rs.get(0);
     }
+
 
     public BigDecimal obtenerCostoVigente(String tipoCosto, LocalDate fecha) {
 
@@ -854,8 +856,6 @@ public class RistorinoRepository {
             return null;
         }
     }
-
-
 
 
 

@@ -2,6 +2,7 @@ package ar.edu.ubp.das.ristorino.beans;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -17,6 +18,7 @@ public class ModificarReservaReqBean {
     private int cantAdultos;
     private int cantMenores;
     private int codZona;
+    private BigDecimal costoReserva;
 
     public Integer getNroRestaurante() {
         return nroRestaurante;
@@ -49,5 +51,11 @@ public class ModificarReservaReqBean {
     public int getCodZona() { return codZona; }
     public void setCodZona(int codZona) { this.codZona = codZona; }
 
+    public BigDecimal getCostoReserva() {
+        return costoReserva;
+    }
 
+    public void setCostoReserva(BigDecimal costoReserva) {
+        this.costoReserva = costoReserva;
+    }
 }

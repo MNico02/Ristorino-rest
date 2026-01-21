@@ -72,6 +72,7 @@ public class ModificarReservaService {
             bodyRest.put("codZona", req.getCodZona());
             bodyRest.put("cantAdultos", req.getCantAdultos());
             bodyRest.put("cantMenores", req.getCantMenores());
+            bodyRest.put("costoReserva", req.getCostoReserva());
             log.info("BODY a restaurante {}: {}", nroRestaurante, bodyRest);
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(bodyRest, headers);
 
