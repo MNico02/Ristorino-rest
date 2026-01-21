@@ -655,17 +655,32 @@ public class RistorinoRepository {
         }
     }
 
-    public List<ReservaClienteBean> getReservasCliente(String correo) {   System.out.println("correo: " + correo);
-        SqlParameterSource params = new MapSqlParameterSource()
+    public ReservasClienteRespBean getReservasCliente(String correo) {
+           // System.out.println("correo: " + correo);
+        String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
+        SqlParameterSource params1 = new MapSqlParameterSource()
                 .addValue("correo_cliente", correo);
-
-        return jdbcCallFactory.executeQuery(
+        List<ReservaClienteBean> reservas = jdbcCallFactory.executeQuery(
                 "obtener_reservas_cliente_por_correo",
                 "dbo",
-                params,
+                params1,
                 "#result-set-1",
                 ReservaClienteBean.class
         );
+        SqlParameterSource params2 = new MapSqlParameterSource()
+                .addValue("idioma_front", idiomaActual);
+        List<EstadoBean> estados = jdbcCallFactory.executeQuery(
+                "get_estados",
+                "dbo",
+                params2,
+                "#result-set-1",
+                EstadoBean.class
+        );
+        ReservasClienteRespBean res = new ReservasClienteRespBean();
+        res.setReservas(reservas);
+        res.setEstados(estados);
+        System.out.println(res);
+        return res;
 
     }
 
@@ -715,6 +730,41 @@ public class RistorinoRepository {
         return rs.isEmpty()
                 ? Map.of("success", false, "status", "ERROR", "message", "SP no devolvió resultado.")
                 : rs.get(0);
+    }
+
+    public BigDecimal obtenerCostoVigente(String tipoCosto, LocalDate fecha) {
+
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("tipo_costo", tipoCosto)
+                .addValue("fecha", java.sql.Date.valueOf(fecha));
+
+        Map<String, Object> out;
+
+        try {
+            out = jdbcCallFactory.executeWithOutputs(
+                    "obtener_costo_vigente",
+                    "dbo",
+                    params
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error obteniendo costo vigente: " + e.getMessage(), e);
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rs =
+                (List<Map<String, Object>>) out.get("#result-set-1");
+
+        if (rs == null || rs.isEmpty()) {
+            throw new RuntimeException("El SP no devolvió monto.");
+        }
+
+        Object montoObj = rs.get(0).get("monto");
+
+        if (montoObj instanceof BigDecimal) {
+            return (BigDecimal) montoObj;
+        }
+
+        return new BigDecimal(montoObj.toString());
     }
 
     @SuppressWarnings("unchecked")
@@ -805,40 +855,7 @@ public class RistorinoRepository {
         }
     }
 
-    public BigDecimal obtenerCostoVigente(String tipoCosto, LocalDate fecha) {
 
-        SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("tipo_costo", tipoCosto)
-                .addValue("fecha", java.sql.Date.valueOf(fecha));
-
-        Map<String, Object> out;
-
-        try {
-            out = jdbcCallFactory.executeWithOutputs(
-                    "obtener_costo_vigente",
-                    "dbo",
-                    params
-            );
-        } catch (Exception e) {
-            throw new RuntimeException("Error obteniendo costo vigente: " + e.getMessage(), e);
-        }
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> rs =
-                (List<Map<String, Object>>) out.get("#result-set-1");
-
-        if (rs == null || rs.isEmpty()) {
-            throw new RuntimeException("El SP no devolvió monto.");
-        }
-
-        Object montoObj = rs.get(0).get("monto");
-
-        if (montoObj instanceof BigDecimal) {
-            return (BigDecimal) montoObj;
-        }
-
-        return new BigDecimal(montoObj.toString());
-    }
 
 
 

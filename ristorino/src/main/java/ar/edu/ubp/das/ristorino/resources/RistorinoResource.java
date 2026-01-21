@@ -71,10 +71,10 @@ public class RistorinoResource {
     }
 
     @GetMapping ("/misReservas")
-    public ResponseEntity<List<ReservaClienteBean>> obtenerReservasCliente(Authentication auth) {   String correo = auth.getName();
-        System.out.println("correo: " + correo);
-        List<ReservaClienteBean> reserva = ristorinoRepository.getReservasCliente(correo);
-        return ResponseEntity.ok(reserva);
+    public ResponseEntity<ReservasClienteRespBean> obtenerReservasCliente(Authentication auth) {   String correo = auth.getName();
+        //System.out.println("correo: " + correo);
+        ReservasClienteRespBean res = ristorinoRepository.getReservasCliente(correo);
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/cancelarReserva")

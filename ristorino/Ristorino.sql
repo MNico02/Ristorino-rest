@@ -3287,3 +3287,28 @@ GO
 /*EXEC dbo.obtener_costo_vigente
      @tipo_costo = 'RESERVA',
      @fecha = '2026-06-15';*/
+
+
+
+CREATE OR ALTER PROCEDURE dbo.get_estados
+    @idioma_front VARCHAR(10) = 'es' AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+        DECLARE @nro_idioma INT;
+
+    SET @nro_idioma =
+        CASE
+            WHEN @idioma_front LIKE 'es%' THEN 1
+            WHEN @idioma_front LIKE 'en%' THEN 2
+            ELSE 1 -- default español
+END;
+SELECT DISTINCT
+    ISNULL(ie.cod_estado,er.cod_estado) as cod_estado ,
+    ISNULL(ie.estado,er.nom_estado) as nom_estado
+FROM dbo.estados_reservas er
+         LEFT JOIN dbo.idiomas_estados ie
+                   on er.cod_estado=ie.cod_estado
+                       and ie.nro_idioma = @nro_idioma
+END;
+GO
