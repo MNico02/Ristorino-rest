@@ -16,8 +16,7 @@ public class PromocionBean {
         this.imagenPromocional = imagenPromocional;
     }
 
-    private Date fechaInicio;
-    private Date fechaFin;
+
 
     public String getNroRestaurante() {
         return nroRestaurante;
@@ -51,19 +50,5 @@ public class PromocionBean {
         this.contenidoPromocional = contenidoPromocional;
     }
 
-    public Date getFechaInicio() {
-        return fechaInicio;
-    }
 
-    public void setFechaInicio(Date fechaInicio) {
-        this.fechaInicio = fechaInicio;
-    }
-
-    public Date getFechaFin() {
-        return fechaFin;
-    }
-
-    public void setFechaFin(Date fechaFin) {
-        this.fechaFin = fechaFin;
-    }
 }

@@ -6,12 +6,15 @@ import ar.edu.ubp.das.ristorino.service.GeminiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
@@ -136,13 +139,11 @@ public class RistorinoRepository {
             return jdbcCallFactory.executeList("get_contenidos_a_generar", "dbo", new MapSqlParameterSource());
         }
 
-        // Actualizar un contenido con el texto generado y duración configurable
-        public void actualizarContenidoPromocional(Integer nroContenido, String textoGenerado, int duracionHoras) {
+
+        public void actualizarContenidoPromocional(Integer nroContenido, String textoGenerado) {
             SqlParameterSource params = new MapSqlParameterSource()
                     .addValue("nro_contenido", nroContenido)
-                    .addValue("contenido_promocional", textoGenerado)
-                    .addValue("duracion_horas", duracionHoras); // 👈 nuevo parámetro
-
+                    .addValue("contenido_promocional", textoGenerado);
             jdbcCallFactory.execute("actualizar_contenido_promocional", "dbo", params);
         }
 
@@ -170,10 +171,7 @@ public class RistorinoRepository {
                             (Integer) row.get("nro_sucursal")
                     );
 
-                    //Duración automática (24h por defecto)
-                    int duracion = 24;
-
-                    actualizarContenidoPromocional(nroContenido, textoGenerado, duracion);
+                    actualizarContenidoPromocional(nroContenido, textoGenerado);
                     generados++;
                 }
 
@@ -252,28 +250,41 @@ public class RistorinoRepository {
         }
     }
         /*----------*/
-        public void guardarPromociones(List<ContenidoBean> promociones, int nroRestaurante) {
+        public BigDecimal guardarPromociones(List<ContenidoBean> promociones, int nroRestaurante) {
+        // Crear JSON con las promociones
+            ObjectMapper mapper = new ObjectMapper();
+            ArrayNode jsonArray = mapper.createArrayNode();
 
             for (ContenidoBean c : promociones) {
+                String codContenidoRestaurante = nroRestaurante + "-" + c.getNroContenido();
 
-                String codContenidoRestaurante =
-                        nroRestaurante + "-" + c.getNroContenido();
+                ObjectNode promo = mapper.createObjectNode();
+                promo.put("nro_contenido", c.getNroContenido());
+                promo.put("nro_sucursal", c.getNroSucursal());
+                promo.put("contenido_a_publicar", c.getContenidoAPublicar());
+                promo.put("imagen_promocional", c.getImagenAPublicar());
+                promo.put("cod_contenido_restaurante", codContenidoRestaurante);
 
-                SqlParameterSource params = new MapSqlParameterSource()
-                        .addValue("nro_restaurante", nroRestaurante, Types.INTEGER)
-                        .addValue("nro_idioma", 1, Types.INTEGER)
-                        .addValue("nro_sucursal", c.getNroSucursal(), Types.INTEGER)
-                        .addValue("contenido_a_publicar", c.getContenidoAPublicar(), Types.NVARCHAR)
-                        .addValue("imagen_promocional", c.getImagenAPublicar(), Types.NVARCHAR)
-                        .addValue("costo_click", c.getCostoClick(), Types.DECIMAL)
-                        .addValue("cod_contenido_restaurante", codContenidoRestaurante, Types.NVARCHAR);
-
-                jdbcCallFactory.execute(
-                        "ins_contenido_restaurante",
-                        "dbo",
-                        params
-                );
+                jsonArray.add(promo);
             }
+
+            String promocionesJson = jsonArray.toString();
+
+            // Parámetros de entrada y salida
+            SqlParameterSource params = new MapSqlParameterSource()
+                    .addValue("nro_restaurante", nroRestaurante, Types.INTEGER)
+                    .addValue("promociones_json", promocionesJson, Types.NVARCHAR);
+
+            // Ejecutar procedimiento
+            Map<String, Object> result = jdbcCallFactory.executeWithOutputs(
+                    "ins_contenidos_restaurante_lote",
+                    "dbo",
+                    params);
+
+            // Obtener el costo aplicado
+            BigDecimal costoAplicado = (BigDecimal) result.get("costo_aplicado");
+        return costoAplicado;
+
         }
 
     public Map<String, Object> guardarInfoRestaurante(SyncRestauranteBean restaurante) {
@@ -302,9 +313,13 @@ public class RistorinoRepository {
     }
 
     public List<PromocionBean> obtenerPromociones(String codRestaurante, Integer nroSucursal) {
+
+        String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
+
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cod_restaurante", codRestaurante)
-                .addValue("nro_sucursal", nroSucursal);
+                .addValue("nro_sucursal", nroSucursal)
+                .addValue("idioma",idiomaActual);
 
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
     }
@@ -609,8 +624,7 @@ public class RistorinoRepository {
                 .addValue("hora_reserva", java.sql.Time.valueOf(req.getHoraReserva()), Types.TIME)
                 .addValue("cod_zona", req.getCodZona(), Types.INTEGER)
                 .addValue("cant_adultos", req.getCantAdultos(), Types.INTEGER)
-                .addValue("cant_menores", req.getCantMenores(), Types.INTEGER)
-                .addValue("costo_reserva",req.getCostoReserva(), Types.DECIMAL);
+                .addValue("cant_menores", req.getCantMenores(), Types.INTEGER);
 
         try {
             Map<String, Object> out =
@@ -733,7 +747,6 @@ public class RistorinoRepository {
                 : rs.get(0);
     }
 
-
     public BigDecimal obtenerCostoVigente(String tipoCosto, LocalDate fecha) {
 
         SqlParameterSource params = new MapSqlParameterSource()
@@ -767,6 +780,20 @@ public class RistorinoRepository {
         }
 
         return new BigDecimal(montoObj.toString());
+    }
+
+    public List<Integer> obtenerNrosActivos() {
+        List<NroRestBean> restaurantes =
+                jdbcCallFactory.executeQuery(
+                        "obtener_nroRestaurantes",
+                        "dbo",
+                        "nroRestaurante",
+                        NroRestBean.class
+                );
+        List<Integer> nros = restaurantes.stream()
+                .map(NroRestBean::getNroRestaurante)
+                .toList();
+        return nros;
     }
 
     @SuppressWarnings("unchecked")

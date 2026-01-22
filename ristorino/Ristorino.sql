@@ -1268,14 +1268,14 @@ CREATE OR ALTER PROCEDURE dbo.get_contenidos_a_generar
 BEGIN
     SET NOCOUNT ON;
 
-SELECT
-    nro_contenido,
-    nro_restaurante,
-    ISNULL(nro_sucursal, 0) AS nro_sucursal,
-    ISNULL(nro_idioma, 1) AS nro_idioma,
-    contenido_a_publicar,
-    ISNULL(imagen_promocional, '') AS imagen_promocional,
-    ISNULL(costo_click, 0) AS costo_click
+SELECT TOP (10)
+                                         nro_contenido,
+       nro_restaurante,
+       ISNULL(nro_sucursal, 0) AS nro_sucursal,
+       ISNULL(nro_idioma, 1) AS nro_idioma,
+       contenido_a_publicar,
+       ISNULL(imagen_promocional, '') AS imagen_promocional,
+       ISNULL(costo_click, 0) AS costo_click
 FROM dbo.contenidos_restaurantes
 WHERE contenido_promocional IS NULL;
 END
@@ -1284,20 +1284,14 @@ GO
 
 CREATE OR ALTER PROCEDURE dbo.actualizar_contenido_promocional
     @nro_contenido INT,
-    @contenido_promocional NVARCHAR(MAX),
-    @duracion_horas INT = 24  -- por defecto 24 horas de vigencia
+    @contenido_promocional NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @fecha_inicio DATETIME = GETDATE();
-    DECLARE @fecha_fin DATETIME = DATEADD(HOUR, @duracion_horas, @fecha_inicio);
-
 UPDATE dbo.contenidos_restaurantes
 SET
-    contenido_promocional = @contenido_promocional,
-    fecha_ini_vigencia = @fecha_inicio,
-    fecha_fin_vigencia = @fecha_fin
+    contenido_promocional = @contenido_promocional
 WHERE nro_contenido = @nro_contenido;
 END
 GO
@@ -1519,12 +1513,28 @@ go */
 
 
 GO
+exec get_promociones
+go
 CREATE OR ALTER PROCEDURE dbo.get_promociones
-    @cod_restaurante VARCHAR(1024) = NULL,  -- 👈 AHORA CIFRADO
-    @nro_sucursal    INT = NULL
+    @cod_restaurante VARCHAR(1024) = NULL,  -- cifrado
+    @nro_sucursal    INT = NULL,
+    @idioma    VARCHAR(10) = 'es'     -- 'es', 'en', 'es_AR', 'en_US'
     AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    ------------------------------------------------------------
+    -- 0) Resolver nro_idioma (estático)
+    ------------------------------------------------------------
+    DECLARE @nro_idioma INT;
+
+    SET @nro_idioma =
+        CASE
+            WHEN @idioma LIKE 'es%' THEN 1
+            WHEN @idioma LIKE 'en%' THEN 2
+            ELSE 1 -- default español
+END;
 
     ------------------------------------------------------------
     -- 1) Resolver nro_restaurante REAL desde el código cifrado
@@ -1551,7 +1561,7 @@ WHERE r.nro_restaurante = CONVERT(
 END
 
     ------------------------------------------------------------
-    -- 2) Promociones
+    -- 2) Promociones VIGENTES + por idioma
     ------------------------------------------------------------
 SELECT
     -- 🔐 DEVOLVEMOS SIEMPRE CIFRADO
@@ -1573,13 +1583,20 @@ FROM dbo.contenidos_restaurantes cr
 WHERE
     (@nro_restaurante IS NULL OR cr.nro_restaurante = @nro_restaurante)
   AND (@nro_sucursal IS NULL OR cr.nro_sucursal = @nro_sucursal)
+
+  -- 👇 FILTRO POR IDIOMA
+  AND cr.nro_idioma = @nro_idioma
+
+  -- 👇 SOLO VIGENTES
+  AND cr.fecha_fin_vigencia >= CAST(GETDATE() AS DATE)
+  AND cr.fecha_ini_vigencia <= CAST(GETDATE() AS DATE)
+
 ORDER BY
     cr.nro_restaurante,
     cr.nro_sucursal,
     cr.nro_contenido;
 END
 GO
-
 
 
 GO
@@ -1874,14 +1891,10 @@ ORDER BY c.nro_restaurante, c.fecha_hora_registro, c.nro_click;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.ins_contenido_restaurante
-    @nro_restaurante             INT,
-    @nro_idioma                  INT = 1,
-    @nro_sucursal                INT = NULL,
-    @contenido_a_publicar        NVARCHAR(MAX),
-    @imagen_promocional          NVARCHAR(255) = NULL,
-    @costo_click                 DECIMAL(12,2) = NULL,
-    @cod_contenido_restaurante   NVARCHAR(MAX)
+CREATE OR ALTER PROCEDURE dbo.ins_contenidos_restaurante_lote
+    @nro_restaurante      INT,
+    @promociones_json     NVARCHAR(MAX),  -- 👈 JSON con array de promociones
+    @costo_aplicado       DECIMAL(12,2) OUTPUT
     AS
 BEGIN
     SET NOCOUNT ON;
@@ -1890,44 +1903,136 @@ BEGIN
 BEGIN TRY
 BEGIN TRAN;
 
-        -- Evitar duplicados (mismo contenido ya importado)
-        IF EXISTS (
-            SELECT 1
-            FROM dbo.contenidos_restaurantes
-            WHERE nro_restaurante = @nro_restaurante
-              AND cod_contenido_restaurante = @cod_contenido_restaurante
-        )
-BEGIN
-COMMIT;
-RETURN;
-END
+        ------------------------------------------------------------
+        -- 1) Obtener el costo vigente actual
+        ------------------------------------------------------------
+        DECLARE @costo_actual DECIMAL(12,2);
+        DECLARE @fecha_fin_costo DATE;
+        DECLARE @fecha_actual DATE = CAST(GETDATE() AS DATE);
 
-INSERT INTO dbo.contenidos_restaurantes
-(
+SELECT TOP 1
+            @costo_actual = c.monto,
+        @fecha_fin_costo = c.fecha_fin_vigencia
+FROM dbo.costos c
+WHERE c.tipo_costo = 'CLICK'
+  AND c.fecha_ini_vigencia <= @fecha_actual
+  AND c.fecha_fin_vigencia >= @fecha_actual
+ORDER BY c.fecha_ini_vigencia DESC;
+
+SET @costo_actual = ISNULL(@costo_actual, 0.00);
+        SET @fecha_fin_costo = ISNULL(@fecha_fin_costo, DATEADD(YEAR, 1, @fecha_actual));
+
+        ------------------------------------------------------------
+        -- 2) Crear tabla temporal con los datos del JSON
+        ------------------------------------------------------------
+CREATE TABLE #promociones_temp (
+                                   nro_contenido           INT,
+                                   nro_sucursal            INT,
+                                   contenido_a_publicar    NVARCHAR(MAX),
+                                   imagen_promocional      NVARCHAR(255),
+                                   cod_contenido_restaurante NVARCHAR(MAX)
+);
+
+INSERT INTO #promociones_temp (
+    nro_contenido,
+    nro_sucursal,
+    contenido_a_publicar,
+    imagen_promocional,
+    cod_contenido_restaurante
+)
+SELECT
+    nro_contenido,
+    nro_sucursal,
+    contenido_a_publicar,
+    imagen_promocional,
+    cod_contenido_restaurante
+FROM OPENJSON(@promociones_json)
+    WITH (
+    nro_contenido           INT             '$.nro_contenido',
+    nro_sucursal            INT             '$.nro_sucursal',
+    contenido_a_publicar    NVARCHAR(MAX)   '$.contenido_a_publicar',
+    imagen_promocional      NVARCHAR(255)   '$.imagen_promocional',
+    cod_contenido_restaurante NVARCHAR(MAX) '$.cod_contenido_restaurante'
+    );
+
+------------------------------------------------------------
+-- 3) Eliminar duplicados de la tabla temporal
+------------------------------------------------------------
+DELETE t
+        FROM #promociones_temp t
+        WHERE EXISTS (
+            SELECT 1
+            FROM dbo.contenidos_restaurantes cr
+            WHERE cr.nro_restaurante = @nro_restaurante
+              AND cr.cod_contenido_restaurante = t.cod_contenido_restaurante
+        );
+
+        ------------------------------------------------------------
+        -- 4) Insertar en ESPAÑOL (nro_idioma = 1)
+        ------------------------------------------------------------
+INSERT INTO dbo.contenidos_restaurantes (
     nro_restaurante,
     nro_idioma,
     nro_sucursal,
     contenido_a_publicar,
     imagen_promocional,
     costo_click,
+    fecha_ini_vigencia,
+    fecha_fin_vigencia,
     cod_contenido_restaurante
 )
-VALUES
-    (
-        @nro_restaurante,
-        @nro_idioma,
-        @nro_sucursal,
-        @contenido_a_publicar,
-        @imagen_promocional,
-        @costo_click,
-        @cod_contenido_restaurante
-    );
+SELECT
+    @nro_restaurante,
+    1,  -- ESPAÑOL
+    t.nro_sucursal,
+    t.contenido_a_publicar,
+    t.imagen_promocional,
+    @costo_actual,
+    @fecha_actual,
+    @fecha_fin_costo,
+    t.cod_contenido_restaurante
+FROM #promociones_temp t;
+
+------------------------------------------------------------
+-- 5) Insertar en INGLÉS (nro_idioma = 2)
+------------------------------------------------------------
+INSERT INTO dbo.contenidos_restaurantes (
+    nro_restaurante,
+    nro_idioma,
+    nro_sucursal,
+    contenido_a_publicar,
+    imagen_promocional,
+    costo_click,
+    fecha_ini_vigencia,
+    fecha_fin_vigencia,
+    cod_contenido_restaurante
+)
+SELECT
+    @nro_restaurante,
+    2,  -- INGLÉS
+    t.nro_sucursal,
+    t.contenido_a_publicar,
+    t.imagen_promocional,
+    @costo_actual,
+    @fecha_actual,
+    @fecha_fin_costo,
+    t.cod_contenido_restaurante
+FROM #promociones_temp t;
+
+------------------------------------------------------------
+-- 6) Asignar costo de salida
+------------------------------------------------------------
+SET @costo_aplicado = @costo_actual;
+
+DROP TABLE #promociones_temp;
 
 COMMIT;
 END TRY
 BEGIN CATCH
 IF XACT_STATE() <> 0
             ROLLBACK;
+
+        SET @costo_aplicado = NULL;
         THROW;
 END CATCH
 END;
@@ -3077,7 +3182,7 @@ SET
     fecha_reserva = @fecha_reserva,
     hora_reserva  = @hora_reserva,
     cod_zona      = @cod_zona,
-    hora_desde    = @hora_reserva,   -- ✅ mantener consistencia con FK de turnos
+    hora_desde    = @hora_reserva,   -- ? mantener consistencia con FK de turnos
     cant_adultos  = @cant_adultos,
     cant_menores  = @cant_menores,
     costo_reserva = @costo_reserva
@@ -3253,7 +3358,7 @@ VALUES
      1000);
 
 go
- CREATE OR ALTER PROCEDURE dbo.obtener_costo_vigente
+  CREATE OR ALTER PROCEDURE dbo.obtener_costo_vigente
     @tipo_costo NVARCHAR(50),
     @fecha DATE
     AS
@@ -3270,7 +3375,7 @@ WHERE c.tipo_costo = @tipo_costo
     AND ISNULL(c.fecha_fin_vigencia, '9999-12-31')
 ORDER BY c.fecha_ini_vigencia DESC;
 
--- ❌ No encontrado
+-- ? No encontrado
 IF @monto IS NULL
 BEGIN
         RAISERROR (
@@ -3282,7 +3387,7 @@ BEGIN
         RETURN;
 END
 
-    -- ✅ Resultado
+    -- ? Resultado
 SELECT @monto AS monto;
 END;
 GO
@@ -3314,3 +3419,13 @@ FROM dbo.estados_reservas er
                        and ie.nro_idioma = @nro_idioma
 END;
 GO
+
+
+create or alter procedure dbo.obtener_nroRestaurantes
+    as
+begin
+select
+    r.nro_restaurante as nroRestaurante
+from dbo.restaurantes r
+end
+go

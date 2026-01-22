@@ -11,7 +11,9 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @SpringBootApplication(scanBasePackages = "ar.edu.ubp.das.ristorino")
@@ -28,20 +30,35 @@ public class PromocionesBatch {
 
         log.info("Iniciando batch de promociones");
 
-        int nroRestaurante = 1; // o traerlos desde DB
+        List<Integer> restaurantes = repository.obtenerNrosActivos();
 
-        List<ContenidoBean> promociones =
-                promocionesService.obtenerPromociones(nroRestaurante);
+        for (Integer nroRestaurante : restaurantes) {
+            try {
+                List<ContenidoBean> promociones =
+                        promocionesService.obtenerPromociones(nroRestaurante);
 
-        if (promociones.isEmpty()) {
-            log.info("No hay promociones para procesar");
-            return;
+                if (promociones.isEmpty()) {
+                    log.info("No hay promociones para procesar para restaurante {}", nroRestaurante);
+                    continue;
+                }
+
+                BigDecimal costoAplicado = repository.guardarPromociones(promociones, nroRestaurante);
+
+                log.info("Se guardaron {} promociones del restaurante {}",
+                        promociones.size(), nroRestaurante);
+                String nroContenidos = promociones.stream()
+                        .map(c -> String.valueOf(c.getNroContenido()))
+                        .collect(Collectors.joining(","));
+
+
+                promocionesService.notifiarRestaurante(nroRestaurante, costoAplicado, nroContenidos);
+
+            } catch (Exception e) {
+                log.error("Error procesando promociones del restaurante {}",
+                        nroRestaurante, e);
+                // seguir con el siguiente restaurante
+            }
         }
-
-        repository.guardarPromociones(promociones, nroRestaurante);
-
-        log.info("Se guardaron {} promociones del restaurante {}",
-                promociones.size(), nroRestaurante);
     }
 
     public static void main(String[] args) {
@@ -55,6 +72,6 @@ public class PromocionesBatch {
             batch.procesarPromociones();
         }
     }
+
+
 }
-
-
