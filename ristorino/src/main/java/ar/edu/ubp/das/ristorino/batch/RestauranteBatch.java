@@ -24,7 +24,7 @@ public class RestauranteBatch {
     public void ejecutar() {
         log.info("Iniciando batch de sync restaurante");
 
-        int nroRestaurante = 1;
+        int nroRestaurante = 2;
 
         SyncRestauranteBean restaurante = restauranteService.obtenerRestaurante(nroRestaurante);
 

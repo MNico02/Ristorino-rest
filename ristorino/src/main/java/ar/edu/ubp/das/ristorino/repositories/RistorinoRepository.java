@@ -624,7 +624,8 @@ public class RistorinoRepository {
                 .addValue("hora_reserva", java.sql.Time.valueOf(req.getHoraReserva()), Types.TIME)
                 .addValue("cod_zona", req.getCodZona(), Types.INTEGER)
                 .addValue("cant_adultos", req.getCantAdultos(), Types.INTEGER)
-                .addValue("cant_menores", req.getCantMenores(), Types.INTEGER);
+                .addValue("cant_menores", req.getCantMenores(), Types.INTEGER)
+                .addValue("costo_reserva",req.getCostoReserva(), Types.DECIMAL);
 
         try {
             Map<String, Object> out =

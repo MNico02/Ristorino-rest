@@ -1,13 +1,11 @@
 package ar.edu.ubp.das.ristorino.service;
 
-
 import ar.edu.ubp.das.ristorino.beans.CancelarReservaBean;
+import ar.edu.ubp.das.ristorino.clients.CancelarReservaClient;
+import ar.edu.ubp.das.ristorino.clients.CancelarReservaClientFactory;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,20 +13,15 @@ import java.util.Map;
 @Service
 @Slf4j
 public class CancelarReservaService {
-    @Autowired
-    private RistorinoRepository ristorinoRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
 
-    private static final Map<Integer, String> BASE_URLS = Map.of(
-            1, "http://localhost:8085/api/v1/restaurante1",
-            2, "http://localhost:8086/api/v1/restaurante2"
-    );
+    private final RistorinoRepository ristorinoRepository;
+    private final CancelarReservaClientFactory clientFactory;
 
-    private static final Map<Integer, String> TOKENS = Map.of(
-            1, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0",
-            2, "TOKEN_RESTAURANTE_2"
-    );
-
+    public CancelarReservaService(RistorinoRepository ristorinoRepository,
+                                  CancelarReservaClientFactory clientFactory) {
+        this.ristorinoRepository = ristorinoRepository;
+        this.clientFactory = clientFactory;
+    }
 
     public Map<String, Object> cancelarReserva(CancelarReservaBean req) {
 
@@ -37,38 +30,20 @@ public class CancelarReservaService {
         Integer nroRestaurante = req.getNroRestaurante();
         String codReservaSucursal = req.getCodReservaSucursal();
 
+        // Validación de datos
         if (nroRestaurante == null || codReservaSucursal == null || codReservaSucursal.isBlank()) {
             resp.put("success", false);
             resp.put("message", "Faltan datos: nroRestaurante y codReservaSucursal son obligatorios.");
             return resp;
         }
 
-        String baseUrl = BASE_URLS.get(nroRestaurante);
-        String token = TOKENS.get(nroRestaurante);
-
-        if (baseUrl == null || token == null) {
-            resp.put("success", false);
-            resp.put("message", "Restaurante no configurado: " + nroRestaurante);
-            return resp;
-        }
-
         try {
+            // Obtener cliente según el restaurante
+            CancelarReservaClient client = clientFactory.getClient(nroRestaurante);
+
             // 1) Llamar al restaurante para que cancele primero
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            Map<String, Object> rtaRest = client.cancelarReserva(codReservaSucursal);
 
-            Map<String, Object> bodyRest = Map.of("codReservaSucursal", codReservaSucursal);
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(bodyRest, headers);
-
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    baseUrl + "/cancelarReserva",
-                    HttpMethod.POST,
-                    request,
-                    Map.class
-            );
-
-            Map<String, Object> rtaRest = response.getBody() != null ? response.getBody() : Map.of();
             boolean okRest = Boolean.TRUE.equals(rtaRest.get("success"));
             String statusRest = String.valueOf(rtaRest.getOrDefault("status", "UNKNOWN"));
             String msgRest = String.valueOf(rtaRest.getOrDefault("message", "Sin mensaje."));
@@ -81,15 +56,13 @@ public class CancelarReservaService {
             }
 
             // 2) Reflejar en Ristorino (SP) usando el repository
-            Map<String, Object> rtaRistorino = ristorinoRepository.cancelarReservaRistorinoPorCodigo(codReservaSucursal);
+            Map<String, Object> rtaRistorino =
+                    ristorinoRepository.cancelarReservaRistorinoPorCodigo(codReservaSucursal);
 
             boolean okRis = Boolean.TRUE.equals(rtaRistorino.get("success"));
-            String statusRis = String.valueOf(rtaRistorino.getOrDefault("status", "UNKNOWN"));
-            String msgRis = String.valueOf(rtaRistorino.getOrDefault("message", "Sin mensaje."));
 
             if (!okRis) {
                 // Restaurante canceló, pero Ristorino no pudo reflejar.
-                // No lo ocultes: devolvé info clara para debug / reintentos.
                 resp.put("success", false);
                 resp.put("status", "PARTIAL_FAILURE");
                 resp.put("message", "El restaurante canceló, pero Ristorino no pudo reflejar la cancelación.");
@@ -100,10 +73,16 @@ public class CancelarReservaService {
 
             // OK total
             resp.put("success", true);
-            resp.put("status", statusRest); // CANCELLED o ALREADY_CANCELLED
+            resp.put("status", statusRest);
             resp.put("message", "Reserva cancelada correctamente en restaurante y reflejada en Ristorino.");
             resp.put("restaurante", rtaRest);
             resp.put("ristorino", rtaRistorino);
+            return resp;
+
+        } catch (IllegalArgumentException e) {
+            log.error("Restaurante no configurado {}: {}", nroRestaurante, e.getMessage());
+            resp.put("success", false);
+            resp.put("message", "Restaurante no configurado: " + nroRestaurante);
             return resp;
 
         } catch (Exception e) {

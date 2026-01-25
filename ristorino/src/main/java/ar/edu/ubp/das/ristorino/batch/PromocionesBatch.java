@@ -25,43 +25,61 @@ public class PromocionesBatch {
     @Autowired
     private RistorinoRepository repository;
 
-    @Transactional
     public void procesarPromociones() {
 
-        log.info("Iniciando batch de promociones");
+        log.info("🚀 Iniciando batch de promociones");
 
         List<Integer> restaurantes = repository.obtenerNrosActivos();
 
+        if (restaurantes.isEmpty()) {
+            log.info("No hay restaurantes activos para procesar");
+            return;
+        }
+
         for (Integer nroRestaurante : restaurantes) {
+
+            log.info("➡️ Procesando promociones restaurante {}", nroRestaurante);
+
             try {
+                // 1️⃣ Obtener promociones
                 List<ContenidoBean> promociones =
                         promocionesService.obtenerPromociones(nroRestaurante);
 
                 if (promociones.isEmpty()) {
-                    log.info("No hay promociones para procesar para restaurante {}", nroRestaurante);
+                    log.info("No hay promociones para restaurante {}", nroRestaurante);
                     continue;
                 }
 
-                BigDecimal costoAplicado = repository.guardarPromociones(promociones, nroRestaurante);
+                // 2️⃣ Guardar promociones (ACÁ va la transacción)
+                BigDecimal costoAplicado =
+                        repository.guardarPromociones(promociones, nroRestaurante);
 
-                log.info("Se guardaron {} promociones del restaurante {}",
-                        promociones.size(), nroRestaurante);
+                log.info("Se guardaron {} promociones del restaurante {} | Costo aplicado: {}",
+                        promociones.size(), nroRestaurante, costoAplicado);
+
+                // 3️⃣ Armar string de contenidos
                 String nroContenidos = promociones.stream()
                         .map(c -> String.valueOf(c.getNroContenido()))
                         .collect(Collectors.joining(","));
 
-
-                promocionesService.notifiarRestaurante(nroRestaurante, costoAplicado, nroContenidos);
+                // 4️⃣ Notificar restaurante
+                promocionesService.notificarRestaurante(
+                        nroRestaurante,
+                        costoAplicado,
+                        nroContenidos
+                );
 
             } catch (Exception e) {
-                log.error("Error procesando promociones del restaurante {}",
+                log.error("❌ Error procesando promociones del restaurante {}. Se continúa con el siguiente.",
                         nroRestaurante, e);
-                // seguir con el siguiente restaurante
             }
         }
+
+        log.info("✅ Batch de promociones finalizado");
     }
 
     public static void main(String[] args) {
+
         try (ConfigurableApplicationContext context =
                      new SpringApplicationBuilder(PromocionesBatch.class)
                              .web(WebApplicationType.NONE)
@@ -72,6 +90,4 @@ public class PromocionesBatch {
             batch.procesarPromociones();
         }
     }
-
-
 }

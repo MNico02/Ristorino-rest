@@ -9,11 +9,8 @@ import java.time.LocalTime;
 public class ModificarReservaReqBean {
     Integer nroRestaurante;
     String codReservaSucursal;
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fechaReserva;
-
-    @JsonFormat(pattern = "HH:mm:ss")
-    private LocalTime horaReserva;
+    private String fechaReserva;
+    private String horaReserva;
 
     private int cantAdultos;
     private int cantMenores;
@@ -36,11 +33,21 @@ public class ModificarReservaReqBean {
         this.codReservaSucursal = codReservaSucursal;
     }
 
-    public LocalDate getFechaReserva() { return fechaReserva; }
-    public void setFechaReserva(LocalDate fechaReserva) { this.fechaReserva = fechaReserva; }
+    public String getFechaReserva() {
+        return fechaReserva;
+    }
 
-    public LocalTime getHoraReserva() { return horaReserva; }
-    public void setHoraReserva(LocalTime horaReserva) { this.horaReserva = horaReserva; }
+    public void setFechaReserva(String fechaReserva) {
+        this.fechaReserva = fechaReserva;
+    }
+
+    public String getHoraReserva() {
+        return horaReserva;
+    }
+
+    public void setHoraReserva(String horaReserva) {
+        this.horaReserva = horaReserva;
+    }
 
     public int getCantAdultos() { return cantAdultos; }
     public void setCantAdultos(int cantAdultos) { this.cantAdultos = cantAdultos; }

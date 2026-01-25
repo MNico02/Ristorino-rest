@@ -1,96 +1,68 @@
 package ar.edu.ubp.das.ristorino.service;
 
-
 import ar.edu.ubp.das.ristorino.beans.*;
+import ar.edu.ubp.das.ristorino.clients.ReservaClient;
+import ar.edu.ubp.das.ristorino.clients.ReservaClientFactory;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
-import java.util.Map;
 
 @Service
 @Slf4j
 public class ReservaService {
 
-    @Autowired
-    private RistorinoRepository ristorinoRepository;
+    private final RistorinoRepository ristorinoRepository;
+    private final ReservaClientFactory factory;
 
-    private final RestTemplate restTemplate = new RestTemplate();
-
-    private static final Map<Integer, String> BASE_URLS = Map.of(
-            1, "http://localhost:8085/api/v1/restaurante1"
-    );
-
-    private static final Map<Integer, String> TOKENS = Map.of(
-            1, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0"
-    );
+    public ReservaService(RistorinoRepository ristorinoRepository,
+                          ReservaClientFactory factory) {
+        this.ristorinoRepository = ristorinoRepository;
+        this.factory = factory;
+    }
 
     public String registrarReserva(ReservaBean reserva) {
 
-        // 1) Obtener cliente desde BD Ristorino
+        // 1) Cliente desde BD Ristorino
         SolicitudClienteBean cliente = ristorinoRepository
                 .getClienteCorreo(reserva.getCorreo())
                 .orElseThrow(() -> new RuntimeException("Cliente no registrado en Ristorino"));
 
-        // 2) Resolver restaurante desde "Restaurante-Sucursal"
+        // 2) Resolver restaurante
         int nroRestaurante = resolverRestaurante(reserva.getCodSucursalRestaurante());
 
-        String baseUrl = BASE_URLS.get(nroRestaurante);
-        String token = TOKENS.get(nroRestaurante);
-
-        if (baseUrl == null || token == null) {
-            throw new RuntimeException("No hay configuración para el restaurante " + nroRestaurante);
-        }
-
-        // 3) Armar request compuesto para el restaurante
+        // 3) Armar payload para restaurante
         ReservaRestauranteBean payload = new ReservaRestauranteBean();
-        payload.setSolicitudCliente(mapCliente(cliente)); // si tu bean difiere, ajustamos
-        payload.setReserva(mapReservaSolicitud(reserva));  // importante: el restaurante espera ReservaSolicitudBean
+        payload.setSolicitudCliente(mapCliente(cliente));
+        payload.setReserva(mapReservaSolicitud(reserva));
 
-        // 4) POST al restaurante (/confirmarReserva)
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        // 4) Delegar en el client correspondiente (REST o SOAP)
+        ReservaClient client = factory.getClient(nroRestaurante);
 
-        HttpEntity<ReservaRestauranteBean> request = new HttpEntity<>(payload, headers);
+        ConfirmarReservaResponseBean body = client.confirmarReserva(payload, nroRestaurante);
 
-        ResponseEntity<ConfirmarReservaResponseBean> response = restTemplate.exchange(
-                baseUrl + "/confirmarReserva",
-                HttpMethod.POST,
-                request,
-                ConfirmarReservaResponseBean.class
-        );
-
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new RuntimeException("Error al confirmar la reserva en el restaurante");
+        if (body == null) {
+            throw new RuntimeException("Error al confirmar la reserva en el restaurante " + nroRestaurante);
         }
 
-        ConfirmarReservaResponseBean body = response.getBody();
-
-        // 5) Si el restaurante rechaza, propagar mensaje
+        // 5) Si el restaurante rechaza
         if (!body.isSuccess()) {
             String msg = (body.getMensaje() != null) ? body.getMensaje() : "Reserva rechazada por el restaurante";
             throw new RuntimeException(msg);
         }
 
-        // 6) Guardar en BD de Ristorino (recomendado)
-        // Usá el codReserva que devolvió el restaurante como ID externo / código.
-        // Ideal: guardar con los datos del RESPONSE (porque es la “verdad confirmada”)
-        ristorinoRepository.insReservaConfirmadaRistorino(body,reserva,nroRestaurante);
+        // 6) Guardar en Ristorino
+        ristorinoRepository.insReservaConfirmadaRistorino(body, reserva, nroRestaurante);
 
         // 7) Devolver código
         return body.getCodReserva();
     }
 
     private int resolverRestaurante(String codigo) {
+        if (codigo == null || !codigo.contains("-")) {
+            throw new IllegalArgumentException("Código restaurante-sucursal inválido: " + codigo);
+        }
         return Integer.parseInt(codigo.split("-")[0]);
     }
-
-    // --------- helpers de mapeo (ajustalos a tus beans reales) ----------
 
     private SolicitudClienteBean mapCliente(SolicitudClienteBean c) {
         SolicitudClienteBean sc = new SolicitudClienteBean();

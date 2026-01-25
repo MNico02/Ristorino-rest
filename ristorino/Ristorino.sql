@@ -517,6 +517,156 @@ insert into idiomas_zonas_suc_restaurantes (nro_restaurante, nro_sucursal, cod_z
     (1,2,1,1,N'Salon',N''),
     (1,2,1,2,N'Lounge',N''),
     (1,2,2,1,N'Terraza',N''),
+    (1,2,2,2,N'Terrace',N'')
+  go
+
+-- MES 1
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+    DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1),
+    EOMONTH(DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+    500),
+    ('RESERVA',
+    DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1),
+    EOMONTH(DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+    1000);
+
+-- MES 2
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 3
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 4
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 5
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 6
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 7
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 8
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 9
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 10
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 11
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+-- MES 12
+INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
+VALUES
+    ('CLICK',
+     DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     500),
+    ('RESERVA',
+     DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
+     EOMONTH(DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
+     1000);
+
+
+
+
 
 /*
 -- restaurantes
@@ -2666,6 +2816,62 @@ IF @nro_cliente IS NULL
         )
             THROW 51016, 'El turno (hora_desde) no existe o no está habilitado en Ristorino.', 1;
 
+        DECLARE
+@capacidad_zona     INT,
+    @ocupacion_actual   INT,
+    @cant_solicitada    INT,
+    @disponible         INT;
+
+/* Cantidad solicitada */
+SET @cant_solicitada = ISNULL(@cant_adultos,0) + ISNULL(@cant_menores,0);
+
+/* Capacidad máxima de la zona */
+SELECT
+    @capacidad_zona = z.cant_comensales
+FROM dbo.zonas_sucursales_restaurantes z
+WHERE z.nro_restaurante = @nro_restaurante
+  AND z.nro_sucursal    = @nro_sucursal
+  AND z.cod_zona        = @cod_zona
+  AND z.habilitada      = 1;
+
+IF @capacidad_zona IS NULL
+BEGIN
+    RAISERROR('La zona no tiene capacidad definida.', 16, 1);
+    RETURN;
+END;
+
+/* Ocupación actual en ese turno (solo reservas activas) */
+SELECT
+    @ocupacion_actual = ISNULL(SUM(r.cant_adultos + ISNULL(r.cant_menores,0)), 0)
+FROM dbo.reservas_restaurantes r
+WHERE r.nro_restaurante = @nro_restaurante
+  AND r.nro_sucursal    = @nro_sucursal
+  AND r.cod_zona        = @cod_zona
+  AND r.fecha_reserva   = @fecha_reserva
+  AND r.hora_desde      = @hora_reserva
+  AND r.fecha_cancelacion IS NULL
+  AND r.cod_estado = 1;   -- Confirmada / Activa
+
+/* Capacidad restante */
+SET @disponible = @capacidad_zona - @ocupacion_actual;
+
+/* Validación final */
+IF @disponible < @cant_solicitada
+BEGIN
+    RAISERROR (
+        'Capacidad insuficiente. Capacidad total: %d. Ocupado: %d. Disponible: %d.',
+        16,
+        1,
+        @capacidad_zona,
+        @ocupacion_actual,
+        @disponible
+    );
+    RETURN;
+END
+
+
+
+
         /* 5) Calcular nro_reserva incremental por cliente */
         DECLARE @nro_reserva INT;
 
@@ -2748,12 +2954,6 @@ END
 END CATCH
 END;
 GO
-
-INSERT INTO dbo.estados_reservas (cod_estado, nom_estado)
-VALUES
- (1, 'CONFIRMADA'),
- (2, 'CANCELADA'),
- (3, 'PENDIENTE');
 
 go
 CREATE OR ALTER PROCEDURE dbo.sp_listar_restaurantes_home
@@ -3212,150 +3412,6 @@ END;
 GO
 
 
-
--- MES 1
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-('CLICK',
- DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1),
- EOMONTH(DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
- 500),
-('RESERVA',
- DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1),
- EOMONTH(DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
- 1000);
-
--- MES 2
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 3
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 2, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 4
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 3, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 5
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 4, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 6
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 7
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 6, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 8
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 7, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 9
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 8, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 10
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 9, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 11
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 10, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
-
--- MES 12
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
-VALUES
-    ('CLICK',
-     DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     500),
-    ('RESERVA',
-     DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)),
-     EOMONTH(DATEADD(MONTH, 11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))),
-     1000);
 
 go
   CREATE OR ALTER PROCEDURE dbo.obtener_costo_vigente
