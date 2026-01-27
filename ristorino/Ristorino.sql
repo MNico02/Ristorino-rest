@@ -638,87 +638,91 @@ VALUES
 ----
 ----
 /*
-insert into idiomas_categorias_preferencias(cod_categoria,nro_idioma,categoria,desc_categoria) values
-    (1,1,N'ESTILOS',N''),
-    (1,2,N'STYLES',N''),
-    (2,1,N'ESPECIALIDADES',N''),
-    (2,2,N'SPECIALTIES',N''),
-    (3,1,N'TIPOS_COMIDAS',N''),
-    (3,2,N'TYPES_OF_FOOD',N'')
-
-
-insert into idiomas_dominio_cat_preferencias(cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio) values
-    (1,1,1,N'Casual',N''),
-    (1,1,2,N'Casual',N''),
-    (1,2,1,N'Familiar',N''),
-    (1,2,2,N'Family',N''),
-    (2,1,1,N'Vegetariano',N''),
-    (2,1,2,N'Vegetarian',N''),
-    (2,2,1,N'Celiaco',N''),
-    (2,2,2,N'Celiac',N''),
-    (3,1,1,N'Italiano tradicional',N''),
-    (3,1,2,N'Traditional italian',N'')
-
-insert into idiomas_zonas_suc_restaurantes (nro_restaurante, nro_sucursal, cod_zona,nro_idioma,zona,desc_zona) values
-    (1,1,1,1,N'Salon',N''),
-    (1,1,1,2,N'Lounge',N''),
-    (1,1,2,1,N'Terraza',N''),
-    (1,1,2,2,N'Terrace',N''),
-    (1,2,1,1,N'Salon',N''),
-    (1,2,1,2,N'Lounge',N''),
-    (1,2,2,1,N'Terraza',N''),
-    (1,2,2,2,N'Terrace',N'')
-  go
-
-
-  INSERT INTO idiomas_dominio_cat_preferencias
-(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio)
+ INSERT INTO idiomas_categorias_preferencias
+(cod_categoria, nro_idioma, categoria, desc_categoria)
 VALUES
--- Moderno
-(1,1,1,N'Moderno',N''),
-(1,1,2,N'Modern',N''),
+(1,1,N'ESTILOS',N''),
+(1,2,N'STYLES',N''),
+(2,1,N'ESPECIALIDADES',N''),
+(2,2,N'SPECIALTIES',N''),
+(3,1,N'TIPOS_COMIDAS',N''),
+(3,2,N'TYPES_OF_FOOD',N'');
+
+
+--ESTILOS
+-- Casual
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(1,1,1,N'Casual',N''),
+(1,1,2,N'Casual',N'');
+
+-- Familiar
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(1,2,1,N'Familiar',N''),
+(1,2,2,N'Family',N'');
 
 -- Gourmet
-(1,2,1,N'Gourmet',N''),
-(1,2,2,N'Gourmet',N''),
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(1,3,1,N'Gourmet',N''),
+(1,3,2,N'Gourmet',N'');
 
 -- Minimalista
-(1,3,1,N'Minimalista',N''),
-(1,3,2,N'Minimalist',N'');
-
-
-INSERT INTO idiomas_dominio_cat_preferencias
-(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio)
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
 VALUES
--- Vegetariano
-(2,1,1,N'Vegetariano',N''),
-(2,1,2,N'Vegetarian',N''),
+(1,4,1,N'Minimalista',N''),
+(1,4,2,N'Minimalist',N'');
 
--- Sin gluten
-(2,2,1,N'Sin gluten',N''),
-(2,2,2,N'Gluten free',N''),
+-- Moderno
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(1,5,1,N'Moderno',N''),
+(1,5,2,N'Modern',N'');
+
+-- Celíaco
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(2,1,1,N'Celíaco',N''),
+(2,1,2,N'Celiac',N'');
+
+
+--ESPECIALIDADES
+-- Vegetariano
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(2,2,1,N'Vegetariano',N''),
+(2,2,2,N'Vegetarian',N'');
 
 -- Pescetariano
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
 (2,3,1,N'Pescetariano',N''),
-(2,3,2,N'Pescatarian',N''),
+(2,3,2,N'Pescatarian',N'');
+
+-- Sin gluten
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(2,4,1,N'Sin gluten',N''),
+(2,4,2,N'Gluten free',N'');
 
 -- Vegano
-(2,4,1,N'Vegano',N''),
-(2,4,2,N'Vegan',N''),
-
--- Sin lactosa
-(2,5,1,N'Sin lactosa',N''),
-(2,5,2,N'Lactose free',N'');
-
-
-INSERT INTO idiomas_dominio_cat_preferencias
-(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio)
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
 VALUES
-(3,1,1,N'Fusión japonesa-peruana',N''),
-(3,1,2,N'Japanese-Peruvian fusion',N'');
+(2,5,1,N'Vegano',N''),
+(2,5,2,N'Vegan',N'');
 
+--TIPÓ DE COMIDA
+-- Italiana tradicional
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(3,1,1,N'Italiana tradicional',N''),
+(3,1,2,N'Traditional Italian',N'');
 
-  */
+-- Fusión japonesa-peruana
+INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
+VALUES
+(3,2,1,N'Fusión japonesa-peruana',N''),
+(3,2,2,N'Japanese-Peruvian fusion',N'');*/
 
 
 
