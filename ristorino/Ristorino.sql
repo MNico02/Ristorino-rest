@@ -1,5 +1,4 @@
 
-
 ---------------------------
 -- 1) Tablas más dependientes (niveles bajos)
 IF OBJECT_ID('dbo.clicks_contenidos_restaurantes','U') IS NOT NULL DROP TABLE dbo.clicks_contenidos_restaurantes;
@@ -437,6 +436,7 @@ CREATE TABLE dbo.costos (
 GO
 
 
+
 /* ===========================
    3) Inserts básicos de prueba
    =========================== */
@@ -484,41 +484,7 @@ VALUES (1,N'Pendiente'),
     (4,1,N'Evaluada'),
     (4,2,N'Evaluated')
 
----
-----
-----    CORRER PROCESO BATCH RESTAURANTE. Luego insertar los datos para los idiomas
-----
-----
-insert into idiomas_categorias_preferencias(cod_categoria,nro_idioma,categoria,desc_categoria) values
-    (1,1,N'ESTILOS',N''),
-    (1,2,N'STYLES',N''),
-    (2,1,N'ESPECIALIDADES',N''),
-    (2,2,N'SPECIALTIES',N''),
-    (3,1,N'TIPOS_COMIDAS',N''),
-    (3,2,N'TYPES_OF_FOOD',N'')
 
-insert into idiomas_dominio_cat_preferencias(cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio) values
-    (1,1,1,N'Casual',N''),
-    (1,1,2,N'Casual',N''),
-    (1,2,1,N'Familiar',N''),
-    (1,2,2,N'Family',N''),
-    (2,1,1,N'Vegetariano',N''),
-    (2,1,2,N'Vegetarian',N''),
-    (2,2,1,N'Celiaco',N''),
-    (2,2,2,N'Celiac',N''),
-    (3,1,1,N'Italiano tradicional',N''),
-    (3,1,2,N'Traditional italian',N'')
-
-insert into idiomas_zonas_suc_restaurantes (nro_restaurante, nro_sucursal, cod_zona,nro_idioma,zona,desc_zona) values
-    (1,1,1,1,N'Salon',N''),
-    (1,1,1,2,N'Lounge',N''),
-    (1,1,2,1,N'Terraza',N''),
-    (1,1,2,2,N'Terrace',N''),
-    (1,2,1,1,N'Salon',N''),
-    (1,2,1,2,N'Lounge',N''),
-    (1,2,2,1,N'Terraza',N''),
-    (1,2,2,2,N'Terrace',N'')
-  go
 
 -- MES 1
 INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
@@ -666,417 +632,95 @@ VALUES
 
 
 
-
-
+---
+----
+----    CORRER PROCESO BATCH RESTAURANTE. Luego insertar los datos para los idiomas
+----
+----
 /*
--- restaurantes
-INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
-(1, N'El millonario', N'30-91245678-9');
-INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
-    (2, N'El gallinero', N'31-91245678-9');
-INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit) VALUES
-    (3, N'El monumental', N'32-91245678-9');*/
-/*
--- sucursales_restaurantes
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+insert into idiomas_categorias_preferencias(cod_categoria,nro_idioma,categoria,desc_categoria) values
+    (1,1,N'ESTILOS',N''),
+    (1,2,N'STYLES',N''),
+    (2,1,N'ESPECIALIDADES',N''),
+    (2,2,N'SPECIALTIES',N''),
+    (3,1,N'TIPOS_COMIDAS',N''),
+    (3,2,N'TYPES_OF_FOOD',N'')
+
+
+insert into idiomas_dominio_cat_preferencias(cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio) values
+    (1,1,1,N'Casual',N''),
+    (1,1,2,N'Casual',N''),
+    (1,2,1,N'Familiar',N''),
+    (1,2,2,N'Family',N''),
+    (2,1,1,N'Vegetariano',N''),
+    (2,1,2,N'Vegetarian',N''),
+    (2,2,1,N'Celiaco',N''),
+    (2,2,2,N'Celiac',N''),
+    (3,1,1,N'Italiano tradicional',N''),
+    (3,1,2,N'Traditional italian',N'')
+
+insert into idiomas_zonas_suc_restaurantes (nro_restaurante, nro_sucursal, cod_zona,nro_idioma,zona,desc_zona) values
+    (1,1,1,1,N'Salon',N''),
+    (1,1,1,2,N'Lounge',N''),
+    (1,1,2,1,N'Terraza',N''),
+    (1,1,2,2,N'Terrace',N''),
+    (1,2,1,1,N'Salon',N''),
+    (1,2,1,2,N'Lounge',N''),
+    (1,2,2,1,N'Terraza',N''),
+    (1,2,2,2,N'Terrace',N'')
+  go
+
+
+  INSERT INTO idiomas_dominio_cat_preferencias
+(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio)
 VALUES
-    (1, 1, N'Casa Central El millonario', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'CEN');
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+-- Moderno
+(1,1,1,N'Moderno',N''),
+(1,1,2,N'Modern',N''),
+
+-- Gourmet
+(1,2,1,N'Gourmet',N''),
+(1,2,2,N'Gourmet',N''),
+
+-- Minimalista
+(1,3,1,N'Minimalista',N''),
+(1,3,2,N'Minimalist',N'');
+
+
+INSERT INTO idiomas_dominio_cat_preferencias
+(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio)
 VALUES
-    (1, 2, N'Sucursal norte El millonario', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'NOR MILLO');
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
+-- Vegetariano
+(2,1,1,N'Vegetariano',N''),
+(2,1,2,N'Vegetarian',N''),
+
+-- Sin gluten
+(2,2,1,N'Sin gluten',N''),
+(2,2,2,N'Gluten free',N''),
+
+-- Pescetariano
+(2,3,1,N'Pescetariano',N''),
+(2,3,2,N'Pescatarian',N''),
+
+-- Vegano
+(2,4,1,N'Vegano',N''),
+(2,4,2,N'Vegan',N''),
+
+-- Sin lactosa
+(2,5,1,N'Sin lactosa',N''),
+(2,5,2,N'Lactose free',N'');
+
+
+INSERT INTO idiomas_dominio_cat_preferencias
+(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio)
 VALUES
-    (2, 1, N'Casa Central El gallinero', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'CEN GALLI');
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
-VALUES
-    (2, 2, N'Sucursal sur El gallinero', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'SUR GALLI');
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
-VALUES
-    (3, 1, N'Casa Central El monumental', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'CEN MONU');
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio, nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
-VALUES
-    (3, 2, N'Sucursal norte El monumental', N'Av. Siempreviva', 742, N'Centro', 1, N'5000', N'351-555-1111', 50, 15, N'NOR MONU');
-
-    */
-/*
-
--- contenidos_restaurantes
------------------------------
--- Restaurante 1 (contenidos 1..6)
------------------------------
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 1, N'https://media.elgourmet.com/recetas/cover/d886d9d83cdfbbb1e1e7aa1d395d796c_3_3_photo.png',
-     N'Menú Tradicional "Abuela" (Sin gluten): empanadas de carne al horno con tapa de maíz + sorrentinos de ricota y nuez en salsa fileto. Precio medio. Ideal para compartir.',
-     '2025-09-01', '2025-12-31', 0.10, N'1-1');
-
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 1, N'https://airescriollos.com.ar/wp-content/uploads/2020/11/Milanesa-de-Pollo-Napolitana.jpg',
-     N'Combo Argentino & Italiano (Sin gluten): milanesa napolitana con papas al horno + penne rigate al pesto. Estilo tradicional, porciones generosas, precio medio.',
-     '2025-09-01', '2025-12-31', 0.10, N'2-1');
-
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 1, N'https://cdn.recetasderechupete.com/wp-content/uploads/2020/11/Tallarines-rojos-con-pollo.jpg',
-     N'Noche de Pastas Caseras (opción Sin gluten): tallarines amasados a la vista con bolognesa o tuco de cocción lenta + copa de vino de la casa. Ambiente tradicional.',
-     '2025-09-01', '2025-12-31', 0.10, N'3-1');
-
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 2, N'https://lastaquerias.com/wp-content/uploads/2022/11/tacos-pastor-gaacc26fa8_1920.jpg',
-     N'Tacos Degustación Premium (Vegetarianos): set de 6 tacos (hongos asados, calabaza especiada, frijoles y queso), salsas caseras y guacamole. Estilo casual, experiencia gourmet.',
-     '2025-09-01', '2025-12-31', 0.10, N'4-1');
-
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 2,  N'https://www.melonsinjamon.com/wp-content/uploads/2022/07/burrito-bowl-vegano.jpg',
-     N'Burrito Bowl Verde (Vegetariano): arroz cilantro-lima, mix de hojas, porotos negros, fajitas de verduras, pico de gallo y crema ácida. Presentación premium, servicio casual.',
-     '2025-09-01', '2025-12-31', 0.10, N'5-1');
-
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (1, 1, 2,N'https://solnatural.bio/views/img/recipesphotos/97.jpg',
-     N'Cena Mexicana Premium: enchiladas rojas vegetarianas + maridaje con tequila/agua fresca. Estilo casual chic, producto de alta calidad, ideal para celebración.',
-     '2025-09-01', '2025-12-31', 0.10, N'6-1');
-INSERT INTO dbo.contenidos_restaurantes
-(nro_restaurante, nro_idioma, nro_sucursal, imagen_promocional, contenido_a_publicar, fecha_ini_vigencia, fecha_fin_vigencia, costo_click, cod_contenido_restaurante) VALUES
-    (2, 1, 2,N'https://www.paulinacocina.net/wp-content/uploads/2023/06/choripan-con-chimichurri-receta.jpg',
-     N'CHORIPAN',
-     '2025-09-01', '2025-12-31', 0.10, N'1-2');
-*/
-
-/*
--- Resto 1
-    INSERT INTO dbo.turnos_sucursales_restaurantes (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado) VALUES
-    (1, 1, '20:00', '21:30', 1),
-    (1, 1, '21:30', '23:00', 1),
-    (1, 1, '23:00', '00:30', 1),
-    (1, 1, '00:30', '02:00', 1);
-
-INSERT INTO dbo.turnos_sucursales_restaurantes (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado) VALUES
-                                                                                                                       (1, 2, '20:00', '21:30', 1),
-                                                                                                                       (1, 2, '21:30', '23:00', 1),
-                                                                                                                       (1, 2, '23:00', '00:30', 1),
-                                                                                                                       (1, 2, '00:30', '02:00', 1);
-
--- Resto 2
-INSERT INTO dbo.turnos_sucursales_restaurantes (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado) VALUES
-                                                                                                                       (2, 1, '20:00', '21:30', 1),
-                                                                                                                       (2, 1, '21:30', '23:00', 1),
-                                                                                                                       (2, 1, '23:00', '00:30', 1),
-                                                                                                                       (2, 1, '00:30', '02:00', 1);
-
-INSERT INTO dbo.turnos_sucursales_restaurantes (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado) VALUES
-                                                                                                                       (2, 2, '20:00', '21:30', 1),
-                                                                                                                       (2, 2, '21:30', '23:00', 1),
-                                                                                                                       (2, 2, '23:00', '00:30', 1),
-                                                                                                                       (2, 2, '00:30', '02:00', 1);
-
--- Resto 3
-INSERT INTO dbo.turnos_sucursales_restaurantes (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado) VALUES
-                                                                                                                       (3, 1, '20:00', '21:30', 1),
-                                                                                                                       (3, 1, '21:30', '23:00', 1),
-                                                                                                                       (3, 1, '23:00', '00:30', 1),
-                                                                                                                       (3, 1, '00:30', '02:00', 1);
-
-INSERT INTO dbo.turnos_sucursales_restaurantes (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado) VALUES
-                                                                                                                       (3, 2, '20:00', '21:30', 1),
-                                                                                                                       (3, 2, '21:30', '23:00', 1),
-                                                                                                                       (3, 2, '23:00', '00:30', 1),
-                                                                                                                       (3, 2, '00:30', '02:00', 1);
-
--- zonas_sucursales_restaurantes
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (1, 1, 1, N'Salón principal', 40, 1, 1);
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (1, 2, 1, N'Salón principal', 40, 1, 1);
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (2, 1, 1, N'Salón principal', 40, 1, 1);
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (2, 2, 1, N'Salón principal', 40, 1, 1);
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (3, 1, 1, N'Salón principal', 40, 1, 1);
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-VALUES
-    (3, 2, 1, N'Salón principal', 40, 1, 1);
-
--- idiomas_zonas_suc_restaurantes
-INSERT INTO dbo.idiomas_zonas_suc_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, nro_idioma, zona, desc_zona)
-VALUES
-    (1, 1, 1, 1, N'Salón', N'Área central del local');
+(3,1,1,N'Fusión japonesa-peruana',N''),
+(3,1,2,N'Japanese-Peruvian fusion',N'');
 
 
-
--- estados_reservas
-INSERT INTO dbo.estados_reservas (cod_estado, nom_estado) VALUES
-                                                              (1, N'Confirmada'),
-                                                              (2, N'Cancelada');
-
--- idiomas_estados
-INSERT INTO dbo.idiomas_estados (cod_estado, nro_idioma, estado) VALUES
-                                                                     (1, 1, N'Confirmada'),
-                                                                     (2, 1, N'Cancelada');
+  */
 
 
--- costos
-INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto) VALUES
-    (N'CLICK', '2025-09-01', '2025-12-31', 0.10);
-GO
-
-
-/* ===========================================================
-   1) CATEGORÍAS
-   ===========================================================*/
-INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria) VALUES
-(1, N'Tipo de cocina'),
-(2, N'Especialidades alimentarias'),
-(3, N'Estilo');
-
--- Etiquetas de categorías (idioma: es-AR -> nro_idioma=1)
-INSERT INTO dbo.idiomas_categorias_preferencias
-(cod_categoria, nro_idioma, categoria, desc_categoria) VALUES
-                                                           (1, 1, N'Tipo de cocina',             N'Tradición o escuela culinaria del restaurante'),
-                                                           (2, 1, N'Especialidades alimentarias',N'Preferencias o restricciones alimentarias'),
-                                                           (3, 1, N'Estilo',                     N'Formato/estilo de servicio o ambientación');
-
-
-/* ===========================================================
-   2) DOMINIOS por categoría
-   ===========================================================*/
-
--- Cat=1  Tipo de cocina
-INSERT INTO dbo.dominio_categorias_preferencias
-(cod_categoria, nro_valor_dominio, nom_valor_dominio) VALUES
-                                                          (1,  1, N'Italiana'),
-                                                          (1,  2, N'Mexicana'),
-                                                          (1,  3, N'Española'),
-                                                          (1,  4, N'Francesa'),
-                                                          (1,  5, N'Japonesa'),
-                                                          (1,  6, N'China'),
-                                                          (1,  7, N'Tailandesa'),
-                                                          (1,  8, N'India'),
-                                                          (1,  9, N'Mediterránea'),
-                                                          (1, 10, N'Argentina'),
-                                                          (1, 11, N'Peruana'),
-                                                          (1, 12, N'Árabe / Medio Oriente'),
-                                                          (1, 13, N'Fusión'),
-                                                          (1, 14, N'Internacional');
-
--- Etiquetas Cat=1 (es-AR)
-INSERT INTO dbo.idiomas_dominio_cat_preferencias
-(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio) VALUES
-                                                                                      (1,  1, 1, N'Italiana',                 NULL),
-                                                                                      (1,  2, 1, N'Mexicana',                 NULL),
-                                                                                      (1,  3, 1, N'Española',                 NULL),
-                                                                                      (1,  4, 1, N'Francesa',                 NULL),
-                                                                                      (1,  5, 1, N'Japonesa',                 NULL),
-                                                                                      (1,  6, 1, N'China',                    NULL),
-                                                                                      (1,  7, 1, N'Tailandesa',               NULL),
-                                                                                      (1,  8, 1, N'India',                    NULL),
-                                                                                      (1,  9, 1, N'Mediterránea',             NULL),
-                                                                                      (1, 10, 1, N'Argentina',                NULL),
-                                                                                      (1, 11, 1, N'Peruana',                  NULL),
-                                                                                      (1, 12, 1, N'Árabe / Medio Oriente',    NULL),
-                                                                                      (1, 13, 1, N'Fusión',                   NULL),
-                                                                                      (1, 14, 1, N'Internacional',            NULL);
-
-
--- Cat=2  Especialidades alimentarias
-INSERT INTO dbo.dominio_categorias_preferencias
-(cod_categoria, nro_valor_dominio, nom_valor_dominio) VALUES
-                                                          (2, 1, N'Vegetariana'),
-                                                          (2, 2, N'Vegana'),
-                                                          (2, 3, N'Sin gluten / Celíaco'),
-                                                          (2, 4, N'Sin lactosa'),
-                                                          (2, 5, N'Baja en calorías'),
-                                                          (2, 6, N'Orgánica'),
-                                                          (2, 7, N'Diabéticos (sin azúcar añadida)');
-
--- Etiquetas Cat=2 (es-AR)
-INSERT INTO dbo.idiomas_dominio_cat_preferencias
-(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio) VALUES
-                                                                                      (2, 1, 1, N'Vegetariana',                         NULL),
-                                                                                      (2, 2, 1, N'Vegana',                              NULL),
-                                                                                      (2, 3, 1, N'Sin gluten / Celíaco',                NULL),
-                                                                                      (2, 4, 1, N'Sin lactosa',                         NULL),
-                                                                                      (2, 5, 1, N'Baja en calorías',                    NULL),
-                                                                                      (2, 6, 1, N'Orgánica',                            NULL),
-                                                                                      (2, 7, 1, N'Diabéticos (sin azúcar añadida)',     NULL);
-
-
--- Cat=3  Estilo
-INSERT INTO dbo.dominio_categorias_preferencias
-(cod_categoria, nro_valor_dominio, nom_valor_dominio) VALUES
-                                                          (3,  1, N'Gourmet'),
-                                                          (3,  2, N'Casual'),
-                                                          (3,  3, N'Comida rápida / Fast food'),
-                                                          (3,  4, N'Buffet libre'),
-                                                          (3,  5, N'Bistró'),
-                                                          (3,  6, N'Food truck'),
-                                                          (3,  7, N'Restaurante tradicional'),
-                                                          (3,  8, N'Bar / Tapas'),
-                                                          (3,  9, N'Cafetería'),
-                                                          (3, 10, N'Delivery'),
-                                                          (3, 11, N'Fine dining');
-
--- Etiquetas Cat=3 (es-AR)
-INSERT INTO dbo.idiomas_dominio_cat_preferencias
-(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio) VALUES
-                                                                                      (3,  1, 1, N'Gourmet',                 NULL),
-                                                                                      (3,  2, 1, N'Casual',                  NULL),
-                                                                                      (3,  3, 1, N'Comida rápida / Fast food', NULL),
-                                                                                      (3,  4, 1, N'Buffet libre',            NULL),
-                                                                                      (3,  5, 1, N'Bistró',                  NULL),
-                                                                                      (3,  6, 1, N'Food truck',              NULL),
-                                                                                      (3,  7, 1, N'Restaurante tradicional', NULL),
-                                                                                      (3,  8, 1, N'Bar / Tapas',             NULL),
-                                                                                      (3,  9, 1, N'Cafetería',               NULL),
-                                                                                      (3, 10, 1, N'Delivery',                NULL),
-                                                                                      (3, 11, 1, N'Fine dining',             NULL);
-
--- Categoría
-INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria) VALUES
-    (4, N'Nivel de precio');
-
--- Etiqueta de categoría (idioma es-AR = 1)
-INSERT INTO dbo.idiomas_categorias_preferencias
-(cod_categoria, nro_idioma, categoria, desc_categoria) VALUES
-    (4, 1, N'Nivel de precio', N'Rango de precios percibido del restaurante');
-
--- Dominios (1..4)
-INSERT INTO dbo.dominio_categorias_preferencias
-(cod_categoria, nro_valor_dominio, nom_valor_dominio) VALUES
-                                                          (4, 1, N'Económico / Bajo'),
-                                                          (4, 2, N'Medio'),
-                                                          (4, 3, N'Alto / Premium'),
-                                                          (4, 4, N'De lujo');
-
--- Etiquetas de dominios (idioma es-AR = 1)
-INSERT INTO dbo.idiomas_dominio_cat_preferencias
-(cod_categoria, nro_valor_dominio, nro_idioma, valor_dominio, desc_valor_dominio) VALUES
-                                                                                      (4, 1, 1, N'Económico / Bajo', NULL),
-                                                                                      (4, 2, 1, N'Medio',            NULL),
-                                                                                      (4, 3, 1, N'Alto / Premium',   NULL),
-                                                                                      (4, 4, 1, N'De lujo',          NULL);
-
-
-
---------------------------------------------------------------
--- RESTAURANTE 1
--- Suc 1: Cocina Argentina + Italiana; Especialidad Sin gluten; Estilo Tradicional; Precio Medio
--- Suc 2: Cocina Mexicana; Especialidad Vegetariana; Estilo Casual; Precio Alto/Premium
---------------------------------------------------------------
-
--- Cat 1: Tipo de cocina
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-    (1, 1, 10, 1, N'Cocina argentina en sucursal 1', 1),   -- Argentina
-    (1, 1,  1, 2, N'Cocina italiana en sucursal 1', 1),    -- Italiana
-    (1, 1,  2, 3, N'Cocina mexicana en sucursal 2', 2);    -- Mexicana
-
--- Cat 2: Especialidades alimentarias
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (1, 2, 3, 1, N'Platos Sin gluten / Celíaco (sucursal 1)', 1),
-                                                                                                      (1, 2, 1, 2, N'Opciones vegetarianas (sucursal 2)', 2);
-
--- Cat 3: Estilo
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (1, 3, 7, 1, N'Estilo restaurante tradicional (sucursal 1)', 1), -- Restaurante tradicional
-                                                                                                      (1, 3, 2, 2, N'Estilo casual (sucursal 2)', 2);                  -- Casual
-
--- Cat 4: Nivel de precio
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (1, 4, 2, 1, N'Rango de precio medio (sucursal 1)', 1),          -- Medio
-                                                                                                      (1, 4, 3, 2, N'Rango alto/premium (sucursal 2)', 2);             -- Alto / Premium
-
-
---------------------------------------------------------------
--- RESTAURANTE 2
--- Suc 1: Cocina Italiana + Mediterránea; Especialidad Sin lactosa; Estilo Bistró; Precio Económico
--- Suc 2: Cocina Internacional; Especialidad Vegana; Estilo Delivery; Precio Medio
---------------------------------------------------------------
-
--- Cat 1: Tipo de cocina
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (2, 1,  1, 1, N'Cocina italiana en sucursal 1', 1),     -- Italiana
-                                                                                                      (2, 1, 9, 2, N'Cocina mediterránea en sucursal 1', 1), -- Mediterránea (en tu carga fue nro 9; si usaste 9, cambia aquí)
-                                                                                                      (2, 1, 14, 3, N'Cocina internacional en sucursal 2', 2);-- Internacional (en tu carga fue nro 14; ajusta si difiere)
-
--- Cat 2: Especialidades alimentarias
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (2, 2, 4, 1, N'Opciones sin lactosa (sucursal 1)', 1),
-                                                                                                      (2, 2, 2, 2, N'Menú vegano (sucursal 2)', 2);
-
--- Cat 3: Estilo
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (2, 3, 5, 1, N'Estilo bistró (sucursal 1)', 1),     -- Bistró
-                                                                                                      (2, 3,10, 2, N'Estilo delivery (sucursal 2)', 2);   -- Delivery
-
--- Cat 4: Nivel de precio
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (2, 4, 1, 1, N'Rango económico/bajo (sucursal 1)', 1), -- Económico / Bajo
-                                                                                                      (2, 4, 2, 2, N'Rango medio (sucursal 2)', 2);          -- Medio
-
-
---------------------------------------------------------------
--- RESTAURANTE 3
--- Suc 1: Cocina Japonesa + Peruana; Especialidad Orgánica; Estilo Fine dining; Precio De lujo
--- Suc 2: Cocina Árabe / Medio Oriente; Especialidad Baja en calorías; Estilo Bar/Tapas; Precio Medio
---------------------------------------------------------------
-
--- Cat 1: Tipo de cocina
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (3, 1,  5, 1, N'Cocina japonesa en sucursal 1', 1),        -- Japonesa
-                                                                                                      (3, 1, 11, 2, N'Cocina peruana en sucursal 1', 1),         -- Peruana
-                                                                                                      (3, 1, 12, 3, N'Árabe / Medio Oriente en sucursal 2', 2);  -- Árabe / Medio Oriente
-
--- Cat 2: Especialidades alimentarias
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (3, 2, 6, 1, N'Opciones orgánicas (sucursal 1)', 1),
-                                                                                                      (3, 2, 5, 2, N'Baja en calorías (sucursal 2)', 2);
-
--- Cat 3: Estilo
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (3, 3,11, 1, N'Fine dining (sucursal 1)', 1),  -- Fine dining
-                                                                                                      (3, 3, 8, 2, N'Bar / Tapas (sucursal 2)', 2);  -- Bar / Tapas
-
--- Cat 4: Nivel de precio
-INSERT INTO dbo.preferencias_restaurantes
-(nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal) VALUES
-                                                                                                      (3, 4, 4, 1, N'Rango de lujo (sucursal 1)', 1), -- De lujo
-                                                                                                      (3, 4, 2, 2, N'Rango medio (sucursal 2)', 2);   -- Medio
-
-
-*/
 
 go
 ---------
@@ -1418,7 +1062,7 @@ CREATE OR ALTER PROCEDURE dbo.get_contenidos_a_generar
 BEGIN
     SET NOCOUNT ON;
 
-SELECT TOP (10)
+SELECT TOP (5)
                                          nro_contenido,
        nro_restaurante,
        ISNULL(nro_sucursal, 0) AS nro_sucursal,
@@ -2196,473 +1840,6 @@ GO
 
 
 
-CREATE OR ALTER PROCEDURE dbo.sync_restaurante_desde_json_full
-    @json NVARCHAR(MAX)
-    AS
-BEGIN
-    SET NOCOUNT ON;
-    SET XACT_ABORT ON;
-
-    IF @json IS NULL OR ISJSON(@json) <> 1
-        THROW 51000, 'JSON inválido o NULL.', 1;
-
-BEGIN TRY
-BEGIN TRAN;
-
-        ------------------------------------------------------------
-        -- 1) Root restaurante
-        ------------------------------------------------------------
-        DECLARE @nro_restaurante INT;
-        DECLARE @razon_social   NVARCHAR(200);
-        DECLARE @cuit           NVARCHAR(20);
-
-SELECT
-    @nro_restaurante = j.nro_restaurante,
-    @razon_social    = j.razon_social,
-    @cuit            = j.cuit
-FROM OPENJSON(@json)
-    WITH (
-    nro_restaurante INT           '$.nroRestaurante',
-    razon_social    NVARCHAR(200) '$.razonSocial',
-    cuit            NVARCHAR(20)  '$.cuit'
-    ) j;
-
-IF @nro_restaurante IS NULL
-            THROW 51001, 'El JSON no trae nroRestaurante.', 1;
-
-        -- Upsert restaurante
-        IF EXISTS (SELECT 1 FROM dbo.restaurantes WHERE nro_restaurante = @nro_restaurante)
-BEGIN
-UPDATE dbo.restaurantes
-SET razon_social = @razon_social,
-    cuit         = @cuit
-WHERE nro_restaurante = @nro_restaurante;
-END
-ELSE
-BEGIN
-INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit)
-VALUES (@nro_restaurante, @razon_social, @cuit);
-END
-
-        ------------------------------------------------------------
-        -- 2) Sucursales (tabla variable)
-        ------------------------------------------------------------
-        DECLARE @Sucursales TABLE(
-            nro_sucursal              INT            NOT NULL,
-            nom_sucursal              NVARCHAR(150)   NOT NULL,
-            calle                     NVARCHAR(150)   NULL,
-            nro_calle                 INT            NULL,
-            barrio                    NVARCHAR(120)   NULL,
-            nro_localidad             INT            NOT NULL,
-            cod_postal                NVARCHAR(20)    NULL,
-            telefonos                 NVARCHAR(100)   NULL,
-            total_comensales          INT            NULL,
-            min_tolerencia_reserva    INT            NULL,
-            cod_sucursal_restaurante  NVARCHAR(50)    NOT NULL
-        );
-
-INSERT INTO @Sucursales
-SELECT
-    s.nro_sucursal,
-    s.nom_sucursal,
-    s.calle,
-    s.nro_calle,
-    s.barrio,
-    s.nro_localidad,
-    s.cod_postal,
-    s.telefonos,
-    s.total_comensales,
-    s.min_tolerencia_reserva,
-    ISNULL(s.cod_sucursal_restaurante, CONCAT(@nro_restaurante, '-', s.nro_sucursal))
-FROM OPENJSON(@json, '$.sucursales')
-    WITH (
-    nro_sucursal             INT           '$.nroSucursal',
-    nom_sucursal             NVARCHAR(150) '$.nomSucursal',
-    calle                    NVARCHAR(150) '$.calle',
-    nro_calle                INT           '$.nroCalle',
-    barrio                   NVARCHAR(120) '$.barrio',
-    nro_localidad            INT           '$.nroLocalidad',
-    cod_postal               NVARCHAR(20)  '$.codPostal',
-    telefonos                NVARCHAR(100) '$.telefonos',
-    total_comensales         INT           '$.totalComensales',
-    min_tolerencia_reserva   INT           '$.minTolerenciaReserva',
-    cod_sucursal_restaurante NVARCHAR(50)  '$.codSucursalRestaurante'
-    ) s;
-
-------------------------------------------------------------
--- 3) FULL REPLACE sucursales y dependencias
-------------------------------------------------------------
-DELETE zts
-          FROM dbo.zonas_turnos_sucurales_restaurantes zts
-         WHERE zts.nro_restaurante = @nro_restaurante;
-
-        DELETE ts
-          FROM dbo.turnos_sucursales_restaurantes ts
-         WHERE ts.nro_restaurante = @nro_restaurante;
-
-        DELETE iz
-          FROM dbo.idiomas_zonas_suc_restaurantes iz
-         WHERE iz.nro_restaurante = @nro_restaurante;
-
-        DELETE zs
-          FROM dbo.zonas_sucursales_restaurantes zs
-         WHERE zs.nro_restaurante = @nro_restaurante;
-
-        DELETE sr
-          FROM dbo.sucursales_restaurantes sr
-         WHERE sr.nro_restaurante = @nro_restaurante;
-
-INSERT INTO dbo.sucursales_restaurantes
-(nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio,
- nro_localidad, cod_postal, telefonos, total_comensales, min_tolerencia_reserva, cod_sucursal_restaurante)
-SELECT
-    @nro_restaurante,
-    s.nro_sucursal,
-    s.nom_sucursal,
-    s.calle,
-    s.nro_calle,
-    s.barrio,
-    s.nro_localidad,
-    s.cod_postal,
-    s.telefonos,
-    s.total_comensales,
-    s.min_tolerencia_reserva,
-    s.cod_sucursal_restaurante
-FROM @Sucursales s;
-
-------------------------------------------------------------
--- 4) ZONAS
-------------------------------------------------------------
-DECLARE @Zonas TABLE(
-            nro_sucursal    INT NOT NULL,
-            cod_zona        INT NOT NULL,
-            desc_zona       NVARCHAR(200) NULL,
-            cant_comensales INT NULL,
-            permite_menores BIT NULL,
-            habilitada      BIT NULL
-        );
-
-INSERT INTO @Zonas
-SELECT DISTINCT
-    s.nro_sucursal,
-    z.cod_zona,
-    z.zona_texto,
-    z.cant_comensales,
-    z.permite_menores,
-    z.habilitada
-FROM OPENJSON(@json, '$.sucursales')
-    WITH (
-    nro_sucursal INT '$.nroSucursal',
-    zonas NVARCHAR(MAX) '$.zonas' AS JSON
-    ) s
-    CROSS APPLY OPENJSON(s.zonas)
-WITH (
-    cod_zona        INT           '$.codZona',
-    zona_texto      NVARCHAR(200) '$.nomZona',
-    cant_comensales INT           '$.cantComensales',
-    permite_menores BIT           '$.permiteMenores',
-    habilitada      BIT           '$.habilitada'
-    ) z;
-
-INSERT INTO dbo.zonas_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
-SELECT
-    @nro_restaurante,
-    z.nro_sucursal,
-    z.cod_zona,
-    z.desc_zona,
-    z.cant_comensales,
-    ISNULL(z.permite_menores, 1),
-    ISNULL(z.habilitada, 1)
-FROM @Zonas z;
-
-------------------------------------------------------------
--- 5) TURNOS (si viene horaDesde NULL -> tiro error claro)
-------------------------------------------------------------
-IF EXISTS (
-            SELECT 1
-            FROM OPENJSON(@json, '$.sucursales')
-            WITH (turnos NVARCHAR(MAX) '$.turnos' AS JSON) s
-            CROSS APPLY OPENJSON(s.turnos)
-            WITH (hora_desde NVARCHAR(20) '$.horaDesde') t
-            WHERE t.hora_desde IS NULL
-        )
-BEGIN
-            THROW 51002, 'JSON trae turnos con horaDesde NULL (corregir endpoint del restaurante).', 1;
-END
-
-        DECLARE @Turnos TABLE(
-            nro_sucursal INT NOT NULL,
-            hora_desde   TIME(0) NOT NULL,
-            hora_hasta   TIME(0) NOT NULL,
-            habilitado   BIT NULL
-        );
-
-INSERT INTO @Turnos
-SELECT
-    s.nro_sucursal,
-    t.hora_desde,
-    t.hora_hasta,
-    t.habilitado
-FROM OPENJSON(@json, '$.sucursales')
-    WITH (
-    nro_sucursal INT '$.nroSucursal',
-    turnos NVARCHAR(MAX) '$.turnos' AS JSON
-    ) s
-    CROSS APPLY OPENJSON(s.turnos)
-WITH (
-    hora_desde TIME(0) '$.horaDesde',
-    hora_hasta TIME(0) '$.horaHasta',
-    habilitado BIT     '$.habilitado'
-    ) t;
-
-INSERT INTO dbo.turnos_sucursales_restaurantes
-(nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
-SELECT
-    @nro_restaurante,
-    t.nro_sucursal,
-    t.hora_desde,
-    t.hora_hasta,
-    ISNULL(t.habilitado, 1)
-FROM @Turnos t;
-
-------------------------------------------------------------
--- 6) ZONAS_TURNOS
-------------------------------------------------------------
-IF EXISTS (
-            SELECT 1
-            FROM OPENJSON(@json, '$.sucursales')
-            WITH (zonasTurnos NVARCHAR(MAX) '$.zonasTurnos' AS JSON) s
-            CROSS APPLY OPENJSON(s.zonasTurnos)
-            WITH (hora_desde NVARCHAR(20) '$.horaDesde') zt
-            WHERE zt.hora_desde IS NULL
-        )
-BEGIN
-            THROW 51003, 'JSON trae zonasTurnos con horaDesde NULL (corregir endpoint del restaurante).', 1;
-END
-
-        DECLARE @ZonasTurnos TABLE(
-            nro_sucursal    INT NOT NULL,
-            cod_zona        INT NOT NULL,
-            hora_desde      TIME(0) NOT NULL,
-            permite_menores BIT NULL
-        );
-
-INSERT INTO @ZonasTurnos
-SELECT DISTINCT
-    s.nro_sucursal,
-    zt.cod_zona,
-    zt.hora_desde,
-    zt.permite_menores
-FROM OPENJSON(@json, '$.sucursales')
-    WITH (
-    nro_sucursal INT '$.nroSucursal',
-    zonasTurnos NVARCHAR(MAX) '$.zonasTurnos' AS JSON
-    ) s
-    CROSS APPLY OPENJSON(s.zonasTurnos)
-WITH (
-    cod_zona        INT     '$.codZona',
-    hora_desde      TIME(0) '$.horaDesde',
-    permite_menores BIT     '$.permiteMenores'
-    ) zt;
-
-INSERT INTO dbo.zonas_turnos_sucurales_restaurantes
-(nro_restaurante, nro_sucursal, cod_zona, hora_desde, permite_menores)
-SELECT
-    @nro_restaurante,
-    zt.nro_sucursal,
-    zt.cod_zona,
-    zt.hora_desde,
-    ISNULL(zt.permite_menores, 1)
-FROM @ZonasTurnos zt;
-
-------------------------------------------------------------
--- 7) PREFERENCIAS (mapeo estilos/especialidades/tiposComidas)
---    evitando PK duplicada con ROW_NUMBER()
-------------------------------------------------------------
-DECLARE @CAT_ESTILOS INT, @CAT_ESPECIALIDADES INT, @CAT_TIPOS_COMIDAS INT;
-
-        -- helper para crear/obtener categoria por nombre
-        DECLARE @maxCat INT;
-
-        -- ESTILOS
-SELECT @CAT_ESTILOS = cod_categoria
-FROM dbo.categorias_preferencias
-WHERE nom_categoria = N'ESTILOS';
-
-IF @CAT_ESTILOS IS NULL
-BEGIN
-SELECT @maxCat = ISNULL(MAX(cod_categoria), 0)
-FROM dbo.categorias_preferencias WITH (UPDLOCK, HOLDLOCK);
-
-SET @CAT_ESTILOS = @maxCat + 1;
-
-INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
-VALUES (@CAT_ESTILOS, N'ESTILOS');
-END
-
-        -- ESPECIALIDADES
-SELECT @CAT_ESPECIALIDADES = cod_categoria
-FROM dbo.categorias_preferencias
-WHERE nom_categoria = N'ESPECIALIDADES';
-
-IF @CAT_ESPECIALIDADES IS NULL
-BEGIN
-SELECT @maxCat = ISNULL(MAX(cod_categoria), 0)
-FROM dbo.categorias_preferencias WITH (UPDLOCK, HOLDLOCK);
-
-SET @CAT_ESPECIALIDADES = @maxCat + 1;
-
-INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
-VALUES (@CAT_ESPECIALIDADES, N'ESPECIALIDADES');
-END
-
-        -- TIPOS_COMIDAS
-SELECT @CAT_TIPOS_COMIDAS = cod_categoria
-FROM dbo.categorias_preferencias
-WHERE nom_categoria = N'TIPOS_COMIDAS';
-
-IF @CAT_TIPOS_COMIDAS IS NULL
-BEGIN
-SELECT @maxCat = ISNULL(MAX(cod_categoria), 0)
-FROM dbo.categorias_preferencias WITH (UPDLOCK, HOLDLOCK);
-
-SET @CAT_TIPOS_COMIDAS = @maxCat + 1;
-
-INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
-VALUES (@CAT_TIPOS_COMIDAS, N'TIPOS_COMIDAS');
-END
-
-        -- Parse preferencias
-        DECLARE @PrefRaw TABLE(
-            nro_sucursal       INT NOT NULL,
-            cod_categoria      INT NOT NULL,
-            nro_valor_dominio  INT NOT NULL,
-            nom_valor_dominio  NVARCHAR(150) NOT NULL
-        );
-
-        -- estilos
-INSERT INTO @PrefRaw
-SELECT DISTINCT
-    s.nro_sucursal,
-    @CAT_ESTILOS,
-    e.nro_estilo,
-    e.nom_estilo
-FROM OPENJSON(@json, '$.sucursales')
-    WITH (
-    nro_sucursal INT '$.nroSucursal',
-    estilos NVARCHAR(MAX) '$.estilos' AS JSON
-    ) s
-    CROSS APPLY OPENJSON(s.estilos)
-WITH (
-    nro_estilo  INT           '$.nroEstilo',
-    nom_estilo  NVARCHAR(150) '$.nomEstilo',
-    habilitado  BIT           '$.habilitado'
-    ) e
-WHERE ISNULL(e.habilitado, 1) = 1;
-
--- especialidades
-INSERT INTO @PrefRaw
-SELECT DISTINCT
-    s.nro_sucursal,
-    @CAT_ESPECIALIDADES,
-    x.nro_restriccion,
-    x.nom_restriccion
-FROM OPENJSON(@json, '$.sucursales')
-    WITH (
-    nro_sucursal INT '$.nroSucursal',
-    especialidades NVARCHAR(MAX) '$.especialidades' AS JSON
-    ) s
-    CROSS APPLY OPENJSON(s.especialidades)
-WITH (
-    nro_restriccion INT           '$.nroRestriccion',
-    nom_restriccion NVARCHAR(150) '$.nomRestriccion',
-    habilitada      BIT           '$.habilitada'
-    ) x
-WHERE ISNULL(x.habilitada, 1) = 1;
-
--- tipos comidas
-INSERT INTO @PrefRaw
-SELECT DISTINCT
-    s.nro_sucursal,
-    @CAT_TIPOS_COMIDAS,
-    t.nro_tipo_comida,
-    t.nom_tipo_comida
-FROM OPENJSON(@json, '$.sucursales')
-    WITH (
-    nro_sucursal INT '$.nroSucursal',
-    tiposComidas NVARCHAR(MAX) '$.tiposComidas' AS JSON
-    ) s
-    CROSS APPLY OPENJSON(s.tiposComidas)
-WITH (
-    nro_tipo_comida INT           '$.nroTipoComida',
-    nom_tipo_comida NVARCHAR(150) '$.nomTipoComida',
-    habilitado      BIT           '$.habilitado'
-    ) t
-WHERE ISNULL(t.habilitado, 1) = 1;
-
--- Upsert dominio (global)
-MERGE dbo.dominio_categorias_preferencias AS tgt
-    USING (
-    SELECT DISTINCT cod_categoria, nro_valor_dominio, nom_valor_dominio
-    FROM @PrefRaw
-    ) AS src
-    ON  tgt.cod_categoria     = src.cod_categoria
-    AND tgt.nro_valor_dominio = src.nro_valor_dominio
-    WHEN MATCHED AND tgt.nom_valor_dominio <> src.nom_valor_dominio THEN
-UPDATE SET nom_valor_dominio = src.nom_valor_dominio
-    WHEN NOT MATCHED THEN
-INSERT (cod_categoria, nro_valor_dominio, nom_valor_dominio)
-VALUES (src.cod_categoria, src.nro_valor_dominio, src.nom_valor_dominio);
-
--- FULL REPLACE preferencias del restaurante (solo estas categorías)
-DELETE pr
-          FROM dbo.preferencias_restaurantes pr
-         WHERE pr.nro_restaurante = @nro_restaurante
-           AND pr.nro_sucursal IS NOT NULL
-           AND pr.cod_categoria IN (@CAT_ESTILOS, @CAT_ESPECIALIDADES, @CAT_TIPOS_COMIDAS);
-
-        ;WITH x AS (
-    SELECT
-        nro_sucursal,
-        cod_categoria,
-        nro_valor_dominio,
-        ROW_NUMBER() OVER(
-                    PARTITION BY cod_categoria, nro_valor_dominio
-                    ORDER BY nro_sucursal
-                ) AS nro_preferencia
-    FROM @PrefRaw
-)
-         INSERT INTO dbo.preferencias_restaurantes
-        (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
-SELECT
-    @nro_restaurante,
-    x.cod_categoria,
-    x.nro_valor_dominio,
-    x.nro_preferencia,
-    NULL,
-    x.nro_sucursal
-FROM x;
-
-COMMIT;
-
-SELECT
-    @nro_restaurante AS nro_restaurante,
-    (SELECT COUNT(*) FROM @Sucursales)  AS sucursales,
-    (SELECT COUNT(*) FROM @Zonas)       AS zonas,
-    (SELECT COUNT(*) FROM @Turnos)      AS turnos,
-    (SELECT COUNT(*) FROM @ZonasTurnos) AS zonas_turnos,
-    (SELECT COUNT(*) FROM @PrefRaw)     AS preferencias_raw;
-
-END TRY
-BEGIN CATCH
-IF XACT_STATE() <> 0 ROLLBACK;
-        THROW;
-END CATCH
-END;
-GO
-
-
 CREATE OR ALTER PROCEDURE dbo.get_categorias_preferencias
     AS
 BEGIN
@@ -2697,7 +1874,7 @@ select * from dbo.preferencias_restaurantes
 select * from dbo.categorias_preferencias
 select * from dbo.dominio_categorias_preferencias
 
-
+    go
 CREATE OR ALTER PROCEDURE dbo.get_cliente_por_correo
     @correo VARCHAR(255)
     AS
@@ -3223,8 +2400,6 @@ ORDER BY z.cod_zona;
 END
 GO
 
-
-
 CREATE OR ALTER PROCEDURE dbo.modificar_reserva_ristorino_por_codigo_sucursal
     @cod_reserva_sucursal NVARCHAR(50),
 
@@ -3412,7 +2587,6 @@ END;
 GO
 
 
-
 go
   CREATE OR ALTER PROCEDURE dbo.obtener_costo_vigente
     @tipo_costo NVARCHAR(50),
@@ -3485,3 +2659,570 @@ select
 from dbo.restaurantes r
 end
 go
+
+
+
+CREATE OR ALTER PROCEDURE dbo.sync_restaurante_desde_json_full
+    @json NVARCHAR(MAX)
+    AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @json IS NULL OR ISJSON(@json) <> 1
+        THROW 51000, 'JSON inválido o NULL.', 1;
+
+BEGIN TRY
+BEGIN TRAN;
+
+        ------------------------------------------------------------
+        -- 1) RESTAURANTE
+        ------------------------------------------------------------
+        DECLARE @nro_restaurante INT;
+        DECLARE @razon_social   NVARCHAR(200);
+        DECLARE @cuit           NVARCHAR(20);
+
+SELECT
+    @nro_restaurante = j.nro_restaurante,
+    @razon_social    = j.razon_social,
+    @cuit            = j.cuit
+FROM OPENJSON(@json)
+    WITH (
+    nro_restaurante INT           '$.nroRestaurante',
+    razon_social    NVARCHAR(200) '$.razonSocial',
+    cuit            NVARCHAR(20)  '$.cuit'
+    ) j;
+
+IF @nro_restaurante IS NULL
+            THROW 51001, 'El JSON no trae nroRestaurante.', 1;
+
+        IF EXISTS (SELECT 1 FROM dbo.restaurantes WHERE nro_restaurante = @nro_restaurante)
+BEGIN
+UPDATE dbo.restaurantes
+SET razon_social = @razon_social,
+    cuit        = @cuit
+WHERE nro_restaurante = @nro_restaurante;
+END
+ELSE
+BEGIN
+INSERT INTO dbo.restaurantes (nro_restaurante, razon_social, cuit)
+VALUES (@nro_restaurante, @razon_social, @cuit);
+END
+
+        ------------------------------------------------------------
+        -- 2) STAGING: SUCURSALES
+        ------------------------------------------------------------
+        DECLARE @Sucursales TABLE(
+            nro_sucursal INT NOT NULL,
+            nom_sucursal NVARCHAR(150) NOT NULL,
+            calle NVARCHAR(150) NULL,
+            nro_calle INT NULL,
+            barrio NVARCHAR(120) NULL,
+            nro_localidad INT NOT NULL,
+            cod_postal NVARCHAR(20) NULL,
+            telefonos NVARCHAR(100) NULL,
+            total_comensales INT NULL,
+            min_tolerencia_reserva INT NULL,
+            cod_sucursal_restaurante NVARCHAR(50) NOT NULL
+        );
+
+INSERT INTO @Sucursales
+SELECT
+    s.nroSucursal,
+    s.nomSucursal,
+    s.calle,
+    s.nroCalle,
+    s.barrio,
+    s.nroLocalidad,
+    s.codPostal,
+    s.telefonos,
+    s.totalComensales,
+    s.minTolerenciaReserva,
+    CONCAT(@nro_restaurante, '-', s.nroSucursal)
+FROM OPENJSON(@json, '$.sucursales')
+    WITH (
+    nroSucursal INT,
+    nomSucursal NVARCHAR(150),
+    calle NVARCHAR(150),
+    nroCalle INT,
+    barrio NVARCHAR(120),
+    nroLocalidad INT,
+    codPostal NVARCHAR(20),
+    telefonos NVARCHAR(100),
+    totalComensales INT,
+    minTolerenciaReserva INT
+    ) s;
+
+------------------------------------------------------------
+-- 3) UPSERT: SUCURSALES (NO DELETE)
+------------------------------------------------------------
+MERGE dbo.sucursales_restaurantes AS T
+    USING @Sucursales AS S
+    ON  T.nro_restaurante = @nro_restaurante
+    AND T.nro_sucursal    = S.nro_sucursal
+    WHEN MATCHED THEN
+UPDATE SET
+    nom_sucursal            = S.nom_sucursal,
+    calle                  = S.calle,
+    nro_calle              = S.nro_calle,
+    barrio                 = S.barrio,
+    nro_localidad          = S.nro_localidad,
+    cod_postal             = S.cod_postal,
+    telefonos              = S.telefonos,
+    total_comensales       = S.total_comensales,
+    min_tolerencia_reserva = S.min_tolerencia_reserva,
+    cod_sucursal_restaurante = S.cod_sucursal_restaurante
+    WHEN NOT MATCHED THEN
+INSERT (nro_restaurante, nro_sucursal, nom_sucursal, calle, nro_calle, barrio,
+nro_localidad, cod_postal, telefonos, total_comensales,
+min_tolerencia_reserva, cod_sucursal_restaurante)
+VALUES (@nro_restaurante, S.nro_sucursal, S.nom_sucursal, S.calle, S.nro_calle, S.barrio,
+    S.nro_localidad, S.cod_postal, S.telefonos, S.total_comensales,
+    S.min_tolerencia_reserva, S.cod_sucursal_restaurante);
+
+------------------------------------------------------------
+-- 4) STAGING: ZONAS
+------------------------------------------------------------
+DECLARE @Zonas TABLE(
+            nro_sucursal INT NOT NULL,
+            cod_zona INT NOT NULL,
+            desc_zona NVARCHAR(200) NULL,
+            cant_comensales INT NULL,
+            permite_menores BIT NULL,
+            habilitada BIT NULL
+        );
+
+INSERT INTO @Zonas
+SELECT
+    s.nroSucursal,
+    z.codZona,
+    z.nomZona,
+    z.cantComensales,
+    z.permiteMenores,
+    z.habilitada
+FROM OPENJSON(@json,'$.sucursales')
+    WITH (nroSucursal INT, zonas NVARCHAR(MAX) AS JSON) s
+    OUTER APPLY OPENJSON(s.zonas)
+WITH (
+    codZona INT,
+    nomZona NVARCHAR(200),
+    cantComensales INT,
+    permiteMenores BIT,
+    habilitada BIT
+    ) z;
+
+------------------------------------------------------------
+-- 5) UPSERT: ZONAS (soft delete si desaparecen y tienen reservas)
+------------------------------------------------------------
+MERGE dbo.zonas_sucursales_restaurantes AS T
+    USING @Zonas AS S
+    ON  T.nro_restaurante = @nro_restaurante
+    AND T.nro_sucursal    = S.nro_sucursal
+    AND T.cod_zona        = S.cod_zona
+    WHEN MATCHED THEN
+UPDATE SET
+    desc_zona       = S.desc_zona,
+    cant_comensales = S.cant_comensales,
+    permite_menores = ISNULL(S.permite_menores, 1),
+    habilitada      = ISNULL(S.habilitada, 1)
+    WHEN NOT MATCHED THEN
+INSERT (nro_restaurante, nro_sucursal, cod_zona, desc_zona, cant_comensales, permite_menores, habilitada)
+VALUES (@nro_restaurante, S.nro_sucursal, S.cod_zona, S.desc_zona, S.cant_comensales,
+    ISNULL(S.permite_menores,1), ISNULL(S.habilitada,1));
+
+;WITH ZonasFaltantes AS (
+    SELECT T.nro_sucursal, T.cod_zona
+    FROM dbo.zonas_sucursales_restaurantes T
+    WHERE T.nro_restaurante = @nro_restaurante
+      AND NOT EXISTS (
+        SELECT 1 FROM @Zonas S
+        WHERE S.nro_sucursal = T.nro_sucursal
+          AND S.cod_zona     = T.cod_zona
+    )
+)
+UPDATE Z
+SET habilitada = 0
+    FROM dbo.zonas_sucursales_restaurantes Z
+        JOIN ZonasFaltantes F
+ON F.nro_sucursal = Z.nro_sucursal AND F.cod_zona = Z.cod_zona
+WHERE Z.nro_restaurante = @nro_restaurante
+  AND EXISTS (
+    SELECT 1 FROM dbo.reservas_restaurantes R
+    WHERE R.nro_restaurante = Z.nro_restaurante
+  AND R.nro_sucursal    = Z.nro_sucursal
+  AND R.cod_zona        = Z.cod_zona
+    );
+
+------------------------------------------------------------
+-- 6) STAGING: TURNOS
+------------------------------------------------------------
+DECLARE @Turnos TABLE(
+            nro_sucursal INT NOT NULL,
+            hora_desde TIME(0) NOT NULL,
+            hora_hasta TIME(0) NULL,
+            habilitado BIT NULL
+        );
+
+INSERT INTO @Turnos
+SELECT
+    s.nroSucursal,
+    t.horaDesde,
+    t.horaHasta,
+    t.habilitado
+FROM OPENJSON(@json,'$.sucursales')
+    WITH (nroSucursal INT, turnos NVARCHAR(MAX) AS JSON) s
+    OUTER APPLY OPENJSON(s.turnos)
+WITH (horaDesde TIME(0), horaHasta TIME(0), habilitado BIT) t;
+
+------------------------------------------------------------
+-- 7) UPSERT: TURNOS (soft delete habilitado=0 si desaparecen)
+------------------------------------------------------------
+MERGE dbo.turnos_sucursales_restaurantes AS T
+    USING @Turnos AS S
+    ON  T.nro_restaurante = @nro_restaurante
+    AND T.nro_sucursal    = S.nro_sucursal
+    AND T.hora_desde      = S.hora_desde
+    WHEN MATCHED THEN
+UPDATE SET
+    hora_hasta = S.hora_hasta,
+    habilitado = ISNULL(S.habilitado, 1)
+    WHEN NOT MATCHED THEN
+INSERT (nro_restaurante, nro_sucursal, hora_desde, hora_hasta, habilitado)
+VALUES (@nro_restaurante, S.nro_sucursal, S.hora_desde, S.hora_hasta, ISNULL(S.habilitado,1));
+
+UPDATE T
+SET habilitado = 0
+    FROM dbo.turnos_sucursales_restaurantes T
+WHERE T.nro_restaurante = @nro_restaurante
+  AND NOT EXISTS (
+    SELECT 1 FROM @Turnos S
+    WHERE S.nro_sucursal = T.nro_sucursal
+  AND S.hora_desde   = T.hora_desde
+    );
+
+------------------------------------------------------------
+-- 8) ZONAS_TURNOS: full replace
+------------------------------------------------------------
+DELETE FROM dbo.zonas_turnos_sucurales_restaurantes
+WHERE nro_restaurante = @nro_restaurante;
+
+INSERT INTO dbo.zonas_turnos_sucurales_restaurantes
+(nro_restaurante, nro_sucursal, cod_zona, hora_desde, permite_menores)
+SELECT
+    @nro_restaurante,
+    s.nroSucursal,
+    z.codZona,
+    z.horaDesde,
+    ISNULL(z.permiteMenores, 1)
+FROM OPENJSON(@json,'$.sucursales')
+    WITH (nroSucursal INT, zonasTurnos NVARCHAR(MAX) AS JSON) s
+    OUTER APPLY OPENJSON(s.zonasTurnos)
+WITH (codZona INT, horaDesde TIME(0), permiteMenores BIT) z;
+
+------------------------------------------------------------
+-- 9) CATEGORÍAS (asegurar)
+------------------------------------------------------------
+DECLARE @CAT_ESTILOS INT, @CAT_ESPECIALIDADES INT, @CAT_TIPOS INT;
+
+SELECT @CAT_ESTILOS = cod_categoria
+FROM dbo.categorias_preferencias
+WHERE nom_categoria = 'ESTILOS';
+IF @CAT_ESTILOS IS NULL
+BEGIN
+SELECT @CAT_ESTILOS = ISNULL(MAX(cod_categoria),0)+1 FROM dbo.categorias_preferencias;
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (@CAT_ESTILOS, 'ESTILOS');
+END
+
+SELECT @CAT_ESPECIALIDADES = cod_categoria
+FROM dbo.categorias_preferencias
+WHERE nom_categoria = 'ESPECIALIDADES';
+IF @CAT_ESPECIALIDADES IS NULL
+BEGIN
+SELECT @CAT_ESPECIALIDADES = ISNULL(MAX(cod_categoria),0)+1 FROM dbo.categorias_preferencias;
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (@CAT_ESPECIALIDADES, 'ESPECIALIDADES');
+END
+
+SELECT @CAT_TIPOS = cod_categoria
+FROM dbo.categorias_preferencias
+WHERE nom_categoria = 'TIPOS_COMIDAS';
+IF @CAT_TIPOS IS NULL
+BEGIN
+SELECT @CAT_TIPOS = ISNULL(MAX(cod_categoria),0)+1 FROM dbo.categorias_preferencias;
+INSERT INTO dbo.categorias_preferencias (cod_categoria, nom_categoria)
+VALUES (@CAT_TIPOS, 'TIPOS_COMIDAS');
+END
+
+        ------------------------------------------------------------
+        -- 10) PREFRAW (DECLARADA ACÁ, antes de usar)
+        ------------------------------------------------------------
+        DECLARE @PrefRaw TABLE(
+            nro_sucursal INT NOT NULL,
+            cod_categoria INT NOT NULL,
+            nro_valor_dominio INT NOT NULL,
+            nom_valor_dominio NVARCHAR(150) NOT NULL
+        );
+
+        ------------------------------------------------------------
+        -- 11) Opción B por NOMBRE: staging por categoría
+        ------------------------------------------------------------
+        DECLARE @EstilosIn TABLE (nro_sucursal INT NOT NULL, nom_val NVARCHAR(150) NOT NULL);
+        DECLARE @EspecialidadesIn TABLE (nro_sucursal INT NOT NULL, nom_val NVARCHAR(150) NOT NULL);
+        DECLARE @TiposIn TABLE (nro_sucursal INT NOT NULL, nom_val NVARCHAR(150) NOT NULL);
+
+        -- ESTILOS
+INSERT INTO @EstilosIn (nro_sucursal, nom_val)
+SELECT DISTINCT
+    s.nroSucursal,
+    LTRIM(RTRIM(e.nomEstilo))
+FROM OPENJSON(@json,'$.sucursales')
+    WITH (nroSucursal INT, estilos NVARCHAR(MAX) AS JSON) s
+    OUTER APPLY OPENJSON(s.estilos)
+WITH (nomEstilo NVARCHAR(150), habilitado BIT) e
+WHERE ISNULL(e.habilitado,1)=1
+  AND e.nomEstilo IS NOT NULL
+  AND LTRIM(RTRIM(e.nomEstilo)) <> '';
+
+-- ESPECIALIDADES
+INSERT INTO @EspecialidadesIn (nro_sucursal, nom_val)
+SELECT DISTINCT
+    s.nroSucursal,
+    LTRIM(RTRIM(e.nomRestriccion))
+FROM OPENJSON(@json,'$.sucursales')
+    WITH (nroSucursal INT, especialidades NVARCHAR(MAX) AS JSON) s
+    OUTER APPLY OPENJSON(s.especialidades)
+WITH (nomRestriccion NVARCHAR(150), habilitada BIT) e
+WHERE ISNULL(e.habilitada,1)=1
+  AND e.nomRestriccion IS NOT NULL
+  AND LTRIM(RTRIM(e.nomRestriccion)) <> '';
+
+-- TIPOS_COMIDAS
+INSERT INTO @TiposIn (nro_sucursal, nom_val)
+SELECT DISTINCT
+    s.nroSucursal,
+    LTRIM(RTRIM(t.nomTipoComida))
+FROM OPENJSON(@json,'$.sucursales')
+    WITH (nroSucursal INT, tiposComidas NVARCHAR(MAX) AS JSON) s
+    OUTER APPLY OPENJSON(s.tiposComidas)
+WITH (nomTipoComida NVARCHAR(150), habilitado BIT) t
+WHERE ISNULL(t.habilitado,1)=1
+  AND t.nomTipoComida IS NOT NULL
+  AND LTRIM(RTRIM(t.nomTipoComida)) <> '';
+
+------------------------------------------------------------
+-- 11.1) Dominio + PrefRaw: ESTILOS
+------------------------------------------------------------
+DECLARE @MaxEst INT = (
+            SELECT ISNULL(MAX(nro_valor_dominio),0)
+            FROM dbo.dominio_categorias_preferencias
+            WHERE cod_categoria = @CAT_ESTILOS
+        );
+
+        ;WITH MissingNames AS (
+    SELECT DISTINCT I.nom_val
+    FROM @EstilosIn I
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM dbo.dominio_categorias_preferencias D
+        WHERE D.cod_categoria = @CAT_ESTILOS
+          AND LTRIM(RTRIM(D.nom_valor_dominio)) = I.nom_val
+    )
+),
+              ToInsert AS (
+                  SELECT
+                      @CAT_ESTILOS AS cod_categoria,
+                      @MaxEst + ROW_NUMBER() OVER (ORDER BY nom_val) AS nro_valor_dominio,
+                          nom_val AS nom_valor_dominio
+                  FROM MissingNames
+              )
+         INSERT INTO dbo.dominio_categorias_preferencias (cod_categoria, nro_valor_dominio, nom_valor_dominio)
+SELECT cod_categoria, nro_valor_dominio, nom_valor_dominio
+FROM ToInsert;
+
+INSERT INTO @PrefRaw (nro_sucursal, cod_categoria, nro_valor_dominio, nom_valor_dominio)
+SELECT
+    I.nro_sucursal,
+    @CAT_ESTILOS,
+    D.nro_valor_dominio,
+    I.nom_val
+FROM @EstilosIn I
+         JOIN dbo.dominio_categorias_preferencias D
+              ON D.cod_categoria = @CAT_ESTILOS
+                  AND LTRIM(RTRIM(D.nom_valor_dominio)) = I.nom_val;
+
+------------------------------------------------------------
+-- 11.2) Dominio + PrefRaw: ESPECIALIDADES
+------------------------------------------------------------
+DECLARE @MaxEsp INT = (
+            SELECT ISNULL(MAX(nro_valor_dominio),0)
+            FROM dbo.dominio_categorias_preferencias
+            WHERE cod_categoria = @CAT_ESPECIALIDADES
+        );
+
+        ;WITH MissingNames AS (
+    SELECT DISTINCT I.nom_val
+    FROM @EspecialidadesIn I
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM dbo.dominio_categorias_preferencias D
+        WHERE D.cod_categoria = @CAT_ESPECIALIDADES
+          AND LTRIM(RTRIM(D.nom_valor_dominio)) = I.nom_val
+    )
+),
+              ToInsert AS (
+                  SELECT
+                      @CAT_ESPECIALIDADES AS cod_categoria,
+                      @MaxEsp + ROW_NUMBER() OVER (ORDER BY nom_val) AS nro_valor_dominio,
+                          nom_val AS nom_valor_dominio
+                  FROM MissingNames
+              )
+         INSERT INTO dbo.dominio_categorias_preferencias (cod_categoria, nro_valor_dominio, nom_valor_dominio)
+SELECT cod_categoria, nro_valor_dominio, nom_valor_dominio
+FROM ToInsert;
+
+INSERT INTO @PrefRaw (nro_sucursal, cod_categoria, nro_valor_dominio, nom_valor_dominio)
+SELECT
+    I.nro_sucursal,
+    @CAT_ESPECIALIDADES,
+    D.nro_valor_dominio,
+    I.nom_val
+FROM @EspecialidadesIn I
+         JOIN dbo.dominio_categorias_preferencias D
+              ON D.cod_categoria = @CAT_ESPECIALIDADES
+                  AND LTRIM(RTRIM(D.nom_valor_dominio)) = I.nom_val;
+
+------------------------------------------------------------
+-- 11.3) Dominio + PrefRaw: TIPOS_COMIDAS
+------------------------------------------------------------
+DECLARE @MaxTipos INT = (
+            SELECT ISNULL(MAX(nro_valor_dominio),0)
+            FROM dbo.dominio_categorias_preferencias
+            WHERE cod_categoria = @CAT_TIPOS
+        );
+
+        ;WITH MissingNames AS (
+    SELECT DISTINCT I.nom_val
+    FROM @TiposIn I
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM dbo.dominio_categorias_preferencias D
+        WHERE D.cod_categoria = @CAT_TIPOS
+          AND LTRIM(RTRIM(D.nom_valor_dominio)) = I.nom_val
+    )
+),
+              ToInsert AS (
+                  SELECT
+                      @CAT_TIPOS AS cod_categoria,
+                      @MaxTipos + ROW_NUMBER() OVER (ORDER BY nom_val) AS nro_valor_dominio,
+                          nom_val AS nom_valor_dominio
+                  FROM MissingNames
+              )
+         INSERT INTO dbo.dominio_categorias_preferencias (cod_categoria, nro_valor_dominio, nom_valor_dominio)
+SELECT cod_categoria, nro_valor_dominio, nom_valor_dominio
+FROM ToInsert;
+
+INSERT INTO @PrefRaw (nro_sucursal, cod_categoria, nro_valor_dominio, nom_valor_dominio)
+SELECT
+    I.nro_sucursal,
+    @CAT_TIPOS,
+    D.nro_valor_dominio,
+    I.nom_val
+FROM @TiposIn I
+         JOIN dbo.dominio_categorias_preferencias D
+              ON D.cod_categoria = @CAT_TIPOS
+                  AND LTRIM(RTRIM(D.nom_valor_dominio)) = I.nom_val;
+
+------------------------------------------------------------
+-- 12) UPSERT preferencias_restaurantes SIN romper FKs
+------------------------------------------------------------
+DECLARE @PrefBase INT = (
+            SELECT ISNULL(MAX(nro_preferencia),0)
+            FROM dbo.preferencias_restaurantes
+            WHERE nro_restaurante = @nro_restaurante
+        );
+
+        ;WITH Missing AS (
+    SELECT DISTINCT
+        @nro_restaurante AS nro_restaurante,
+        P.nro_sucursal,
+        P.cod_categoria,
+        P.nro_valor_dominio,
+        ROW_NUMBER() OVER (
+                    ORDER BY P.cod_categoria, P.nro_valor_dominio, P.nro_sucursal
+                ) AS rn
+    FROM @PrefRaw P
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM dbo.preferencias_restaurantes PR
+        WHERE PR.nro_restaurante   = @nro_restaurante
+          AND PR.nro_sucursal      = P.nro_sucursal
+          AND PR.cod_categoria     = P.cod_categoria
+          AND PR.nro_valor_dominio = P.nro_valor_dominio
+    )
+)
+         INSERT INTO dbo.preferencias_restaurantes
+            (nro_restaurante, cod_categoria, nro_valor_dominio, nro_preferencia, observaciones, nro_sucursal)
+SELECT
+    nro_restaurante,
+    cod_categoria,
+    nro_valor_dominio,
+    @PrefBase + rn,
+    NULL,
+    nro_sucursal
+FROM Missing;
+
+-- Borrar solo si NO viene y NO está usada por reservas
+DELETE PR
+        FROM dbo.preferencias_restaurantes PR
+        WHERE PR.nro_restaurante = @nro_restaurante
+          AND PR.cod_categoria IN (@CAT_ESTILOS, @CAT_ESPECIALIDADES, @CAT_TIPOS)
+          AND NOT EXISTS (
+              SELECT 1
+              FROM @PrefRaw P
+              WHERE P.nro_sucursal      = PR.nro_sucursal
+                AND P.cod_categoria     = PR.cod_categoria
+                AND P.nro_valor_dominio = PR.nro_valor_dominio
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.preferencias_reservas_restaurantes RR
+              WHERE RR.nro_restaurante = PR.nro_restaurante
+                AND RR.nro_preferencia = PR.nro_preferencia
+          );
+
+COMMIT;
+END TRY
+BEGIN CATCH
+IF XACT_STATE() <> 0 ROLLBACK;
+        THROW;
+END CATCH
+END;
+GO
+
+
+
+
+
+/*
+
+select * from restaurantes
+select * from sucursales_restaurantes
+SELECT * FROM dbo.zonas_sucursales_restaurantes;
+SELECT * FROM dbo.turnos_sucursales_restaurantes;
+SELECT * FROM dbo.zonas_turnos_sucurales_restaurantes;
+
+
+SELECT * from dbo.categorias_preferencias
+select * from dbo.dominio_categorias_preferencias
+select * from dbo.preferencias_restaurantes
+
+
+
+select * from dbo.contenidos_restaurantes
+select * from dbo.reservas_restaurantes
+*/
+
+
+
+
