@@ -1843,32 +1843,54 @@ GO
 
 
 
-
 CREATE OR ALTER PROCEDURE dbo.get_categorias_preferencias
+    @idioma_front VARCHAR(10)      -- 'es', 'en', 'es_AR', 'en_US'
     AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
-    -- RS1: Categorías
-SELECT
-    cod_categoria,
-    nom_categoria
-FROM dbo.categorias_preferencias
-ORDER BY cod_categoria;
+    ------------------------------------------------------------
+    -- 0) Resolver nro_idioma
+    ------------------------------------------------------------
+    DECLARE @nro_idioma INT;
 
--- RS2: Dominios por categoría
+    SET @nro_idioma =
+        CASE
+            WHEN @idioma_front LIKE 'es%' THEN 1
+            WHEN @idioma_front LIKE 'en%' THEN 2
+            ELSE 1
+END;
+
+    ------------------------------------------------------------
+    -- RS1: Categorías (traducidas si existen)
+    ------------------------------------------------------------
 SELECT
-    cod_categoria,
-    nro_valor_dominio,
-    nom_valor_dominio
-FROM dbo.dominio_categorias_preferencias
-ORDER BY cod_categoria, nro_valor_dominio;
+    c.cod_categoria,
+    COALESCE(ic.categoria, c.nom_categoria)     AS nom_categoria,
+    COALESCE(ic.desc_categoria, N'')            AS desc_categoria
+FROM dbo.categorias_preferencias c
+         LEFT JOIN dbo.idiomas_categorias_preferencias ic
+                   ON ic.cod_categoria = c.cod_categoria
+                       AND ic.nro_idioma   = @nro_idioma
+ORDER BY c.cod_categoria;
+
+------------------------------------------------------------
+-- RS2: Dominios por categoría (traducidos si existen)
+------------------------------------------------------------
+SELECT
+    d.cod_categoria,
+    d.nro_valor_dominio,
+    COALESCE(idc.valor_dominio, d.nom_valor_dominio) AS nom_valor_dominio,
+    COALESCE(idc.desc_valor_dominio, N'')            AS desc_valor_dominio
+FROM dbo.dominio_categorias_preferencias d
+         LEFT JOIN dbo.idiomas_dominio_cat_preferencias idc
+                   ON idc.cod_categoria      = d.cod_categoria
+                       AND idc.nro_valor_dominio  = d.nro_valor_dominio
+                       AND idc.nro_idioma         = @nro_idioma
+ORDER BY d.cod_categoria, d.nro_valor_dominio;
 END;
 GO
-
-
-
-
 
 select * from dbo.localidades
 

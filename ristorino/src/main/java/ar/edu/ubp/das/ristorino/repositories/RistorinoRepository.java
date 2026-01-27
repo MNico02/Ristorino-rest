@@ -505,12 +505,14 @@ public class RistorinoRepository {
     }
 
     public List<CategoriaPreferenciaBean> obtenerCategoriasPreferencias() {
+        String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("idioma_front",idiomaActual);
 
         Map<String, Object> out =
                 jdbcCallFactory.executeWithOutputs(
                         "get_categorias_preferencias",
-                        "dbo",
-                        new MapSqlParameterSource()
+                        "dbo",params
                 );
 
         // RS1: Categorías

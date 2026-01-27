@@ -196,6 +196,7 @@ public class RistorinoResource {
 
     @GetMapping("/categoriasPreferencias")
     public ResponseEntity<List<CategoriaPreferenciaBean>> obtenerCategoriasPreferencias() {
+
         List<CategoriaPreferenciaBean> resultado =
                 ristorinoRepository.obtenerCategoriasPreferencias();
         return ResponseEntity.ok(resultado);
