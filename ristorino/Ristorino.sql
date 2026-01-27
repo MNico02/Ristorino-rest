@@ -679,14 +679,36 @@ VALUES
 (1,5,1,N'Moderno',N''),
 (1,5,2,N'Modern',N'');
 
+-- Industrial
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(1,6,1,N'Industrial',N''),
+(1,6,2,N'Industrial',N'');
+
+-- Urbano
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(1,7,1,N'Urbano',N''),
+(1,7,2,N'Urban',N'');
+
+-- Folclórico
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(1,8,1,N'Folclórico',N''),
+(1,8,2,N'Folkloric',N'');
+
+-- Rústico
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(1,9,1,N'Rústico',N''),
+(1,9,2,N'Rustic',N'');
+
+
+
+
+--ESPECIALIDADES
 -- Celíaco
 INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
 VALUES
 (2,1,1,N'Celíaco',N''),
 (2,1,2,N'Celiac',N'');
 
-
---ESPECIALIDADES
 -- Vegetariano
 INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
 VALUES
@@ -711,6 +733,19 @@ VALUES
 (2,5,1,N'Vegano',N''),
 (2,5,2,N'Vegan',N'');
 
+-- Opción keto
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(2,6,1,N'Opción keto',N''),
+(2,6,2,N'Keto option',N'');
+
+-- Sin lactosa
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(2,7,1,N'Sin lactosa',N''),
+(2,7,2,N'Lactose free',N'');
+
+
+
+
 --TIPÓ DE COMIDA
 -- Italiana tradicional
 INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
@@ -722,8 +757,57 @@ VALUES
 INSERT INTO idiomas_dominio_cat_preferencias (cod_categoria,nro_valor_dominio,nro_idioma,valor_dominio,desc_valor_dominio)
 VALUES
 (3,2,1,N'Fusión japonesa-peruana',N''),
-(3,2,2,N'Japanese-Peruvian fusion',N'');*/
+(3,2,2,N'Japanese-Peruvian fusion',N'');
 
+-- Comida rápida gourmet
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(3,3,1,N'Comida rápida gourmet',N''),
+(3,3,2,N'Gourmet fast food',N'');
+
+-- Regional del NOA
+INSERT INTO idiomas_dominio_cat_preferencias VALUES
+(3,4,1,N'Regional del NOA',N''),
+(3,4,2,N'NOA regional cuisine',N'');
+
+
+
+INSERT INTO idiomas_zonas_suc_restaurantes
+(nro_restaurante, nro_sucursal, cod_zona, nro_idioma, zona, desc_zona)
+VALUES
+-- Restaurante 1
+(1,1,1,1,N'Salón',N''),(1,1,1,2,N'Lounge',N''),
+(1,1,2,1,N'Terraza',N''),(1,1,2,2,N'Terrace',N''),
+
+(1,2,1,1,N'Salón',N''),(1,2,1,2,N'Lounge',N''),
+(1,2,2,1,N'Terraza',N''),(1,2,2,2,N'Terrace',N''),
+
+-- Restaurante 2
+(2,1,1,1,N'Salón Nikkei',N''),(2,1,1,2,N'Nikkei Lounge',N''),
+(2,1,2,1,N'Terraza Zen',N''),(2,1,2,2,N'Zen Terrace',N''),
+(2,1,3,1,N'Bar Sushi',N''),(2,1,3,2,N'Sushi Bar',N''),
+
+(2,2,1,1,N'Salón Nikkei',N''),(2,2,1,2,N'Nikkei Lounge',N''),
+(2,2,2,1,N'Terraza Zen',N''),(2,2,2,2,N'Zen Terrace',N''),
+(2,2,3,1,N'Bar Sushi',N''),(2,2,3,2,N'Sushi Bar',N''),
+
+-- Restaurante 3
+(3,1,1,1,N'Salón Industrial',N''),(3,1,1,2,N'Industrial Hall',N''),
+(3,1,2,1,N'Patio de la Fábrica',N''),(3,1,2,2,N'Factory Patio',N''),
+(3,1,3,1,N'Bar Craft Beer',N''),(3,1,3,2,N'Craft Beer Bar',N''),
+
+(3,2,1,1,N'Salón Industrial',N''),(3,2,1,2,N'Industrial Hall',N''),
+(3,2,2,1,N'Patio de la Fábrica',N''),(3,2,2,2,N'Factory Patio',N''),
+(3,2,3,1,N'Bar Craft Beer',N''),(3,2,3,2,N'Craft Beer Bar',N''),
+
+-- Restaurante 4
+(4,1,1,1,N'Salón Norteño',N''),(4,1,1,2,N'Northern Hall',N''),
+(4,1,2,1,N'Patio Criollo',N''),(4,1,2,2,N'Creole Patio',N''),
+(4,1,3,1,N'Peña y Fogón',N''),(4,1,3,2,N'Folk Grill',N''),
+
+(4,2,1,1,N'Salón Norteño',N''),(4,2,1,2,N'Northern Hall',N''),
+(4,2,2,1,N'Patio Criollo',N''),(4,2,2,2,N'Creole Patio',N''),
+(4,2,3,1,N'Peña y Fogón',N''),(4,2,3,2,N'Folk Grill',N'');
+*/
 
 
 go
