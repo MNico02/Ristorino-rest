@@ -16,40 +16,116 @@ import java.util.Map;
 public class GeminiService {
 
 
-    private static final String API_KEY = "AIzaSyALuK9aZ_qKNsigHgWn-j5bfx6oAivdNYs";
+    private static final String API_KEY = "AIzaSyA4LXo6RM5obvQx5120B6z-DGPMAi7aj3Y";
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
     public FiltroRecomendacionBean interpretarTexto(String textoUsuario) throws Exception {
 
         String prompt = """
-            Analiza el siguiente texto del usuario que busca un restaurante. El texto puede estar en ingles o español.
-            Si el texto menciona el nombre de un restaurante o una sucursal,completá el campo "nombreRestaurante".
-            Devuelve SOLO un JSON **válido** con los siguientes campos en español exactamente:
-            {
-              "tipoComida": "",
-              "momentoDelDia": "",
-              "ciudad": "",
-              "provincia": "",
-              "rangoPrecio": "",
-              "tieneMenores": "",
-              "restriccionesAlimentarias": "",
-              "preferenciasAmbiente": "",
-              "cantidadPersonas": "",
-              "nombreRestaurante": ""
-            }
-            Texto: "%s"
-        """.formatted(textoUsuario);
+Analizá el texto del usuario que busca un restaurante.
+El texto puede estar en español o en inglés.
+
+Tu objetivo es INTERPRETAR LA INTENCIÓN del usuario y mapearla a filtros
+compatibles con una base de datos de restaurantes y sucursales.
+
+REGLAS GENERALES (OBLIGATORIAS):
+- NO inventes información que el usuario no menciona.
+- Normalizá sinónimos a valores simples.
+- Si un dato no está claro, dejá el campo vacío ("").
+- Devolvé SIEMPRE un JSON válido.
+- NO agregues explicaciones, comentarios, texto extra ni markdown.
+
+-----------------------------------
+NORMALIZACIÓN DE PRECIO:
+-----------------------------------
+- "barato", "económico", "low cost", "cheap" → rangoPrecio = "bajo"
+- "precio medio", "normal", "average" → rangoPrecio = "medio"
+- "caro", "lujoso", "premium", "expensive" → rangoPrecio = "alto"
+
+-----------------------------------
+NORMALIZACIÓN DE HORARIO:
+-----------------------------------
+- "desayuno", "mañana", "breakfast" → momentoDelDia = "mañana"
+- "almuerzo", "mediodía", "lunch" → momentoDelDia = "mediodía"
+- "tarde", "merienda" → momentoDelDia = "tarde"
+- "cena", "noche", "dinner" → momentoDelDia = "noche"
+
+-----------------------------------
+UBICACIÓN (IMPORTANTE):
+-----------------------------------
+- Si menciona una CIUDAD o PROVINCIA clara, completar ciudad / provincia.
+- Si menciona un BARRIO o ZONA (ej: Güemes, Centro, Nueva Córdoba)
+  y NO hay campo específico para barrio,
+  usar el campo "ciudad" para almacenar ese valor.
+  (Ejemplo: ciudad = "Güemes")
+
+-----------------------------------
+RESTAURANTE / SUCURSAL:
+-----------------------------------
+- Si menciona un nombre propio que parece restaurante o sucursal,
+  completar nombreRestaurante.
+- NO confundir tipo de comida con nombre de restaurante.
+
+-----------------------------------
+PERSONAS Y MENORES:
+-----------------------------------
+- Si menciona cantidad de personas, usar SOLO el número en cantidadPersonas.
+- Si menciona niños, familia, menores, kids → tieneMenores = "si".
+- Si menciona solo adultos → tieneMenores = "no".
+
+-----------------------------------
+RESTRICCIONES ALIMENTARIAS:
+-----------------------------------
+- Mapear a restriccionesAlimentarias valores como:
+  vegetariano, vegano, sin gluten, kosher, halal, etc.
+
+-----------------------------------
+AMBIENTE:
+-----------------------------------
+- Mapear preferenciasAmbiente con valores como:
+  tranquilo, familiar, romántico, bar, moderno, gourmet, informal.
+
+-----------------------------------
+TIPO DE COMIDA:
+-----------------------------------
+- Si menciona un tipo de comida (italiana, japonesa, mexicana, rápida, etc.)
+  completar tipoComida.
+
+-----------------------------------
+DEVOLVÉ EXACTAMENTE ESTE JSON
+(con estos campos, sin agregar ni quitar ninguno):
+
+{
+  "tipoComida": "",
+  "momentoDelDia": "",
+  "ciudad": "",
+  "provincia": "",
+  "barrioZona": "",
+  "rangoPrecio": "",
+  "tieneMenores": "",
+  "restriccionesAlimentarias": "",
+  "preferenciasAmbiente": "",
+  "cantidadPersonas": "",
+  "nombreRestaurante": "",
+  "horarioFlexible": false/true
+}
+
+Texto del usuario:
+"%s"
+""".formatted(textoUsuario);
 
         String requestBody = """
+    {
+      "contents": [
         {
-          "contents": [
-            {
-              "parts": [{"text": "%s"}]
-            }
+          "parts": [
+            { "text": "%s" }
           ]
         }
-        """.formatted(prompt.replace("\"", "\\\""));
+      ]
+    }
+    """.formatted(prompt.replace("\"", "\\\""));
 
         URL url = new URL(GEMINI_URL);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -69,7 +145,9 @@ public class GeminiService {
         BufferedReader br = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
         StringBuilder response = new StringBuilder();
         String line;
-        while ((line = br.readLine()) != null) response.append(line);
+        while ((line = br.readLine()) != null) {
+            response.append(line);
+        }
         br.close();
 
         if (status != 200) {
@@ -82,19 +160,21 @@ public class GeminiService {
 
         text = text.trim();
         if (text.startsWith("```")) {
-            text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+            text = text.replaceAll("```json", "")
+                    .replaceAll("```", "")
+                    .trim();
         }
 
-
-
         try {
+            System.out.println("🔮 JSON IA = " + text);
             return mapper.readValue(text, FiltroRecomendacionBean.class);
         } catch (Exception ex) {
-            System.err.println("Error parseando JSON IA: " + ex.getMessage());
+            System.err.println("❌ Error parseando JSON IA: " + ex.getMessage());
             System.err.println("Texto devuelto por Gemini: " + text);
             throw new RuntimeException("Respuesta IA inválida o mal formada.");
         }
     }
+
 
 
     public String generarTextoPromocional(String textoBase, String idioma, Integer nroRestaurante, Integer nroSucursal) throws Exception {

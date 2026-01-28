@@ -112,6 +112,7 @@ public class RistorinoRepository {
     /*--IA---*/
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> obtenerRecomendaciones(FiltroRecomendacionBean filtro) {
+
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("tipoComida", filtro.getTipoComida())
                 .addValue("ciudad", filtro.getCiudad())
@@ -123,16 +124,23 @@ public class RistorinoRepository {
                 .addValue("restriccionesAlimentarias", filtro.getRestriccionesAlimentarias())
                 .addValue("preferenciasAmbiente", filtro.getPreferenciasAmbiente())
                 .addValue("nroCliente", filtro.getNroCliente())
-                .addValue("nombreRestaurante", filtro.getNombreRestaurante());
+                .addValue("nombreRestaurante", filtro.getNombreRestaurante())
+                .addValue("barrioZona", filtro.getBarrioZona())
+                .addValue("horarioFlexible", filtro.getHorarioFlexible());
 
         try {
-
-            return jdbcCallFactory.executeQueryAsMap("recomendar_restaurantes", "dbo", params, "result");
+            return jdbcCallFactory.executeQueryAsMap(
+                    "recomendar_restaurantes",
+                    "dbo",
+                    params,
+                    "result"
+            );
         } catch (Exception e) {
             throw new RuntimeException("Error al obtener recomendaciones: " + e.getMessage(), e);
         }
     }
-        /*--IA Promociones--*/
+
+    /*--IA Promociones--*/
         // Obtener todos los contenidos pendientes de generación
         @SuppressWarnings("unchecked")
         public List<Map<String, Object>> obtenerContenidosPendientes() {
