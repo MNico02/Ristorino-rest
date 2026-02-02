@@ -15,6 +15,7 @@ public class FiltroRecomendacionBean {
     private String nombreRestaurante;
     private String barrioZona;
     private Boolean horarioFlexible;
+    private String comida;
 
     // --- Getters y Setters ---
     public String getTipoComida() { return tipoComida; }
@@ -68,5 +69,13 @@ public class FiltroRecomendacionBean {
 
     public void setHorarioFlexible(Boolean horarioFlexible) {
         this.horarioFlexible = horarioFlexible;
+    }
+
+    public String getComida() {
+        return comida;
+    }
+
+    public void setComida(String comida) {
+        this.comida = comida;
     }
 }

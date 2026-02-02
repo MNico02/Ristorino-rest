@@ -1,6 +1,7 @@
 package ar.edu.ubp.das.ristorino.batch;
 
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
+import ar.edu.ubp.das.ristorino.service.GeminiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.WebApplicationType;
@@ -16,20 +17,21 @@ import java.util.Map;
 public class GenerarContenidosIABatch {
 
     @Autowired
-    private RistorinoRepository ristorinoRepository;
+    private GeminiService geminiService;
 
-    @Transactional
+
     public void ejecutar() {
 
         log.info("Iniciando batch de generación de contenidos promocionales con IA");
 
         Map<String, Object> resultado =
-                ristorinoRepository.generarContenidosPromocionales();
+                geminiService.generarContenidosPromocionalesBatch();
 
         log.info("Resultado del batch IA: {}", resultado);
 
         log.info("Batch de generación de contenidos promocionales finalizado");
     }
+
 
     public static void main(String[] args) {
 

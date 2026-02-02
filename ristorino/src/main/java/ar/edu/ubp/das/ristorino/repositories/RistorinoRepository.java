@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 public class RistorinoRepository {
     @Autowired
     private SimpleJdbcCallFactory jdbcCallFactory;
-    @Autowired
-    private GeminiService geminiService;
+   // @Autowired
+    //private GeminiService geminiService;
     @Value("${security.jwt.secret}")
     private String jwtSecret;
 
@@ -126,7 +126,8 @@ public class RistorinoRepository {
                 .addValue("nroCliente", filtro.getNroCliente())
                 .addValue("nombreRestaurante", filtro.getNombreRestaurante())
                 .addValue("barrioZona", filtro.getBarrioZona())
-                .addValue("horarioFlexible", filtro.getHorarioFlexible());
+                .addValue("horarioFlexible", filtro.getHorarioFlexible())
+                .addValue("comida", filtro.getComida());
 
         try {
             return jdbcCallFactory.executeQueryAsMap(
@@ -155,44 +156,30 @@ public class RistorinoRepository {
             jdbcCallFactory.execute("actualizar_contenido_promocional", "dbo", params);
         }
 
-        // Generar todos los contenidos pendientes
-        public Map<String, Object> generarContenidosPromocionales() {
-            try {
-                List<Map<String, Object>> pendientes = obtenerContenidosPendientes();
 
-                if (pendientes == null || pendientes.isEmpty()) {
-                    return Map.of("mensaje", "No hay contenidos pendientes para generar.");
-                }
+    /*-----*/
+    public String getPromptIA(String tipoPrompt) {
 
-                int generados = 0;
-                for (Map<String, Object> row : pendientes) {
-                    String textoBase = (String) row.get("contenido_a_publicar");
-                    Integer nroContenido = (Integer) row.get("nro_contenido");
-                    Integer nroIdioma = (Integer) row.get("nro_idioma");
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("tipo_prompt", tipoPrompt);
 
-                    String idioma = (nroIdioma != null && nroIdioma == 2) ? "English" : "Spanish";
-
-                    String textoGenerado = geminiService.generarTextoPromocional(
-                            textoBase,
-                            idioma,
-                            (Integer) row.get("nro_restaurante"),
-                            (Integer) row.get("nro_sucursal")
-                    );
-
-                    actualizarContenidoPromocional(nroContenido, textoGenerado);
-                    generados++;
-                }
-
-                return Map.of(
-                        "mensaje", "Contenidos generados correctamente.",
-                        "cantidad", generados
+        Map<String, Object> out =
+                jdbcCallFactory.executeWithOutputs(
+                        "sp_get_prompt_ia",
+                        "dbo",
+                        params
                 );
 
-            } catch (Exception e) {
-                throw new RuntimeException("Error al generar contenidos promocionales: " + e.getMessage(), e);
-            }
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> rs =
+                (List<Map<String, Object>>) out.get("#result-set-1");
+
+        if (rs == null || rs.isEmpty()) {
+            throw new RuntimeException("No se encontró prompt IA para tipo " + tipoPrompt);
         }
-    /*-----*/
+
+        return rs.get(0).get("texto_prompt").toString();
+    }
 
         /*--Clicks--*/
     public Map<String, Object> registrarClick(ClickBean clickBean) {

@@ -141,14 +141,18 @@ public class RistorinoResource {
     @PostMapping("/ia/generarContenidosPromocionales")
     public ResponseEntity<?> generarContenidosPromocionales() {
         try {
-            Map<String, Object> resultado = ristorinoRepository.generarContenidosPromocionales();
+            Map<String, Object> resultado =
+                    geminiService.generarContenidosPromocionalesBatch();
+
             return ResponseEntity.ok(resultado);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
 
     /*
     * Obtiene el contenido promocional desde la BD de ristorino

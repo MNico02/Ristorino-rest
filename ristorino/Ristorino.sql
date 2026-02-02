@@ -28,6 +28,7 @@ IF OBJECT_ID('dbo.atributos','U') IS NOT NULL DROP TABLE dbo.atributos;
 IF OBJECT_ID('dbo.localidades','U') IS NOT NULL DROP TABLE dbo.localidades;
 IF OBJECT_ID('dbo.provincias','U') IS NOT NULL DROP TABLE dbo.provincias;
 IF OBJECT_ID('dbo.costos','U') IS NOT NULL DROP TABLE dbo.costos;
+IF OBJECT_ID('dbo.prompts_ia','U') IS NOT NULL DROP TABLE dbo.prompts_ia;
 
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
@@ -145,10 +146,9 @@ CREATE TABLE dbo.configuracion_restaurantes (
                                                 nro_restaurante  INT           NOT NULL, -- (FK)
                                                 cod_atributo     INT           NOT NULL, -- (FK)
                                                 valor            NVARCHAR(400) NOT NULL,
-                                                CONSTRAINT PK_configuracion_restaurantes PRIMARY KEY (nro_restaurante, cod_atributo),
-                                                CONSTRAINT FK_config_rest_restaurantes
-                                                    FOREIGN KEY (nro_restaurante) REFERENCES dbo.restaurantes (nro_restaurante),
-                                                CONSTRAINT FK_config_rest_atributos
+                                                CONSTRAINT PK_config_clientes_externos
+                                                    PRIMARY KEY (nro_restaurante, cod_atributo),
+                                                CONSTRAINT FK_config_clientes_atributos
                                                     FOREIGN KEY (cod_atributo) REFERENCES dbo.atributos (cod_atributo)
 );
 GO
@@ -435,6 +435,131 @@ CREATE TABLE dbo.costos (
 );
 GO
 
+CREATE TABLE dbo.prompts_ia (
+                                cod_prompt     INT IDENTITY PRIMARY KEY,
+                                tipo_prompt    VARCHAR(50) NOT NULL,   -- PROMOCION
+                                texto_prompt   NVARCHAR(MAX) NOT NULL,
+                                activo         BIT NOT NULL DEFAULT 1,
+                                fecha_alta     DATETIME NOT NULL DEFAULT GETDATE()
+);
+
+
+
+
+INSERT INTO dbo.prompts_ia (tipo_prompt, texto_prompt)
+VALUES (
+           'PROMOCION',
+           N'Eres un redactor gastronómico experto en marketing culinario 🍽️.
+           Tu tarea es crear un texto PROMOCIONAL muy atractivo, breve y natural (entre 300 y 600 caracteres).
+
+           La respuesta FINAL debe estar escrita en el siguiente idioma:
+           👉 {IDIOMA_SALIDA}
+
+           Basate exclusivamente en la siguiente promoción del restaurante (el texto base puede estar en otro idioma, pero DEBES adaptarlo al idioma de salida):
+           👉 "{TEXTO_BASE}"
+
+           Instrucciones:
+           - Escribe en tono entusiasta y cercano, como una publicación de redes sociales.
+           - Usa emojis relacionados con comida o celebración (🥩🍕🍝🍔🍷🍰🔥🎉), sin abusar.
+           - No inventes información que no esté en el texto base.
+           - Traducí el contenido si es necesario para respetar el idioma de salida.
+           - Si el texto lo permite, destacá precio, combo o beneficio.
+           - Cerrá con una invitación atractiva.
+
+           Devuelve solo el texto final, sin comillas ni formato adicional.'
+       );
+
+INSERT INTO dbo.prompts_ia (tipo_prompt, texto_prompt)
+VALUES (
+           'BUSQUEDA',
+           N'Analizá el texto del usuario que busca un restaurante.👉 "{TEXTO_BASE}"
+           El texto puede estar en español o en inglés.
+
+           Tu objetivo es INTERPRETAR LA INTENCIÓN del usuario y mapearla a filtros
+           compatibles con una base de datos de restaurantes y sucursales.
+
+           REGLAS GENERALES (OBLIGATORIAS):
+           - NO inventes información que el usuario no menciona.
+           - Normalizá sinónimos a valores simples.
+           - Si un dato no está claro, dejá el campo vacío ("").
+           - Devolvé SIEMPRE un JSON válido.
+           - NO agregues explicaciones, comentarios, texto extra ni markdown.
+
+           -----------------------------------
+           NORMALIZACIÓN DE PRECIO:
+           -----------------------------------
+           - "barato", "económico", "low cost", "cheap" → rangoPrecio = "bajo"
+           - "precio medio", "normal", "average" → rangoPrecio = "medio"
+           - "caro", "lujoso", "premium", "expensive" → rangoPrecio = "alto"
+
+           -----------------------------------
+           NORMALIZACIÓN DE HORARIO:
+           -----------------------------------
+           - "desayuno", "mañana", "breakfast" → momentoDelDia = "mañana"
+           - "almuerzo", "mediodía", "lunch" → momentoDelDia = "mediodía"
+           - "tarde", "merienda" → momentoDelDia = "tarde"
+           - "cena", "noche", "dinner" → momentoDelDia = "noche"
+
+           -----------------------------------
+           UBICACIÓN (IMPORTANTE):
+           -----------------------------------
+           - Si menciona una CIUDAD o PROVINCIA clara, completar ciudad / provincia.
+           - Si menciona un BARRIO o ZONA (ej: Güemes, Centro, Nueva Córdoba)
+             y NO hay campo específico para barrio,
+             usar el campo "ciudad" para almacenar ese valor.
+             (Ejemplo: ciudad = "Güemes")
+
+           -----------------------------------
+           RESTAURANTE / SUCURSAL:
+           -----------------------------------
+           - Si menciona un nombre propio que parece restaurante o sucursal,
+             completar nombreRestaurante.
+           - NO confundir tipo de comida con nombre de restaurante.
+
+           -----------------------------------
+           PERSONAS Y MENORES:
+           -----------------------------------
+           - Si menciona cantidad de personas, usar SOLO el número en cantidadPersonas.
+           - Si menciona niños, familia, menores, kids → tieneMenores = "si".
+           - Si menciona solo adultos → tieneMenores = "no".
+
+           -----------------------------------
+           RESTRICCIONES ALIMENTARIAS:
+           -----------------------------------
+           - Mapear a restriccionesAlimentarias valores como:
+             vegetariano, vegano, sin gluten, kosher, halal, etc.
+
+           -----------------------------------
+           AMBIENTE:
+           -----------------------------------
+           - Mapear preferenciasAmbiente con valores como:
+             tranquilo, familiar, romántico, bar, moderno, gourmet, informal.
+
+           -----------------------------------
+           TIPO DE COMIDA:
+           -----------------------------------
+           - Si menciona un tipo de comida (italiana, japonesa, mexicana, rápida, etc.)
+             completar tipoComida.
+
+           -----------------------------------
+           DEVOLVÉ EXACTAMENTE ESTE JSON SIN LAS COMILLAS ANTES Y DESP DE LAS LLAVE DEL JSON
+           (con estos campos, sin agregar ni quitar ninguno):
+
+           "{
+             "tipoComida": "",
+             "momentoDelDia": "",
+             "ciudad": "",
+             "provincia": "",
+             "barrioZona": "",
+             "rangoPrecio": "",
+             "tieneMenores": "",
+             "restriccionesAlimentarias": "",
+             "preferenciasAmbiente": "",
+             "cantidadPersonas": "",
+             "nombreRestaurante": "",
+             "horarioFlexible": false/true
+           }" '
+       );
 
 
 /* ===========================
@@ -1000,6 +1125,7 @@ END;
 GO
 
 
+
 CREATE OR ALTER PROCEDURE dbo.recomendar_restaurantes
     @tipoComida NVARCHAR(120) = NULL,
     @ciudad NVARCHAR(120) = NULL,
@@ -1009,11 +1135,14 @@ CREATE OR ALTER PROCEDURE dbo.recomendar_restaurantes
     @cantidadPersonas INT = NULL,
     @tieneMenores NVARCHAR(10) = NULL,
     @restriccionesAlimentarias NVARCHAR(120) = NULL,
-    @preferenciasAmbiente NVARCHAR(120) = NULL, -- sector: patio, terraza, etc.
+    @preferenciasAmbiente NVARCHAR(120) = NULL,
     @nombreRestaurante NVARCHAR(200) = NULL,
-    @barrioZona NVARCHAR(120) = NULL,            -- barrio: Güemes, Centro, etc.
+    @barrioZona NVARCHAR(120) = NULL,
     @horarioFlexible BIT = 0,
-    @nroCliente INT = NULL
+    @nroCliente INT = NULL,
+
+    /* 🔥 NUEVO */
+    @comida NVARCHAR(150) = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
@@ -1031,6 +1160,9 @@ BEGIN
     SET @preferenciasAmbiente = NULLIF(LTRIM(RTRIM(@preferenciasAmbiente)), '');
     SET @nombreRestaurante = NULLIF(LTRIM(RTRIM(@nombreRestaurante)), '');
     SET @barrioZona = NULLIF(LTRIM(RTRIM(@barrioZona)), '');
+    SET @comida = NULLIF(LTRIM(RTRIM(@comida)), '');
+
+    DECLARE @comidaNorm NVARCHAR(150) = LOWER(@comida);
 
     /* ============================================================
        2) Rango horario
@@ -1060,7 +1192,7 @@ WHERE l.nom_localidad COLLATE Latin1_General_CI_AI
 END;
 
     /* ============================================================
-       4) Candidatos con FILTRO DURO DE UBICACIÓN + SCORING
+       4) Candidatos + SCORING
        ============================================================*/
     ;WITH candidatos AS (
     SELECT
@@ -1082,7 +1214,6 @@ END;
         l.nom_localidad,
         p.nom_provincia,
 
-        /* Sector representativo */
         (
             SELECT TOP 1 z.desc_zona
             FROM dbo.zonas_sucursales_restaurantes z
@@ -1090,7 +1221,6 @@ END;
               AND z.nro_sucursal = s.nro_sucursal
         ) AS desc_zona,
 
-        /* Horario agregado */
         (
             SELECT MIN(t.hora_desde)
             FROM dbo.turnos_sucursales_restaurantes t
@@ -1119,7 +1249,7 @@ END;
                     THEN 3 ELSE 0
                 END
 
-                /* Tipo de comida */
+                /* Tipo comida estructurado */
                 +
             CASE
                 WHEN @tipoComida IS NOT NULL
@@ -1137,7 +1267,22 @@ END;
                     THEN 2 ELSE 0
                 END
 
-                /* Restricciones alimentarias */
+                /* 🔥 COMIDA EN TEXTO (MENÚ / CONTENIDOS) */
+                +
+            CASE
+                WHEN @comidaNorm IS NOT NULL
+                    AND EXISTS (
+                        SELECT 1
+                        FROM dbo.contenidos_restaurantes c
+                        WHERE c.nro_restaurante = r.nro_restaurante
+                          AND c.nro_sucursal = s.nro_sucursal
+                          AND GETDATE() BETWEEN c.fecha_ini_vigencia AND c.fecha_fin_vigencia
+                          AND LOWER(c.contenido_a_publicar) LIKE '%' + @comidaNorm + '%'
+                    )
+                    THEN 3 ELSE 0
+                END
+
+                /* Restricciones */
                 +
             CASE
                 WHEN @restriccionesAlimentarias IS NOT NULL
@@ -1155,7 +1300,7 @@ END;
                     THEN 2 ELSE 0
                 END
 
-                /* Barrio (sucursal) */
+                /* Barrio */
                 +
             CASE
                 WHEN @barrioZona IS NOT NULL
@@ -1164,7 +1309,7 @@ END;
                     THEN 2 ELSE 0
                 END
 
-                /* Sector / ambiente (patio, terraza, salón, etc.) */
+                /* Ambiente */
                 +
             CASE
                 WHEN @preferenciasAmbiente IS NOT NULL
@@ -1215,7 +1360,6 @@ END;
             LIKE '%' + @barrioZona + '%'
         )
 ),
-
           resultado_final AS (
               SELECT *,
                      ROW_NUMBER() OVER (
@@ -1225,7 +1369,6 @@ END;
               FROM candidatos
               WHERE coincidencias > 0
           )
-
      SELECT
          nro_restaurante,
          nro_sucursal,
@@ -3422,6 +3565,29 @@ END CATCH
 END;
 GO
 
+go
+CREATE OR ALTER PROCEDURE dbo.sp_get_prompt_ia
+    @tipo_prompt VARCHAR(50)
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT TOP 1
+        texto_prompt
+FROM dbo.prompts_ia
+WHERE tipo_prompt = @tipo_prompt
+  AND activo = 1
+ORDER BY fecha_alta DESC;
+
+IF @@ROWCOUNT = 0
+BEGIN
+        RAISERROR(
+            'No existe prompt IA activo para tipo %s',
+            16, 1, @tipo_prompt
+        );
+END
+END;
+GO
 
 go
 CREATE OR ALTER PROCEDURE dbo.sp_get_configuracion_cliente_reservas

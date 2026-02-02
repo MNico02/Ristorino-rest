@@ -2,9 +2,12 @@ package ar.edu.ubp.das.ristorino.service;
 
 
 import ar.edu.ubp.das.ristorino.beans.FiltroRecomendacionBean;
+import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -15,106 +18,18 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-
-    private static final String API_KEY = "AIzaSyA4LXo6RM5obvQx5120B6z-DGPMAi7aj3Y";
+    @Autowired
+    private RistorinoRepository ristorinoRepository;
+    private static final String API_KEY = "";
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
     public FiltroRecomendacionBean interpretarTexto(String textoUsuario) throws Exception {
 
-        String prompt = """
-Analizá el texto del usuario que busca un restaurante.
-El texto puede estar en español o en inglés.
-
-Tu objetivo es INTERPRETAR LA INTENCIÓN del usuario y mapearla a filtros
-compatibles con una base de datos de restaurantes y sucursales.
-
-REGLAS GENERALES (OBLIGATORIAS):
-- NO inventes información que el usuario no menciona.
-- Normalizá sinónimos a valores simples.
-- Si un dato no está claro, dejá el campo vacío ("").
-- Devolvé SIEMPRE un JSON válido.
-- NO agregues explicaciones, comentarios, texto extra ni markdown.
-
------------------------------------
-NORMALIZACIÓN DE PRECIO:
------------------------------------
-- "barato", "económico", "low cost", "cheap" → rangoPrecio = "bajo"
-- "precio medio", "normal", "average" → rangoPrecio = "medio"
-- "caro", "lujoso", "premium", "expensive" → rangoPrecio = "alto"
-
------------------------------------
-NORMALIZACIÓN DE HORARIO:
------------------------------------
-- "desayuno", "mañana", "breakfast" → momentoDelDia = "mañana"
-- "almuerzo", "mediodía", "lunch" → momentoDelDia = "mediodía"
-- "tarde", "merienda" → momentoDelDia = "tarde"
-- "cena", "noche", "dinner" → momentoDelDia = "noche"
-
------------------------------------
-UBICACIÓN (IMPORTANTE):
------------------------------------
-- Si menciona una CIUDAD o PROVINCIA clara, completar ciudad / provincia.
-- Si menciona un BARRIO o ZONA (ej: Güemes, Centro, Nueva Córdoba)
-  y NO hay campo específico para barrio,
-  usar el campo "ciudad" para almacenar ese valor.
-  (Ejemplo: ciudad = "Güemes")
-
------------------------------------
-RESTAURANTE / SUCURSAL:
------------------------------------
-- Si menciona un nombre propio que parece restaurante o sucursal,
-  completar nombreRestaurante.
-- NO confundir tipo de comida con nombre de restaurante.
-
------------------------------------
-PERSONAS Y MENORES:
------------------------------------
-- Si menciona cantidad de personas, usar SOLO el número en cantidadPersonas.
-- Si menciona niños, familia, menores, kids → tieneMenores = "si".
-- Si menciona solo adultos → tieneMenores = "no".
-
------------------------------------
-RESTRICCIONES ALIMENTARIAS:
------------------------------------
-- Mapear a restriccionesAlimentarias valores como:
-  vegetariano, vegano, sin gluten, kosher, halal, etc.
-
------------------------------------
-AMBIENTE:
------------------------------------
-- Mapear preferenciasAmbiente con valores como:
-  tranquilo, familiar, romántico, bar, moderno, gourmet, informal.
-
------------------------------------
-TIPO DE COMIDA:
------------------------------------
-- Si menciona un tipo de comida (italiana, japonesa, mexicana, rápida, etc.)
-  completar tipoComida.
-
------------------------------------
-DEVOLVÉ EXACTAMENTE ESTE JSON
-(con estos campos, sin agregar ni quitar ninguno):
-
-{
-  "tipoComida": "",
-  "momentoDelDia": "",
-  "ciudad": "",
-  "provincia": "",
-  "barrioZona": "",
-  "rangoPrecio": "",
-  "tieneMenores": "",
-  "restriccionesAlimentarias": "",
-  "preferenciasAmbiente": "",
-  "cantidadPersonas": "",
-  "nombreRestaurante": "",
-  "horarioFlexible": false/true
-}
-
-Texto del usuario:
-"%s"
-""".formatted(textoUsuario);
-
+        String promptBase =
+                ristorinoRepository.getPromptIA("BUSQUEDA");
+        String prompt = promptBase
+                .replace("{TEXTO_BASE}", textoUsuario);
         String requestBody = """
     {
       "contents": [
@@ -175,35 +90,82 @@ Texto del usuario:
         }
     }
 
+    @Transactional
+    public Map<String, Object> generarContenidosPromocionalesBatch() {
+
+        var pendientes = ristorinoRepository.obtenerContenidosPendientes();
+
+        if (pendientes == null || pendientes.isEmpty()) {
+            return Map.of("mensaje", "No hay contenidos pendientes para generar.");
+        }
+
+        int generados = 0;
+
+        for (Map<String, Object> row : pendientes) {
+
+            String textoBase = (String) row.get("contenido_a_publicar");
+            Integer nroContenido = (Integer) row.get("nro_contenido");
+            Integer nroIdioma = (Integer) row.get("nro_idioma");
+
+            String idioma = (nroIdioma != null && nroIdioma == 2)
+                    ? "English"
+                    : "Spanish";
+
+            try {
+                String textoGenerado = generarTextoPromocional(
+                        textoBase,
+                        idioma,
+                        (Integer) row.get("nro_restaurante"),
+                        (Integer) row.get("nro_sucursal")
+                );
+
+                ristorinoRepository.actualizarContenidoPromocional(
+                        nroContenido,
+                        textoGenerado
+                );
+
+                generados++;
+
+            } catch (Exception e) {
+                System.err.println(
+                        "❌ Error generando contenido IA nro_contenido=" + nroContenido
+                );
+                e.printStackTrace();
+            }
+        }
+
+        return Map.of(
+                "mensaje", "Contenidos generados correctamente.",
+                "cantidad", generados
+        );
+    }
 
 
     public String generarTextoPromocional(String textoBase, String idioma, Integer nroRestaurante, Integer nroSucursal) throws Exception {
+        System.out.println("textoBase = " + textoBase);
+        System.out.println("idioma = " + idioma);
 
-        String prompt = String.format("""
-    Eres un redactor gastronómico experto en marketing culinario 🍽️.
-    Tu tarea es crear un texto PROMOCIONAL muy atractivo, breve y natural (entre 300 y 600 caracteres) en idioma %s.
+        //  Buscar prompt desde BD
+        String promptBase =
+                ristorinoRepository.getPromptIA("PROMOCION");
 
-    Basate en la siguiente idea o campaña del restaurante:
-    👉 "%s"
+        // idioma de salida
+        String idiomaSalida =
+                "English".equalsIgnoreCase(idioma) ? "English" : "Spanish";
 
-    Instrucciones:
-    - Escribe en tono entusiasta y cercano, como una publicación de redes sociales.
-    - Usa emojis relacionados con comida o celebración (🥩🍕🍝🍔🍷🍰🔥🎉, etc.), pero sin abusar.
-    - Si la información lo permite, destacá la propuesta (precio, combo, tipo de comida o experiencia).
-    - Si hay datos del restaurante o sucursal, podés mencionarlos de forma natural (ej: “en nuestra sucursal del centro”).
-    - Cierra el texto con una invitación atractiva (por ejemplo: “¡Te esperamos hoy!” o “No te lo pierdas 🍴”).
-
-    Devuelve solo el texto final, sin comillas ni formato adicional.
-""", idioma, textoBase);
+        //  Reemplazar variables del prompt
+        String prompt = promptBase
+                .replace("{TEXTO_BASE}", textoBase)
+                .replace("{IDIOMA_SALIDA}", idiomaSalida);
 
 
         String requestBody = """
-        {
-          "contents": [
-            { "parts": [ { "text": "%s" } ] }
-          ]
-        }
-        """.formatted(prompt.replace("\"", "\\\""));
+    {
+      "contents": [
+        { "parts": [ { "text": "%s" } ] }
+      ]
+    }
+    """.formatted(prompt.replace("\"", "\\\""));
 
         URL url = new URL(GEMINI_URL);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -238,5 +200,6 @@ Texto del usuario:
 
         return texto;
     }
+
 
 }
