@@ -1,6 +1,6 @@
 package ar.edu.ubp.das.ristorino.beans;
 
-public class ClienteBean {
+public class ClienteBean {//cliente desde el front-end  (persona)
     private String apellido;
     private String nombre;
     private String clave;

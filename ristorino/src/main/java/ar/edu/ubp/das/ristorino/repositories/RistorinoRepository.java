@@ -681,6 +681,29 @@ public class RistorinoRepository {
         }
     }
 
+    public ClienteRestauranteConfigBean getConfiguracionClienteReservas(int nroRestaurante) {
+
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_restaurante", nroRestaurante, Types.INTEGER);
+
+        ClienteRestauranteConfigBean config = jdbcCallFactory.executeSingle(
+                "sp_get_configuracion_cliente_reservas", // nombre SP
+                "dbo",                                   // esquema
+                params,
+                "result",                                // alias (puede ser cualquiera)
+                ClienteRestauranteConfigBean.class
+        );
+
+        if (config == null || config.getTipoCliente() == null) {
+            throw new RuntimeException(
+                    "No se pudo obtener configuración de cliente para restaurante " + nroRestaurante
+            );
+        }
+
+        return config;
+    }
+
+
     public ReservasClienteRespBean getReservasCliente(String correo) {
            // System.out.println("correo: " + correo);
         String idiomaActual = LocaleContextHolder.getLocale().getLanguage();

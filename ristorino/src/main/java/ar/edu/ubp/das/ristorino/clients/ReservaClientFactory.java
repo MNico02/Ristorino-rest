@@ -1,38 +1,45 @@
 package ar.edu.ubp.das.ristorino.clients;
 
+import ar.edu.ubp.das.ristorino.beans.ClienteRestauranteConfigBean;
+import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ReservaClientFactory {
 
+    @Autowired
+    private RistorinoRepository ristorinoRepository;
+
     public ReservaClient getClient(int nroRestaurante) {
 
-        return switch (nroRestaurante) {
-
-            case 1 -> new ReservaRestClient(
-                    "http://localhost:8081/api/v1/restaurante1",
-                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0"
-            );
-
-            case 2 -> new ReservaSoapClient(
-                    "http://localhost:8082/services",
-                    "usr_admin",
-                    "pwd_admin"
-            );
-            case 3 -> new ReservaRestClient(
-                    "http://localhost:8083/api/v1/restaurante3",
-                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0"
-            );
-            case 4 -> new ReservaSoapClient(
-                    "http://localhost:8084/services",
-                    "usr_admin",
-                    "pwd_admin"
-            );
+        // Traer configuración desde BD
+        ClienteRestauranteConfigBean cfg =
+                ristorinoRepository.getConfiguracionClienteReservas(nroRestaurante);
 
 
-            default -> throw new IllegalArgumentException(
+        if (cfg == null || cfg.getTipoCliente() == null) {
+            throw new IllegalArgumentException(
                     "No hay cliente de reservas para restaurante " + nroRestaurante
             );
-        };
+        }
+
+        String tipo = cfg.getTipoCliente().toUpperCase();
+
+        //  Construcción del cliente
+        if ("REST".equals(tipo)) {
+
+            return new ReservaRestClient(
+                    cfg.getBaseUrl(),
+                    cfg.getToken()
+            );
+        } else {
+            
+            return new ReservaSoapClient(
+                    cfg.getBaseUrl(),
+                    cfg.getSoapUser(),
+                    cfg.getSoapPass()
+            );
+        }
     }
 }

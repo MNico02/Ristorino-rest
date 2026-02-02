@@ -20,7 +20,7 @@ public class CancelarReservaService {
     public CancelarReservaService(RistorinoRepository ristorinoRepository,
                                   CancelarReservaClientFactory clientFactory) {
         this.ristorinoRepository = ristorinoRepository;
-        this.clientFactory = clientFactory;
+        this.clientFactory = clientFactory; //decide el cliente segun el nro de restaurante
     }
 
     public Map<String, Object> cancelarReserva(CancelarReservaBean req) {
@@ -38,7 +38,7 @@ public class CancelarReservaService {
         }
 
         try {
-            // Obtener cliente según el restaurante
+            // Obtener cliente según el restaurante, va a la interfaz y decide el cliente
             CancelarReservaClient client = clientFactory.getClient(nroRestaurante);
 
             // 1) Llamar al restaurante para que cancele primero

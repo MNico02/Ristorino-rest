@@ -12,6 +12,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -23,18 +24,26 @@ public class RestauranteBatch {
 
     public void ejecutar() {
         log.info("Iniciando batch de sync restaurante");
+        List<Integer> restaurantes = repository.obtenerNrosActivos();
 
-        int nroRestaurante = 4;
-
-        SyncRestauranteBean restaurante = restauranteService.obtenerRestaurante(nroRestaurante);
-
-        if (restaurante == null) {
-            log.warn("No se obtuvo información del restaurante {}", nroRestaurante);
+        if (restaurantes.isEmpty()) {
+            log.info("No hay restaurantes activos para procesar");
             return;
         }
 
-        Map<String, Object> result = repository.guardarInfoRestaurante(restaurante);
-        log.info("Sync OK restaurante {} -> {}", nroRestaurante, result);
+
+        //int nroRestaurante = 4;
+        for (Integer nroRestaurante : restaurantes) {
+            SyncRestauranteBean restaurante = restauranteService.obtenerRestaurante(nroRestaurante);
+
+            if (restaurante == null) {
+                log.warn("No se obtuvo información del restaurante {}", nroRestaurante);
+                return;
+            }
+
+            Map<String, Object> result = repository.guardarInfoRestaurante(restaurante);
+            log.info("Sync OK restaurante {} -> {}", nroRestaurante, result);
+        }
     }
 
     public static void main(String[] args) {

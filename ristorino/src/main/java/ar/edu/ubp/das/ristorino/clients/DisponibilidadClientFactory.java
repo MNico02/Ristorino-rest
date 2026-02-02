@@ -1,37 +1,46 @@
 package ar.edu.ubp.das.ristorino.clients;
 
+import ar.edu.ubp.das.ristorino.beans.ClienteRestauranteConfigBean;
+import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DisponibilidadClientFactory {
 
+    @Autowired
+    private RistorinoRepository ristorinoRepository;
+
     public DisponibilidadClient getClient(int nroRestaurante) {
 
-        return switch (nroRestaurante) {
+        //  Traer configuración desde BD
+        ClienteRestauranteConfigBean cfg =
+                ristorinoRepository.getConfiguracionClienteReservas(nroRestaurante);
 
-            case 1 -> new DisponibilidadRestClient(
-                    "http://localhost:8081/api/v1/restaurante1",
-                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0"
-            );
-
-            case 2 -> new DisponibilidadSoapClient(
-                    "http://localhost:8082/services",
-                    "usr_admin",
-                    "pwd_admin"
-            );
-            case 3 -> new DisponibilidadRestClient(
-                    "http://localhost:8083/api/v1/restaurante3",
-                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0"
-            );
-            case 4 -> new DisponibilidadSoapClient(
-                    "http://localhost:8084/services",
-                    "usr_admin",
-                    "pwd_admin"
-            );
-
-            default -> throw new IllegalArgumentException(
+        if (cfg == null || cfg.getTipoCliente() == null) {
+            throw new IllegalArgumentException(
                     "No hay cliente de disponibilidad para restaurante " + nroRestaurante
             );
-        };
+        }
+
+        String tipo = cfg.getTipoCliente().toUpperCase();
+
+        //  Construcción del cliente (sin switch)
+        if ("REST".equals(tipo)) {
+
+            return new DisponibilidadRestClient(
+                    cfg.getBaseUrl(),
+                    cfg.getToken()
+            );
+
+        } else {
+
+            return new DisponibilidadSoapClient(
+                    cfg.getBaseUrl(),
+                    cfg.getSoapUser(),
+                    cfg.getSoapPass()
+            );
+
+        }
     }
 }

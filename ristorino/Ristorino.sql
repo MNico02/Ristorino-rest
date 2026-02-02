@@ -486,6 +486,35 @@ VALUES (1,N'Pendiente'),
 
 
 
+INSERT INTO atributos (cod_atributo, nom_atributo, tipo_dato) VALUES
+    (1, 'CLIENT_TYPE', 'VARCHAR'),
+    (2, 'BASE_URL',    'VARCHAR'),
+    (3, 'TOKEN',       'VARCHAR'),
+    (4, 'SOAP_USER',   'VARCHAR'),
+    (5, 'SOAP_PASS',   'VARCHAR');
+
+INSERT INTO configuracion_restaurantes VALUES
+                                           (1, 1, 'REST'),
+                                           (1, 2, 'http://localhost:8081/api/v1/restaurante1'),
+                                           (1, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0');
+
+INSERT INTO configuracion_restaurantes VALUES
+                                           (2, 1, 'SOAP'),
+                                           (2, 2, 'http://localhost:8082/services'),
+                                           (2, 4, 'usr_admin'),
+                                           (2, 5, 'pwd_admin');
+
+INSERT INTO configuracion_restaurantes VALUES
+                                           (3, 1, 'REST'),
+                                           (3, 2, 'http://localhost:8083/api/v1/restaurante3'),
+                                           (3, 3, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0');
+
+INSERT INTO configuracion_restaurantes VALUES
+                                           (4, 1, 'SOAP'),
+                                           (4, 2, 'http://localhost:8084/services'),
+                                           (4, 4, 'usr_admin'),
+                                           (4, 5, 'pwd_admin');
+
 -- MES 1
 INSERT INTO dbo.costos (tipo_costo, fecha_ini_vigencia, fecha_fin_vigencia, monto)
 VALUES
@@ -3393,6 +3422,38 @@ END CATCH
 END;
 GO
 
+
+go
+CREATE OR ALTER PROCEDURE dbo.sp_get_configuracion_cliente_reservas
+    @nro_restaurante INT
+    AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT
+    MAX(CASE WHEN a.nom_atributo = 'CLIENT_TYPE' THEN cr.valor END) AS tipo_cliente,
+    MAX(CASE WHEN a.nom_atributo = 'BASE_URL'    THEN cr.valor END) AS base_url,
+    MAX(CASE WHEN a.nom_atributo = 'TOKEN'       THEN cr.valor END) AS token,
+    MAX(CASE WHEN a.nom_atributo = 'SOAP_USER'   THEN cr.valor END) AS soap_user,
+    MAX(CASE WHEN a.nom_atributo = 'SOAP_PASS'   THEN cr.valor END) AS soap_pass
+FROM configuracion_restaurantes cr
+         INNER JOIN atributos a
+                    ON a.cod_atributo = cr.cod_atributo
+WHERE cr.nro_restaurante = @nro_restaurante
+GROUP BY cr.nro_restaurante;
+
+-- Validación básica (opcional pero prolija)
+IF @@ROWCOUNT = 0
+BEGIN
+        RAISERROR(
+            'No existe configuración de cliente para el restaurante %d',
+            16,
+            1,
+            @nro_restaurante
+        );
+END
+END;
+GO
 
 
 
