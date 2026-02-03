@@ -9,10 +9,8 @@ public class ReservaBean {
     private String codSucursalRestaurante;
     private String correo;
     private int idSucursal;
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fechaReserva;
-    @JsonFormat(pattern = "HH:mm:ss")
-    private LocalTime horaReserva;
+    private String fechaReserva; // "yyyy-MM-dd"
+    private String horaReserva;
     private int cantAdultos;
     private int cantMenores;
     private int codZona;
@@ -27,22 +25,21 @@ public class ReservaBean {
         this.codSucursalRestaurante = codSucursalRestaurante;
     }
 
-    public LocalDate getFechaReserva() {
-        return fechaReserva;
-    }
-
-    public void setFechaReserva(LocalDate fechaReserva) {
-        this.fechaReserva = fechaReserva;
-    }
-
-    public LocalTime getHoraReserva() {
+    public String getHoraReserva() {
         return horaReserva;
     }
 
-    public void setHoraReserva(LocalTime horaReserva) {
+    public void setHoraReserva(String horaReserva) {
         this.horaReserva = horaReserva;
     }
 
+    public String getFechaReserva() {
+        return fechaReserva;
+    }
+
+    public void setFechaReserva(String fechaReserva) {
+        this.fechaReserva = fechaReserva;
+    }
 
     public String getCorreo() {
         return correo;

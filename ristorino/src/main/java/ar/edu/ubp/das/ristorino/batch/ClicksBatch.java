@@ -49,7 +49,7 @@ public class ClicksBatch {
 
         // Enviar por restaurante
         clicksPorRestaurante.forEach((nroRestaurante, listaClicks) -> {
-            boolean exito = clickNotificationService.enviarClicksPorRestaurante(nroRestaurante, listaClicks);
+            boolean exito = clickNotificationService.enviarClicksPorRestaurante(nroRestaurante, listaClicks).isSuccess();
 
             if (exito) {
                 log.info("Clicks enviados correctamente al restaurante {}", nroRestaurante);

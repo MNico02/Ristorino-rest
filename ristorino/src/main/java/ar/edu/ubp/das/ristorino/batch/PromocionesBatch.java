@@ -27,7 +27,7 @@ public class PromocionesBatch {
 
     public void procesarPromociones() {
 
-        log.info("🚀 Iniciando batch de promociones");
+        log.info("Iniciando batch de promociones");
 
         List<Integer> restaurantes = repository.obtenerNrosActivos();
 
@@ -38,10 +38,10 @@ public class PromocionesBatch {
 
         for (Integer nroRestaurante : restaurantes) {
 
-            log.info("➡️ Procesando promociones restaurante {}", nroRestaurante);
+            log.info("Procesando promociones restaurante {}", nroRestaurante);
 
             try {
-                // 1️⃣ Obtener promociones
+                // Obtener promociones
                 List<ContenidoBean> promociones =
                         promocionesService.obtenerPromociones(nroRestaurante);
 
@@ -50,19 +50,19 @@ public class PromocionesBatch {
                     continue;
                 }
 
-                // 2️⃣ Guardar promociones (ACÁ va la transacción)
+                // Guardar promociones
                 BigDecimal costoAplicado =
                         repository.guardarPromociones(promociones, nroRestaurante);
 
                 log.info("Se guardaron {} promociones del restaurante {} | Costo aplicado: {}",
                         promociones.size(), nroRestaurante, costoAplicado);
 
-                // 3️⃣ Armar string de contenidos
+                // Armar string de contenidos
                 String nroContenidos = promociones.stream()
                         .map(c -> String.valueOf(c.getNroContenido()))
                         .collect(Collectors.joining(","));
 
-                // 4️⃣ Notificar restaurante
+                // Notificar restaurante
                 promocionesService.notificarRestaurante(
                         nroRestaurante,
                         costoAplicado,
@@ -70,12 +70,12 @@ public class PromocionesBatch {
                 );
 
             } catch (Exception e) {
-                log.error("❌ Error procesando promociones del restaurante {}. Se continúa con el siguiente.",
+                log.error("Error procesando promociones del restaurante {}. Se continúa con el siguiente.",
                         nroRestaurante, e);
             }
         }
 
-        log.info("✅ Batch de promociones finalizado");
+        log.info("Batch de promociones finalizado");
     }
 
     public static void main(String[] args) {

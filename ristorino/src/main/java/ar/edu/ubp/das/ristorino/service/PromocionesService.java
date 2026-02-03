@@ -1,8 +1,8 @@
 package ar.edu.ubp.das.ristorino.service;
 
 import ar.edu.ubp.das.ristorino.beans.ContenidoBean;
-import ar.edu.ubp.das.ristorino.clients.PromocionesClient;
-import ar.edu.ubp.das.ristorino.clients.PromocionesClientFactory;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -13,15 +13,15 @@ import java.util.List;
 @Service
 public class PromocionesService {
 
-    private final PromocionesClientFactory factory;
+    private final RestauranteClientFactory factory;
 
-    public PromocionesService(PromocionesClientFactory factory) {
+    public PromocionesService(RestauranteClientFactory factory) {
         this.factory = factory;
     }
 
     public List<ContenidoBean> obtenerPromociones(int nroRestaurante) {
 
-        PromocionesClient client = factory.getClient(nroRestaurante);
+        RestauranteClient client = factory.getClient(nroRestaurante);
         if (client == null) {
             log.warn("No hay cliente promociones para {}", nroRestaurante);
             return List.of();
@@ -35,7 +35,7 @@ public class PromocionesService {
             BigDecimal costoAplicado,
             String nroContenidos) {
 
-        PromocionesClient client = factory.getClient(nroRestaurante);
+        RestauranteClient client = factory.getClient(nroRestaurante);
         if (client == null) {
             log.warn("No hay cliente promociones para {}", nroRestaurante);
             return;

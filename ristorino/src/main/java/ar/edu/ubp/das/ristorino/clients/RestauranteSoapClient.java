@@ -5,207 +5,290 @@ package ar.edu.ubp.das.ristorino.clients;
 import ar.edu.ubp.das.ristorino.beans.*;
 
 
-import ar.edu.ubp.das.ristorino.soap.restaurante2.EspecialidadBean;
-import ar.edu.ubp.das.ristorino.soap.restaurante2.GetInfoRestauranteRequest;
-import ar.edu.ubp.das.ristorino.soap.restaurante2.GetInfoRestauranteResponse;
-import ar.edu.ubp.das.ristorino.soap.restaurante2.ObjectFactory;
+import ar.edu.ubp.das.ristorino.beans.ContenidoBean;
+import ar.edu.ubp.das.ristorino.beans.HorarioBean;
+import ar.edu.ubp.das.ristorino.beans.ModificarReservaReqBean;
+import ar.edu.ubp.das.ristorino.beans.NotiRestReqBean;
+import ar.edu.ubp.das.ristorino.beans.ReservaRestauranteBean;
+import ar.edu.ubp.das.ristorino.beans.ResponseBean;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import jakarta.xml.bind.JAXBElement;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.smartcardio.ResponseAPDU;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 @Slf4j
-public class RestauranteSoapClient extends SoapClientBase
-        implements RestauranteClient {
+public class RestauranteSoapClient implements RestauranteClient {
 
-    public RestauranteSoapClient(String endpointUrl,
-                                 String username,
-                                 String password) {
-        super(endpointUrl, username, password);
+    private final String jsonConfig;
+
+    private final Gson gson = new Gson();
+
+    public RestauranteSoapClient(String jsonConfig) {
+        this.jsonConfig = jsonConfig;
+    }
+    @Override
+    public ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload, int nroRestaurante) {
+
+        try {
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("confirmarReservaRequest")
+                    .build();
+
+            String jsonPayload = gson.toJson(payload);
+
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("jsonRequest", jsonPayload);
+
+            String jsonResponse = client.callServiceForString(
+                    "confirmarReservaResponse",
+                    params
+            );
+            ConfirmarReservaResponseBean result =
+                    gson.fromJson(jsonResponse, ConfirmarReservaResponseBean.class);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error: {}", e.getMessage(), e);
+            return null;
+        }
     }
 
     @Override
     public SyncRestauranteBean obtenerRestaurante(int nroRestaurante) {
+        try{
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("GetInfoRestauranteRequest")
+                    .build();
+            String jsonPayload = "{\"id\": 1}";
 
-        // =========================
-        // Datos SOAP
-        // =========================
-        GetInfoRestauranteRequest data = new GetInfoRestauranteRequest();
-        data.setId(1); // SOAP siempre entiende 1
+            //String jsonPayload = gson.toJson("id",1);
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
+            Map<String, Object> params = new HashMap<>();
 
-        // =========================
-        // ELEMENTO ROOT (JAXBElement)
-        // =========================
-        ObjectFactory factory = new ObjectFactory();
-        JAXBElement<GetInfoRestauranteRequest> request =
-                factory.createGetInfoRestauranteRequest(data);
+            params.put("jsonRequest", jsonPayload);
+            String jsonResponse = client.callServiceForString(
+                    "GetInfoRestauranteResponse",
+                    params
+            );
+            SyncRestauranteBean result = gson.fromJson(jsonResponse, SyncRestauranteBean.class);
+            result.setNroRestaurante(nroRestaurante);
+            return result;
 
-        JAXBElement<GetInfoRestauranteResponse> response =
-                (JAXBElement<GetInfoRestauranteResponse>)
-                        wsTemplate.marshalSendAndReceive(request);
-
-        if (response == null || response.getValue() == null
-                || response.getValue().getInfoRestaurante() == null) {
-            log.warn("SOAP vacío restaurante {}", nroRestaurante);
+        }catch (Exception e){
+            log.error("Error: {}", e.getMessage(), e);
             return null;
         }
-
-        SyncRestauranteBean sync = mapear(response.getValue());
-        sync.setNroRestaurante(nroRestaurante); // ID Ristorino
-        return sync;
     }
-    private SyncRestauranteBean mapear(GetInfoRestauranteResponse response) {
+    @Override
+    public ResponseBean enviarClicks(List<ClickNotiBean> clicks) {
+        try {
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("registrarClicksRequest")
+                    .build();
 
-        var r = response.getInfoRestaurante();
+            String jsonPayload = gson.toJson(clicks);
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
 
-        SyncRestauranteBean sync = new SyncRestauranteBean();
+            Map<String, Object> params = new HashMap<>();
+            params.put("jsonRequest", jsonPayload);
 
-        // =========================
-        // Datos restaurante
-        // =========================
-        sync.setNroRestaurante(r.getNroRestaurante()); // luego se pisa
-        sync.setRazonSocial(r.getRazonSocial());
-        sync.setCuit(r.getCuit());
-
-        // =========================
-        // Sucursales
-        // =========================
-        if (r.getSucursales() != null) {
-            sync.setSucursales(
-                    r.getSucursales()
-                            .stream()
-                            .map(s -> {
-
-                                SyncSucursalBean ss = new SyncSucursalBean();
-
-                                ss.setNroSucursal(s.getNroSucursal());
-                                ss.setNomSucursal(s.getNomSucursal());
-                                ss.setCalle(s.getCalle());
-                                ss.setNroCalle(
-                                        String.valueOf(s.getNroCalle() != null
-                                                ? Integer.parseInt(s.getNroCalle())
-                                                : null)
-                                );
-                                ss.setBarrio(s.getBarrio());
-
-                                ss.setNroLocalidad(s.getNroLocalidad());
-                                ss.setNomLocalidad(s.getNomLocalidad());
-                                ss.setCodProvincia(s.getCodProvincia());
-                                ss.setNomProvincia(s.getNomProvincia());
-                                ss.setCodPostal(s.getCodPostal());
-                                ss.setTelefonos(s.getTelefonos());
-
-                                ss.setTotalComensales(s.getTotalComensales());
-                                ss.setMinTolerenciaReserva(s.getMinTolerenciaReserva());
-
-                                // =========================
-                                // Zonas
-                                // =========================
-                                if (s.getZonas() != null) {
-                                    ss.setZonas(
-                                            s.getZonas().stream()
-                                                    .map(z -> {
-                                                        ZonaBean zb = new ZonaBean();
-                                                        zb.setCodZona(z.getCodZona());
-                                                        zb.setDescZona(z.getNomZona());
-                                                        zb.setCantComensales(z.getCantComensales());
-                                                        zb.setPermiteMenores(z.isPermiteMenores());
-                                                        zb.setHabilitada(z.isHabilitada());
-                                                        return zb;
-                                                    })
-                                                    .toList()
-                                    );
-                                }
-
-                                // =========================
-                                // Turnos
-                                // =========================
-                                if (s.getTurnos() != null) {
-                                    ss.setTurnos(
-                                            s.getTurnos().stream()
-                                                    .map(t -> {
-                                                        TurnoBean tb = new TurnoBean();
-                                                        tb.setHoraDesde(t.getHoraDesde());
-                                                        tb.setHoraHasta(t.getHoraHasta());
-                                                        return tb;
-                                                    })
-                                                    .toList()
-                                    );
-                                }
-
-                                // =========================
-                                // Zonas por turno
-                                // =========================
-                                if (s.getZonasTurnos() != null) {
-                                    ss.setZonasTurnos(
-                                            s.getZonasTurnos().stream()
-                                                    .map(zt -> {
-                                                        ZonaTurnoBean ztb = new ZonaTurnoBean();
-                                                        ztb.setCodZona(zt.getCodZona());
-                                                        ztb.setHoraDesde(zt.getHoraDesde());
-                                                        ztb.setPermiteMenores(zt.isPermiteMenores());
-                                                        return ztb;
-                                                    })
-                                                    .toList()
-                                    );
-                                }
-
-                                // =========================
-                                // Especialidades
-                                // =========================
-                                if (s.getEspecialidades() != null) {
-                                    ss.setEspecialidades(
-                                            s.getEspecialidades().stream()
-                                                    .map(e -> {
-                                                        SyncEspecialidadBean eb = new SyncEspecialidadBean();
-                                                        eb.setNroRestriccion(e.getNroRestriccion());
-                                                        eb.setNomRestriccion(e.getNomRestriccion());
-                                                        eb.setHabilitada(e.isHabilitada());
-                                                        return eb;
-                                                    })
-                                                    .toList()
-                                    );
-                                }
-
-                                // =========================
-                                // Tipos de Comidas
-                                // =========================
-                                if (s.getTiposComidas() != null) {
-                                    ss.setTiposComidas(
-                                            s.getTiposComidas().stream()
-                                                    .map(tc -> {
-                                                        SyncTipoComidaBean tcb = new SyncTipoComidaBean();
-                                                        tcb.setNroTipoComida(tc.getNroTipoComida());
-                                                        tcb.setNomTipoComida(tc.getNomTipoComida());
-                                                        tcb.setHabilitado(tc.isHabilitado());
-                                                        return tcb;
-                                                    })
-                                                    .toList()
-                                    );
-                                }
-
-                                // =========================
-                                // Estilos
-                                // =========================
-                                if (s.getEstilos() != null) {
-                                    ss.setEstilos(
-                                            s.getEstilos().stream()
-                                                    .map(est -> {
-                                                        SyncEstiloBean estb = new SyncEstiloBean();
-                                                        estb.setNroEstilo(est.getNroEstilo());
-                                                        estb.setNomEstilo(est.getNomEstilo());
-                                                        estb.setHabilitado(est.isHabilitado());
-                                                        return estb;
-                                                    })
-                                                    .toList()
-                                    );
-                                }
-
-                                return ss;
-                            })
-                            .toList()
+            String jsonResponse = client.callServiceForString(
+                    "registrarClicksResponse",
+                    params
             );
-        }
+            ResponseBean result =
+                    gson.fromJson(jsonResponse, ResponseBean.class);
 
-        return sync;
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error SOAP enviando clicks: {}", e.getMessage());
+            ResponseBean resp = new ResponseBean();
+            resp.setSuccess(Boolean.FALSE);
+            return resp;
+        }
     }
+    @Override
+    public List<HorarioBean> obtenerDisponibilidad(SoliHorarioBean soli) {
+
+        try {
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("ConsultarDisponibilidadRequest")
+                    .build();
+
+            String jsonPayload = gson.toJson(soli);
+
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("jsonRequest", jsonPayload);
+
+            String jsonResponse = client.callServiceForString(
+                    "ConsultarDisponibilidadResponse",
+                    params
+            );
+            Type listType = new TypeToken<List<HorarioBean>>(){}.getType();
+            List<HorarioBean> result = gson.fromJson(jsonResponse, listType);
+            if(result.isEmpty())
+                return List.of();
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error SOAP consultarDisponibilidad: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+    @Override
+    public ResponseBean cancelarReserva(String codReservaSucursal) {
+        try {
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("cancelarReservaRequest")
+                    .build();
+            CancelarReservaReqBean data = new CancelarReservaReqBean();
+            data.setCodReservaSucursal(codReservaSucursal);
+            String jsonPayload = gson.toJson(data);
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
+            Map<String, Object> params = new HashMap<>();
+            params.put("jsonRequest", jsonPayload);
+
+            String jsonResponse = client.callServiceForString(
+                    "cancelarReservaResponse",
+                    params
+            );
+            ResponseBean  result = gson.fromJson(jsonResponse, ResponseBean.class);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    @Override
+    public ResponseBean modificarReserva(ModificarReservaReqBean req) {
+        try {
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("ModificarReservaRequest")
+                    .build();
+            String jsonPayload = gson.toJson(req);
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
+            Map<String, Object> params = new HashMap<>();
+            params.put("jsonRequest", jsonPayload);
+
+            String jsonResponse = client.callServiceForString(
+                    "ModificarReservaResponse",
+                    params
+            );
+            ResponseBean  result = gson.fromJson(jsonResponse, ResponseBean.class);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    @Override
+    public List<ContenidoBean> obtenerPromociones(int nroRestaurante) {
+
+        try {
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("obtenerPromocionesRequest")
+                    .build();
+
+            String jsonPayload = "{\"id\": 1}";
+
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("jsonRequest", jsonPayload);
+
+            String jsonResponse = client.callServiceForString(
+                    "obtenerPromocionesResponse",
+                    params
+            );
+
+            Type listType = new TypeToken<List<ContenidoBean>>(){}.getType();
+            List<ContenidoBean> result = gson.fromJson(jsonResponse, listType);
+
+            if (result == null) {
+                log.warn("SOAP promociones vacío restaurante {}", nroRestaurante);
+                return List.of();
+            }
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error SOAP obteniendo promociones restaurante {}: {}",
+                    nroRestaurante, e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public void notificarRestaurante(int nroRestaurante, BigDecimal costo, String contenidos) {
+
+        NotiRestReqBean req = new NotiRestReqBean();
+        req.setNroRestaurante(1);
+        req.setCostoAplicado(costo);
+        req.setNroContenidos(contenidos);
+
+        try {
+            SOAPClient client = SOAPClient.SOAPClientBuilder
+                    .fromConfig(jsonConfig)
+                    .operationName("notificarRestauranteRequest")
+                    .build();
+
+            String jsonPayload = gson.toJson(req);
+
+            JsonDataRequestBean requestBean = new JsonDataRequestBean();
+            requestBean.setJsonRequest(jsonPayload);
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("jsonRequest", jsonPayload);
+
+            String jsonResponse = client.callServiceForString(
+                    "notificarRestauranteResponse",
+                    params
+            );
+            UpdPublicarContenidosRespBean result =
+                    gson.fromJson(jsonResponse, UpdPublicarContenidosRespBean.class);
+
+            log.info("Notificación SOAP enviada restaurante {} (contenidos {})",
+                    nroRestaurante, contenidos);
+
+        } catch (Exception e) {
+            log.error("Error SOAP notificando restaurante {}: {}",
+                    nroRestaurante, e.getMessage(), e);
+        }
+    }
+
+
 }

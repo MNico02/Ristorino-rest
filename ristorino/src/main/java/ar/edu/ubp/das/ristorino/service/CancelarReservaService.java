@@ -1,8 +1,9 @@
 package ar.edu.ubp.das.ristorino.service;
 
 import ar.edu.ubp.das.ristorino.beans.CancelarReservaBean;
-import ar.edu.ubp.das.ristorino.clients.CancelarReservaClient;
-import ar.edu.ubp.das.ristorino.clients.CancelarReservaClientFactory;
+import ar.edu.ubp.das.ristorino.beans.ResponseBean;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,12 +16,12 @@ import java.util.Map;
 public class CancelarReservaService {
 
     private final RistorinoRepository ristorinoRepository;
-    private final CancelarReservaClientFactory clientFactory;
+    private final RestauranteClientFactory clientFactory;
 
     public CancelarReservaService(RistorinoRepository ristorinoRepository,
-                                  CancelarReservaClientFactory clientFactory) {
+                                  RestauranteClientFactory clientFactory) {
         this.ristorinoRepository = ristorinoRepository;
-        this.clientFactory = clientFactory; //decide el cliente segun el nro de restaurante
+        this.clientFactory = clientFactory;
     }
 
     public Map<String, Object> cancelarReserva(CancelarReservaBean req) {
@@ -30,7 +31,7 @@ public class CancelarReservaService {
         Integer nroRestaurante = req.getNroRestaurante();
         String codReservaSucursal = req.getCodReservaSucursal();
 
-        // Validación de datos
+
         if (nroRestaurante == null || codReservaSucursal == null || codReservaSucursal.isBlank()) {
             resp.put("success", false);
             resp.put("message", "Faltan datos: nroRestaurante y codReservaSucursal son obligatorios.");
@@ -38,22 +39,22 @@ public class CancelarReservaService {
         }
 
         try {
-            // Obtener cliente según el restaurante, va a la interfaz y decide el cliente
-            CancelarReservaClient client = clientFactory.getClient(nroRestaurante);
+            // Obtener cliente según el restaurante
+            RestauranteClient client = clientFactory.getClient(nroRestaurante);
 
             // 1) Llamar al restaurante para que cancele primero
-            Map<String, Object> rtaRest = client.cancelarReserva(codReservaSucursal);
+            ResponseBean rtaRest = client.cancelarReserva(codReservaSucursal);
 
-            boolean okRest = Boolean.TRUE.equals(rtaRest.get("success"));
-            String statusRest = String.valueOf(rtaRest.getOrDefault("status", "UNKNOWN"));
+
+            /*String statusRest = String.valueOf(rtaRest.getOrDefault("status", "UNKNOWN"));
             String msgRest = String.valueOf(rtaRest.getOrDefault("message", "Sin mensaje."));
 
-            if (!okRest) {
+            if (rtaRest.isSuccess()) {
                 resp.put("success", false);
                 resp.put("status", statusRest);
                 resp.put("message", msgRest);
                 return resp;
-            }
+            }*/
 
             // 2) Reflejar en Ristorino (SP) usando el repository
             Map<String, Object> rtaRistorino =
@@ -71,9 +72,9 @@ public class CancelarReservaService {
                 return resp;
             }
 
-            // OK total
+
             resp.put("success", true);
-            resp.put("status", statusRest);
+            resp.put("status", rtaRistorino.get("status"));
             resp.put("message", "Reserva cancelada correctamente en restaurante y reflejada en Ristorino.");
             resp.put("restaurante", rtaRest);
             resp.put("ristorino", rtaRistorino);

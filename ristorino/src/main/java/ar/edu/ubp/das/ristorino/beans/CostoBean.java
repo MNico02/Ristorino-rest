@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public class CostoBean {
     private String tipoCosto;
-    private LocalDate fecha;
+    private String fecha;
 
     public String getTipoCosto() {
         return tipoCosto;
@@ -14,11 +14,11 @@ public class CostoBean {
         this.tipoCosto = tipoCosto;
     }
 
-    public LocalDate getFecha() {
-        return fecha;
+    public void setFecha(String fecha) {
+        this.fecha = fecha;
     }
 
-    public void setFecha(LocalDate fecha) {
-        this.fecha = fecha;
+    public String getFecha() {
+        return fecha;
     }
 }

@@ -2,8 +2,8 @@ package ar.edu.ubp.das.ristorino.service;
 
 import ar.edu.ubp.das.ristorino.beans.HorarioBean;
 import ar.edu.ubp.das.ristorino.beans.SoliHorarioBean;
-import ar.edu.ubp.das.ristorino.clients.DisponibilidadClient;
-import ar.edu.ubp.das.ristorino.clients.DisponibilidadClientFactory;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +13,9 @@ import java.util.List;
 @Slf4j
 public class DisponibilidadService {
 
-    private final DisponibilidadClientFactory factory;
+    private final RestauranteClientFactory factory;
 
-    public DisponibilidadService(DisponibilidadClientFactory factory) {
+    public DisponibilidadService(RestauranteClientFactory factory) {
         this.factory = factory;
     }
 
@@ -23,7 +23,7 @@ public class DisponibilidadService {
 
         int nroRestaurante = resolverRestaurante(soli.getCodSucursalRestaurante());
 
-        DisponibilidadClient client = factory.getClient(nroRestaurante);
+        RestauranteClient client = factory.getClient(nroRestaurante);
 
         return client.obtenerDisponibilidad(soli);
     }

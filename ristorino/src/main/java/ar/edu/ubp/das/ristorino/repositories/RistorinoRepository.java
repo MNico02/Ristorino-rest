@@ -97,7 +97,7 @@ public class RistorinoRepository {
 
     private String generarToken(String correo) {
         Date ahora = new Date();
-        Date expiracion = new Date(ahora.getTime() + 1000 * 60 * 60 * 2); // 2 horas
+        Date expiracion = new Date(ahora.getTime() + 1000 * 60 * 60 * 2);
 
         return Jwts.builder()
                 .setSubject(correo)
@@ -210,28 +210,28 @@ public class RistorinoRepository {
 
     public List<ClickNotiBean> marcarClicksComoNotificados(List<ClickNotiBean> clicks, Integer nroRestaurante) {
         if (clicks == null || clicks.isEmpty()) {
-            log.info("⚠️ No hay clics para marcar como notificados.");
+            log.info(" No hay clics para marcar como notificados.");
             return List.of();
         }
 
-        // 1️⃣ Convertimos la lista de clicks a JSON (como espera el SP)
+        // Convertimos la lista de clicks a JSON (como espera el SP)
         String jsonItems = clicks.stream()
                 .map(click -> String.format("{\"nro_click\": %d}", click.getNroClick()))
                 .collect(Collectors.joining(",", "[", "]"));
 
-        // 2️⃣ Armamos los parámetros
+        // Armamos los parámetros
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("items_json", jsonItems)
                 .addValue("nro_restaurante", nroRestaurante);
 
         try {
-            // 3️⃣ Ejecutamos el procedimiento con la factory
+            //Ejecutamos el procedimiento con la factory
             List<ClickNotiBean> actualizados = jdbcCallFactory.executeQuery(
-                    "sp_clicks_confirmar_notificados_obj",   // nombre del SP
-                    "dbo",                                   // esquema
+                    "sp_clicks_confirmar_notificados_obj",
+                    "dbo",
                     params,
-                    "clicks",                                // alias del resultset (puede ser cualquiera)
-                    ClickNotiBean.class                      // clase mapeada
+                    "clicks",
+                    ClickNotiBean.class
             );
 
             log.info("{} clic(s) marcados como notificados para restaurante {}.",
@@ -265,18 +265,18 @@ public class RistorinoRepository {
 
             String promocionesJson = jsonArray.toString();
 
-            // Parámetros de entrada y salida
+
             SqlParameterSource params = new MapSqlParameterSource()
                     .addValue("nro_restaurante", nroRestaurante, Types.INTEGER)
                     .addValue("promociones_json", promocionesJson, Types.NVARCHAR);
 
-            // Ejecutar procedimiento
+
             Map<String, Object> result = jdbcCallFactory.executeWithOutputs(
                     "ins_contenidos_restaurante_lote",
                     "dbo",
                     params);
 
-            // Obtener el costo aplicado
+
             BigDecimal costoAplicado = (BigDecimal) result.get("costo_aplicado");
         return costoAplicado;
 
@@ -285,9 +285,7 @@ public class RistorinoRepository {
     public Map<String, Object> guardarInfoRestaurante(SyncRestauranteBean restaurante) {
         try {
             ObjectMapper om = new ObjectMapper();
-            // Si después agregás fechas/horas como LocalDate/LocalTime:
-            // om.registerModule(new JavaTimeModule());
-            // om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
 
             String json = om.writeValueAsString(restaurante);
             System.out.println(json);
@@ -318,7 +316,51 @@ public class RistorinoRepository {
 
         return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
     }
+    public String obtenerConfiguracionJson(int nroRestaurante) {
 
+        log.debug("Obteniendo configuración JSON para restaurante #{}", nroRestaurante);
+
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_restaurante", nroRestaurante);
+
+        try {
+            List<Map<String, Object>> rs = jdbcCallFactory.executeList(
+                    "sp_get_configuracion_restaurante",
+                    "dbo",
+                    params
+            );
+
+            if (rs == null || rs.isEmpty()) {
+                throw new RuntimeException(
+                        "No se encontró configuración para el restaurante #" + nroRestaurante
+                );
+            }
+
+            // El SP retorna el JSON en la primera columna
+            // Como usamos FOR JSON PATH, la columna tiene un nombre auto-generado
+            // Tomamos el primer (y único) valor del Map
+            Object jsonValue = rs.get(0).values().iterator().next();
+
+            if (jsonValue == null) {
+                throw new RuntimeException(
+                        "Configuración vacía para restaurante #" + nroRestaurante
+                );
+            }
+
+            String json = jsonValue.toString();
+
+            log.debug("Configuración obtenida: {}", json);
+
+            return json;
+
+        } catch (Exception e) {
+            log.error("Error al obtener configuración del restaurante #{}: {}",
+                    nroRestaurante, e.getMessage(), e);
+            throw new RuntimeException(
+                    "Error al obtener configuración: " + e.getMessage(), e
+            );
+        }
+    }
     public List<RestauranteHomeBean> listarRestaurantesHome() {
         String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
         SqlParameterSource params = new MapSqlParameterSource().addValue("idioma_front",idiomaActual);
@@ -340,13 +382,7 @@ public class RistorinoRepository {
 
                 if (categoriasJson != null && !categoriasJson.isEmpty()) {
                     try {
-                    /*
-                      JSON viene así:
-                      [
-                        { "categoria": "ESTILOS", "valores": "Casual,Familiar" },
-                        ...
-                      ]
-                    */
+
                         List<Map<String, String>> lista =
                                 mapper.readValue(categoriasJson, new TypeReference<>() {});
 
@@ -385,7 +421,6 @@ public class RistorinoRepository {
                 .addValue("cod_restaurante", nroRestaurante)
                     .addValue("idioma_front",idiomaActual);
 
-        // 👇 Cambiamos al nombre real del SP con 5 result sets
         Map<String, Object> out =
                 jdbcCallFactory.executeWithOutputs("get_restaurante_info", "dbo", params);
 
@@ -414,7 +449,7 @@ public class RistorinoRepository {
                 s.setNroSucursal(nroSuc);
                 s.setNomSucursal(getStr(row.get("nom_sucursal")));
                 s.setCalle(getStr(row.get("calle")));
-                s.setNroCalle(getStr(row.get("nro_calle")));   // si es INT en bean, usa getInt
+                s.setNroCalle(getStr(row.get("nro_calle")));
                 s.setBarrio(getStr(row.get("barrio")));
                 s.setNroLocalidad(getInt(row.get("nro_localidad")));
                 s.setNomLocalidad(getStr(row.get("nom_localidad")));
@@ -429,7 +464,7 @@ public class RistorinoRepository {
                 // Inicializamos colecciones que vamos a llenar abajo
                 s.setTurnos(new ArrayList<>());
                 s.setZonas(new ArrayList<>());
-                s.setPreferencias(new ArrayList<>()); // ⬅️ agregá esta lista al SucursalBean si no existe
+                s.setPreferencias(new ArrayList<>());
 
 
                 sucursalesMap.put(nroSuc, s);
@@ -444,7 +479,7 @@ public class RistorinoRepository {
             for (Map<String, Object> row : rs3) {
                 int nroSuc = getInt(row.get("nro_sucursal"));
                 TurnoBean t = new TurnoBean();
-                t.setHoraDesde(getStr(row.get("hora_desde")));  // o getTime(...) si tu bean usa java.sql.Time
+                t.setHoraDesde(getStr(row.get("hora_desde")));
                 t.setHoraHasta(getStr(row.get("hora_hasta")));
                 t.setHabilitado(getBool(row.get("habilitado")));
 
@@ -462,9 +497,7 @@ public class RistorinoRepository {
                 int nroSuc = getInt(row.get("nro_sucursal"));
                 ZonaBean z = new ZonaBean();
                 z.setCodZona(getInt(row.get("cod_zona")));
-                // El RS4 trae "desc_zona". Si tu bean tiene "nomZona", mapealo ahí:
-                // z.setNomZona(getStr(row.get("desc_zona")));
-                z.setDescZona(getStr(row.get("zona")));
+                z.setNomZona(getStr(row.get("zona")));
                 z.setCantComensales(getInt(row.get("cant_comensales")));
                 z.setPermiteMenores(getBool(row.get("permite_menores")));
                 z.setHabilitada(getBool(row.get("habilitada")));
@@ -476,7 +509,6 @@ public class RistorinoRepository {
 
         // =========================
         // RS5: Preferencias por sucursal
-        // (con nom_valor_dominio y nom_categoria)
         // =========================
         List<Map<String, Object>> rs5 = castRS(out.get("#result-set-5"));
         if (rs5 != null) {
@@ -585,7 +617,7 @@ public class RistorinoRepository {
 
         Map<String, Object> resp = new HashMap<>();
 
-        // 1) Validaciones mínimas (evita NPE y errores de parse)
+
         if (req == null) {
             resp.put("success", false);
             resp.put("status", "INVALID");
@@ -614,7 +646,7 @@ public class RistorinoRepository {
             return resp;
         }
 
-        // 2) Armar params para el SP (OJO: nombres en snake_case como el SP)
+
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cod_reserva_sucursal", req.getCodReservaSucursal(), Types.VARCHAR)
                 .addValue("fecha_reserva", java.sql.Date.valueOf(req.getFechaReserva()), Types.DATE)
@@ -641,7 +673,7 @@ public class RistorinoRepository {
 
             Map<String, Object> row = rs.get(0);
 
-            // 3) Parsear success/status/message del SP
+
             boolean success = false;
             Object vSuccess = row.get("success");
             if (vSuccess instanceof Boolean) success = (Boolean) vSuccess;
@@ -692,7 +724,7 @@ public class RistorinoRepository {
 
 
     public ReservasClienteRespBean getReservasCliente(String correo) {
-           // System.out.println("correo: " + correo);
+
         String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
         SqlParameterSource params1 = new MapSqlParameterSource()
                 .addValue("correo_cliente", correo);
@@ -738,7 +770,7 @@ public class RistorinoRepository {
             ZonaBean z = new ZonaBean();
 
             z.setCodZona(getInt(row.get("codZona")));
-            z.setDescZona(getStr(row.get("nomZona"))); // <-- alias del SP
+            z.setNomZona(getStr(row.get("nomZona")));
             z.setCantComensales(getInt(row.get("cantComensales")));
             z.setPermiteMenores(getBool(row.get("permiteMenores")));
             z.setHabilitada(getBool(row.get("habilitada")));
@@ -753,8 +785,7 @@ public class RistorinoRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cod_reserva_sucursal", codReservaSucursal);
 
-        // El nombre del resultset puede ser cualquiera, pero tiene que coincidir
-        // con el que usa returningResultSet(resultSetName, ...)
+
         List<Map<String, Object>> rs = jdbcCallFactory.executeQueryAsMap(
                 "cancelar_reserva_ristorino_por_codigo",
                 "dbo",
@@ -762,13 +793,13 @@ public class RistorinoRepository {
                 "result"
         );
 
-        // Spring siempre devuelve una lista. Tomamos el primer registro
+
         return rs.isEmpty()
                 ? Map.of("success", false, "status", "ERROR", "message", "SP no devolvió resultado.")
                 : rs.get(0);
     }
 
-    public BigDecimal obtenerCostoVigente(String tipoCosto, LocalDate fecha) {
+    public BigDecimal obtenerCostoVigente(String tipoCosto, String fecha) {
 
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("tipo_costo", tipoCosto)

@@ -58,7 +58,7 @@ public class SimpleJdbcCallFactory {
         SimpleJdbcCall jdbcCall = createCall(procedureName, schemaName);
         Map<String, Object> result = jdbcCall.execute(params);
 
-        // buscar el primer ResultSet (Spring devuelve bajo una clave "#result-set-1")
+
         Object rs = result.get("#result-set-1");
         if (rs instanceof List) {
             return (List<Map<String, Object>>) rs;

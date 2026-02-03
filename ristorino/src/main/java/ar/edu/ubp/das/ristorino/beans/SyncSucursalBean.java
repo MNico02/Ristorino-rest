@@ -15,7 +15,7 @@ public class SyncSucursalBean {
     private int nroSucursal;
     private String nomSucursal;
     private String calle;
-    private String nroCalle; // en tu JSON viene como String, perfecto
+    private String nroCalle;
     private String barrio;
     private int nroLocalidad;
     private String nomLocalidad;

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ZonaBean {
     private int codZona;
-    @JsonProperty("nomZona")
-    private String descZona;
+    //@JsonProperty("nomZona")
+    private String nomZona;
     private int cantComensales;
     private Boolean permiteMenores;
     private Boolean habilitada;
@@ -18,12 +18,12 @@ public class ZonaBean {
         this.codZona = codZona;
     }
 
-    public String getDescZona() {
-        return descZona;
+    public String getNomZona() {
+        return nomZona;
     }
 
-    public void setDescZona(String descZona) {
-        this.descZona = descZona;
+    public void setNomZona(String nomZona) {
+        this.nomZona = nomZona;
     }
 
     public int getCantComensales() {

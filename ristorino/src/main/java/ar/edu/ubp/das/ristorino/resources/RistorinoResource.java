@@ -125,6 +125,7 @@ public class RistorinoResource {
             String texto = body.get("texto");
             FiltroRecomendacionBean filtros = geminiService.interpretarTexto(texto);
             List<Map<String, Object>> restaurantes = ristorinoRepository.obtenerRecomendaciones(filtros);
+            System.out.println(restaurantes);
             return ResponseEntity.ok(restaurantes);
         } catch (Exception e) {
             e.printStackTrace();

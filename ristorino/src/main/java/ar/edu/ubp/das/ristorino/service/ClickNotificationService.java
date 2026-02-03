@@ -1,8 +1,11 @@
 package ar.edu.ubp.das.ristorino.service;
 
 import ar.edu.ubp.das.ristorino.beans.ClickNotiBean;
-import ar.edu.ubp.das.ristorino.clients.ClickNotificationClient;
-import ar.edu.ubp.das.ristorino.clients.ClickNotificationClientFactory;
+import ar.edu.ubp.das.ristorino.beans.ReservaSolicitudBean;
+import ar.edu.ubp.das.ristorino.beans.ResponseBean;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
+import jakarta.xml.ws.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -12,27 +15,29 @@ import java.util.List;
 @Service
 public class ClickNotificationService {
 
-    private final ClickNotificationClientFactory clientFactory;
+    private final RestauranteClientFactory clientFactory;
 
-    public ClickNotificationService(ClickNotificationClientFactory clientFactory) {
+    public ClickNotificationService(RestauranteClientFactory clientFactory) {
         this.clientFactory = clientFactory;
     }
 
-    public boolean enviarClicksPorRestaurante(int nroRestaurante, List<ClickNotiBean> clicks) {
+    public ResponseBean enviarClicksPorRestaurante(int nroRestaurante, List<ClickNotiBean> clicks) {
 
         if (clicks == null || clicks.isEmpty()) {
             log.warn("No hay clicks para enviar al restaurante {}", nroRestaurante);
-            return false;
+            ResponseBean resp = new ResponseBean();
+            resp.setSuccess(false);
+            return resp;
         }
 
         try {
             // Obtener cliente según el restaurante
-            ClickNotificationClient client = clientFactory.getClient(nroRestaurante);
+            RestauranteClient client = clientFactory.getClient(nroRestaurante);
 
             // Enviar clicks
-            boolean resultado = client.enviarClicks(clicks);
+            ResponseBean resultado = client.enviarClicks(clicks);
 
-            if (resultado) {
+            if (resultado.isSuccess()) {
                 log.info("Clicks registrados correctamente en restaurante {}", nroRestaurante);
             } else {
                 log.warn("El restaurante {} no pudo registrar los clicks", nroRestaurante);
@@ -42,12 +47,16 @@ public class ClickNotificationService {
 
         } catch (IllegalArgumentException e) {
             log.warn("No se encontró configuración para el restaurante {}", nroRestaurante);
-            return false;
+            ResponseBean resp = new ResponseBean();
+            resp.setSuccess(false);
+            return resp;
 
         } catch (Exception e) {
             log.error("No se pudieron enviar los clicks al restaurante {}: {}",
                     nroRestaurante, e.getMessage());
-            return false;
+            ResponseBean resp = new ResponseBean();
+            resp.setSuccess(false);
+            return resp;
         }
     }
 }

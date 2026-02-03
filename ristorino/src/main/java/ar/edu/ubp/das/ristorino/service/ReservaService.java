@@ -1,8 +1,8 @@
 package ar.edu.ubp.das.ristorino.service;
 
 import ar.edu.ubp.das.ristorino.beans.*;
-import ar.edu.ubp.das.ristorino.clients.ReservaClient;
-import ar.edu.ubp.das.ristorino.clients.ReservaClientFactory;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
 public class ReservaService {
 
     private final RistorinoRepository ristorinoRepository;
-    private final ReservaClientFactory factory;
+    private final RestauranteClientFactory factory;
 
     public ReservaService(RistorinoRepository ristorinoRepository,
-                          ReservaClientFactory factory) {
+                          RestauranteClientFactory factory) {
         this.ristorinoRepository = ristorinoRepository;
         this.factory = factory;
     }
@@ -36,7 +36,7 @@ public class ReservaService {
         payload.setReserva(mapReservaSolicitud(reserva));
 
         // 4) Delegar en el client correspondiente (REST o SOAP)
-        ReservaClient client = factory.getClient(nroRestaurante);
+        RestauranteClient client = factory.getClient(nroRestaurante);
 
         ConfirmarReservaResponseBean body = client.confirmarReserva(payload, nroRestaurante);
 

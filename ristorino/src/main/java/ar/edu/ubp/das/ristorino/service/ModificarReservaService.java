@@ -1,8 +1,9 @@
 package ar.edu.ubp.das.ristorino.service;
 
 import ar.edu.ubp.das.ristorino.beans.ModificarReservaReqBean;
-import ar.edu.ubp.das.ristorino.clients.ModificarReservaClient;
-import ar.edu.ubp.das.ristorino.clients.ModificarReservaClientFactory;
+import ar.edu.ubp.das.ristorino.beans.ResponseBean;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
+import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,10 @@ import java.util.Map;
 public class ModificarReservaService {
 
     private final RistorinoRepository ristorinoRepository;
-    private final ModificarReservaClientFactory clientFactory;
+    private final RestauranteClientFactory clientFactory;
 
     public ModificarReservaService(RistorinoRepository ristorinoRepository,
-                                   ModificarReservaClientFactory clientFactory) {
+                                   RestauranteClientFactory clientFactory) {
         this.ristorinoRepository = ristorinoRepository;
         this.clientFactory = clientFactory;
     }
@@ -27,7 +28,7 @@ public class ModificarReservaService {
 
         Map<String, Object> resp = new HashMap<>();
 
-        // 1) Validaciones mínimas
+
         Integer nroRestaurante = req.getNroRestaurante();
         String codReservaSucursal = req.getCodReservaSucursal();
 
@@ -40,13 +41,13 @@ public class ModificarReservaService {
 
         try {
             log.info("antes de el soapclient"+req.getHoraReserva().toString());
-            // Obtener cliente según el restaurante
-            ModificarReservaClient client = clientFactory.getClient(nroRestaurante);
 
-            // 2) Llamar al restaurante para que modifique
-            Map<String, Object> rtaRest = client.modificarReserva(req);
+            RestauranteClient client = clientFactory.getClient(nroRestaurante);
 
-            boolean okRest = Boolean.TRUE.equals(rtaRest.get("success"));
+
+            ResponseBean rtaRest = client.modificarReserva(req);
+
+            /*boolean okRest = Boolean.TRUE.equals(rtaRest.get("success"));
             String statusRest = String.valueOf(rtaRest.getOrDefault("status", "UNKNOWN"));
             String msgRest = String.valueOf(rtaRest.getOrDefault("message", "Sin mensaje."));
 
@@ -57,9 +58,9 @@ public class ModificarReservaService {
                 resp.put("message", msgRest);
                 resp.put("restaurante", rtaRest);
                 return resp;
-            }
+            }*/
 
-            // 3) Reflejar modificación en Ristorino (SP)
+
             Map<String, Object> rtaRistorino = ristorinoRepository.modificarReservaRistorino(req);
 
             boolean okRis = Boolean.TRUE.equals(rtaRistorino.get("success"));
@@ -74,9 +75,9 @@ public class ModificarReservaService {
                 return resp;
             }
 
-            // OK total
+
             resp.put("success", true);
-            resp.put("status", statusRest);
+            resp.put("status", rtaRest.getStatus());
             resp.put("message", "Reserva modificada correctamente en restaurante y reflejada en Ristorino.");
             resp.put("restaurante", rtaRest);
             resp.put("ristorino", rtaRistorino);

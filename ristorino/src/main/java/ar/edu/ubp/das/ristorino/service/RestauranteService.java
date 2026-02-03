@@ -18,8 +18,7 @@ public class RestauranteService {
 
     public SyncRestauranteBean obtenerRestaurante(int nroRestaurante) {
 
-        RestauranteClient client =
-                clientFactory.getClient(nroRestaurante);
+        RestauranteClient client =   clientFactory.getClient(nroRestaurante);
 
         if (client == null) {
             log.warn("No hay cliente configurado para restaurante {}", nroRestaurante);

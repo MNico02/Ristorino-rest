@@ -1,7 +1,9 @@
 package ar.edu.ubp.das.ristorino.clients;
 
-import ar.edu.ubp.das.ristorino.beans.ClienteRestauranteConfigBean;
+
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -10,53 +12,25 @@ import java.util.Map;
 
 @Component
 public class RestauranteClientFactory {
-
     @Autowired
-    private RistorinoRepository ristorinoRepository;
-
+    private RistorinoRepository repository;
     private final Map<Integer, RestauranteClient> clients = new HashMap<>();
 
     public RestauranteClient getClient(int nroRestaurante) {
+        String jsonConfig = repository.obtenerConfiguracionJson(nroRestaurante);
 
-        // Cache: si ya existe, lo devolvemos
-        if (clients.containsKey(nroRestaurante)) {
-            return clients.get(nroRestaurante);
-        }
 
-        //  Traer configuración desde BD
-        ClienteRestauranteConfigBean cfg =
-                ristorinoRepository.getConfiguracionClienteReservas(nroRestaurante);
+        JsonObject json = JsonParser.parseString(jsonConfig).getAsJsonObject();
+        String tipo = json.get("tipoIntegracion").getAsString();
 
-        if (cfg == null || cfg.getTipoCliente() == null) {
-            throw new IllegalArgumentException(
-                    "No hay cliente configurado para restaurante " + nroRestaurante
+        return switch (tipo.toUpperCase()) {
+            case "SOAP" -> new RestauranteSoapClient(jsonConfig);
+            case "REST" -> new RestauranteRestClient(
+                    json.get("baseUrl").getAsString(),
+                    json.get("token").getAsString()
             );
-        }
-
-        String tipo = cfg.getTipoCliente().toUpperCase();
-
-        RestauranteClient client;
-
-        // Construcción del cliente
-        if ("REST".equals(tipo)) {
-
-            client = new RestauranteRestClient(
-                    cfg.getBaseUrl() + "/restaurante",
-                    cfg.getToken()
-            );
-
-        } else{
-
-            client = new RestauranteSoapClient(
-                    cfg.getBaseUrl(),
-                    cfg.getSoapUser(),
-                    cfg.getSoapPass()
-            );
-
-        }
-
-        //  Guardamos en cache
-        clients.put(nroRestaurante, client);
-        return client;
+            default -> throw new IllegalArgumentException("Tipo no soportado: " + tipo);
+        };
     }
 }
+
