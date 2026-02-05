@@ -123,16 +123,32 @@ public class RistorinoResource {
     public ResponseEntity<?> procesarTexto(@RequestBody Map<String, String> body) {
         try {
             String texto = body.get("texto");
-            FiltroRecomendacionBean filtros = geminiService.interpretarTexto(texto);
-            List<Map<String, Object>> restaurantes = ristorinoRepository.obtenerRecomendaciones(filtros);
-            System.out.println(restaurantes);
+            String email = body.get("emailUsuario");
+
+            String preferenciasUsuario = null;
+
+
+            if (email != null && !email.isBlank()) {
+                preferenciasUsuario =
+                        ristorinoRepository.obtenerPreferenciasClienteJson(email);
+
+            }
+
+            FiltroRecomendacionBean filtros =
+                    geminiService.interpretarTexto(texto, preferenciasUsuario);
+
+            List<Map<String, Object>> restaurantes =
+                    ristorinoRepository.obtenerRecomendaciones(filtros);
+
             return ResponseEntity.ok(restaurantes);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
 
     /*
     * Obtiene los contenidos pendientes, genera un texto promocional con la IA para cada uno, y lo registra en la BD.

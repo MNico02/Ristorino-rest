@@ -1,6 +1,9 @@
 package ar.edu.ubp.das.ristorino.beans;
 
-public class ClienteBean {//cliente desde el front-end  (persona)
+import java.util.List;
+
+public class ClienteBean {
+
     private String apellido;
     private String nombre;
     private String clave;
@@ -9,8 +12,14 @@ public class ClienteBean {//cliente desde el front-end  (persona)
     private String nomLocalidad;
     private String nomProvincia;
     private String observaciones;
-    private int codCategoria;
-    private int nroValorDominio;
+
+    // 🔹 LEGADO (no se rompe)
+    private Integer codCategoria;
+    private Integer nroValorDominio;
+
+    // 🔹 NUEVO
+    private List<PreferenciaRegistroBean> preferencias;
+
 
     public String getApellido() {
         return apellido;
@@ -52,7 +61,6 @@ public class ClienteBean {//cliente desde el front-end  (persona)
         this.telefonos = telefonos;
     }
 
-
     public String getNomLocalidad() {
         return nomLocalidad;
     }
@@ -77,19 +85,27 @@ public class ClienteBean {//cliente desde el front-end  (persona)
         this.observaciones = observaciones;
     }
 
-    public int getCodCategoria() {
+    public Integer getCodCategoria() {
         return codCategoria;
     }
 
-    public void setCodCategoria(int codCategoria) {
+    public void setCodCategoria(Integer codCategoria) {
         this.codCategoria = codCategoria;
     }
 
-    public int getNroValorDominio() {
+    public Integer getNroValorDominio() {
         return nroValorDominio;
     }
 
-    public void setNroValorDominio(int nroValorDominio) {
+    public void setNroValorDominio(Integer nroValorDominio) {
         this.nroValorDominio = nroValorDominio;
+    }
+
+    public List<PreferenciaRegistroBean> getPreferencias() {
+        return preferencias;
+    }
+
+    public void setPreferencias(List<PreferenciaRegistroBean> preferencias) {
+        this.preferencias = preferencias;
     }
 }

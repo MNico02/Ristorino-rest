@@ -469,97 +469,133 @@ VALUES (
            Devuelve solo el texto final, sin comillas ni formato adicional.'
        );
 
+
+
 INSERT INTO dbo.prompts_ia (tipo_prompt, texto_prompt)
 VALUES (
            'BUSQUEDA',
-           N'Analizá el texto del usuario que busca un restaurante.👉 "{TEXTO_BASE}"
+           N'
+           Analizá el texto del usuario que busca un restaurante:
+
+           "{TEXTO_BASE}"
+
            El texto puede estar en español o en inglés.
 
-           Tu objetivo es INTERPRETAR LA INTENCIÓN del usuario y mapearla a filtros
-           compatibles con una base de datos de restaurantes y sucursales.
+           Opcionalmente vas a recibir información adicional del cliente:
+           {TEXTO_PREFERENCIA_CLIENTE}
 
-           REGLAS GENERALES (OBLIGATORIAS):
-           - NO inventes información que el usuario no menciona.
-           - Normalizá sinónimos a valores simples.
-           - Si un dato no está claro, dejá el campo vacío ("").
-           - Devolvé SIEMPRE un JSON válido.
-           - NO agregues explicaciones, comentarios, texto extra ni markdown.
+           ====================================================
+           REGLA PRINCIPAL (OBLIGATORIA)
+           ====================================================
+           - La intención explícita del texto del usuario TIENE PRIORIDAD ABSOLUTA.
+           - Si el texto contradice una preferencia del cliente, ignorá la preferencia.
+           - Usá las preferencias SOLO si el texto es ambiguo o no especifica ese aspecto.
+           - No fuerces preferencias si el usuario menciona explícitamente otra cosa.
+             Ejemplo:
+             Preferencia: vegano
+             Texto: "quiero una hamburguesa de carne"
+             → priorizá hamburguesa de carne.
 
-           -----------------------------------
-           NORMALIZACIÓN DE PRECIO:
-           -----------------------------------
-           - "barato", "económico", "low cost", "cheap" → rangoPrecio = "bajo"
-           - "precio medio", "normal", "average" → rangoPrecio = "medio"
-           - "caro", "lujoso", "premium", "expensive" → rangoPrecio = "alto"
+           ====================================================
+           OBJETIVO
+           ====================================================
+           Interpretar la intención del usuario y mapearla a filtros
+           compatibles con una base de datos SQL de restaurantes y sucursales.
 
-           -----------------------------------
-           NORMALIZACIÓN DE HORARIO:
-           -----------------------------------
-           - "desayuno", "mañana", "breakfast" → momentoDelDia = "mañana"
-           - "almuerzo", "mediodía", "lunch" → momentoDelDia = "mediodía"
-           - "tarde", "merienda" → momentoDelDia = "tarde"
-           - "cena", "noche", "dinner" → momentoDelDia = "noche"
+           ====================================================
+           REGLAS GENERALES (OBLIGATORIAS)
+           ====================================================
+           - NO inventes información.
+           - NO agregues texto explicativo, comentarios ni markdown.
+           - Devolvé ÚNICAMENTE un JSON válido.
+           - Si un dato no está presente, usar null (NO string vacío).
+           - No agregues ni quites campos.
+           - No devuelvas arrays ni objetos anidados.
 
-           -----------------------------------
-           UBICACIÓN (IMPORTANTE):
-           -----------------------------------
-           - Si menciona una CIUDAD o PROVINCIA clara, completar ciudad / provincia.
-           - Si menciona un BARRIO o ZONA (ej: Güemes, Centro, Nueva Córdoba)
-             y NO hay campo específico para barrio,
-             usar el campo "ciudad" para almacenar ese valor.
-             (Ejemplo: ciudad = "Güemes")
+           ====================================================
+           MULTIPLES PREFERENCIAS
+           ====================================================
+           - Si existen varias preferencias del mismo tipo:
+             - Elegí la más relevante
+             - o concatená los valores usando "|" (pipe).
+             Ejemplo: "patio|terraza"
 
-           -----------------------------------
-           RESTAURANTE / SUCURSAL:
-           -----------------------------------
+           ====================================================
+           NORMALIZACIÓN DE PRECIO
+           ====================================================
+           - barato, económico, low cost, cheap → "bajo"
+           - precio medio, normal, average → "medio"
+           - caro, lujoso, premium, expensive → "alto"
+
+           ====================================================
+           NORMALIZACIÓN DE HORARIO
+           ====================================================
+           - desayuno, mañana, breakfast → "mañana"
+           - almuerzo, mediodía, lunch → "mediodía"
+           - tarde, merienda → "tarde"
+           - cena, noche, dinner → "noche"
+
+           ====================================================
+           UBICACIÓN
+           ====================================================
+           - Ciudad → ciudad
+           - Provincia → provincia
+           - Barrio o zona (ej: Güemes, Centro, Nueva Córdoba) → barrioZona
+
+           ====================================================
+           RESTAURANTE / SUCURSAL
+           ====================================================
            - Si menciona un nombre propio que parece restaurante o sucursal,
              completar nombreRestaurante.
-           - NO confundir tipo de comida con nombre de restaurante.
+           - No confundir tipo de comida con nombre de restaurante.
 
-           -----------------------------------
-           PERSONAS Y MENORES:
-           -----------------------------------
-           - Si menciona cantidad de personas, usar SOLO el número en cantidadPersonas.
-           - Si menciona niños, familia, menores, kids → tieneMenores = "si".
-           - Si menciona solo adultos → tieneMenores = "no".
+           ====================================================
+           PERSONAS Y MENORES
+           ====================================================
+           - cantidadPersonas → número entero o null
+           - niños, familia, menores, kids → tieneMenores = "si"
+           - solo adultos → tieneMenores = "no"
 
-           -----------------------------------
-           RESTRICCIONES ALIMENTARIAS:
-           -----------------------------------
+           ====================================================
+           RESTRICCIONES ALIMENTARIAS
+           ====================================================
            - Mapear a restriccionesAlimentarias valores como:
              vegetariano, vegano, sin gluten, kosher, halal, etc.
 
-           -----------------------------------
-           AMBIENTE:
-           -----------------------------------
+           ====================================================
+           AMBIENTE
+           ====================================================
            - Mapear preferenciasAmbiente con valores como:
              tranquilo, familiar, romántico, bar, moderno, gourmet, informal.
 
-           -----------------------------------
-           TIPO DE COMIDA:
-           -----------------------------------
+           ====================================================
+           TIPO DE COMIDA
+           ====================================================
            - Si menciona un tipo de comida (italiana, japonesa, mexicana, rápida, etc.)
              completar tipoComida.
+           - Si se menciona hamburguesa, inyectala en el json como burger
+           ====================================================
+           DEVOLVÉ EXACTAMENTE ESTE JSON
+           (no agregues ni quites campos):
 
-           -----------------------------------
-           DEVOLVÉ EXACTAMENTE ESTE JSON SIN LAS COMILLAS ANTES Y DESP DE LAS LLAVE DEL JSON
-           (con estos campos, sin agregar ni quitar ninguno):
-
-           "{
-             "tipoComida": "",
-             "momentoDelDia": "",
-             "ciudad": "",
-             "provincia": "",
-             "barrioZona": "",
-             "rangoPrecio": "",
-             "tieneMenores": "",
-             "restriccionesAlimentarias": "",
-             "preferenciasAmbiente": "",
-             "cantidadPersonas": "",
-             "nombreRestaurante": "",
-             "horarioFlexible": false/true
-           }" '
+           {
+             "tipoComida": null,
+             "momentoDelDia": null,
+             "ciudad": null,
+             "provincia": null,
+             "barrioZona": null,
+             "rangoPrecio": null,
+             "tieneMenores": null,
+             "restriccionesAlimentarias": null,
+             "preferenciasAmbiente": null,
+             "cantidadPersonas": null,
+             "nombreRestaurante": null,
+             "horarioFlexible": false,
+             "comida": null
+           }
+           '
        );
+
 
 
 /* ===========================
@@ -973,10 +1009,14 @@ CREATE OR ALTER PROCEDURE registrar_cliente
     @nom_localidad      NVARCHAR(120),
     @nom_provincia      NVARCHAR(120),
 
-    -- 👇 NUEVOS (preferencias)
+    -- 🔹 LEGADO (1 preferencia)
     @cod_categoria      INT = NULL,
     @nro_valor_dominio  INT = NULL,
-    @observaciones      NVARCHAR(500) = NULL
+
+    @observaciones      NVARCHAR(500) = NULL,
+
+    -- 🔹 NUEVO (múltiples preferencias)
+    @preferencias_json  NVARCHAR(MAX) = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
@@ -986,16 +1026,18 @@ BEGIN
     DECLARE @nro_localidad INT;
     DECLARE @nro_cliente   INT;
 
-    -- ❌ correo duplicado
+    /* ===============================
+       Validación correo duplicado
+       =============================== */
     IF EXISTS (SELECT 1 FROM dbo.clientes WHERE correo = @correo)
 BEGIN
         RAISERROR('El correo ya está registrado.', 16, 1);
         RETURN;
 END;
 
-    -- ===============================
-    -- Provincia
-    -- ===============================
+    /* ===============================
+       Provincia
+       =============================== */
 SELECT @cod_provincia = cod_provincia
 FROM dbo.provincias
 WHERE LOWER(nom_provincia) COLLATE Latin1_General_CI_AI =
@@ -1009,9 +1051,9 @@ VALUES (@nom_provincia);
 SET @cod_provincia = SCOPE_IDENTITY();
 END;
 
-    -- ===============================
-    -- Localidad
-    -- ===============================
+    /* ===============================
+       Localidad
+       =============================== */
 SELECT @nro_localidad = nro_localidad
 FROM dbo.localidades
 WHERE LOWER(nom_localidad) COLLATE Latin1_General_CI_AI =
@@ -1026,9 +1068,9 @@ VALUES (@nom_localidad, @cod_provincia);
 SET @nro_localidad = SCOPE_IDENTITY();
 END;
 
-    -- ===============================
-    -- Hash de clave (SHA-256)
-    -- ===============================
+    /* ===============================
+       Hash de clave
+       =============================== */
     DECLARE @clave_hash NVARCHAR(64);
     SET @clave_hash = UPPER(
         CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', @clave), 2)
@@ -1036,9 +1078,9 @@ END;
 
 BEGIN TRAN;
 
-    -- ===============================
-    -- Cliente
-    -- ===============================
+    /* ===============================
+       Cliente
+       =============================== */
 INSERT INTO dbo.clientes (
     apellido,
     nombre,
@@ -1060,9 +1102,9 @@ VALUES (
 
 SET @nro_cliente = SCOPE_IDENTITY();
 
-    -- ===============================
-    -- Preferencia (si viene)
-    -- ===============================
+    /* ===============================
+       Preferencia LEGADO
+       =============================== */
     IF @cod_categoria IS NOT NULL
        AND @nro_valor_dominio IS NOT NULL
 BEGIN
@@ -1080,7 +1122,35 @@ VALUES (
        );
 END;
 
+    /* ===============================
+       Preferencias JSON (NUEVO)
+       =============================== */
+    IF @preferencias_json IS NOT NULL
+BEGIN
+INSERT INTO dbo.preferencias_clientes (
+    nro_cliente,
+    cod_categoria,
+    nro_valor_dominio,
+    observaciones
+)
+SELECT
+    @nro_cliente,
+    JSON_VALUE(p.value, '$.codCategoria'),
+    d.value,
+    @observaciones
+FROM OPENJSON(@preferencias_json) p
+    CROSS APPLY OPENJSON(p.value, '$.dominios') d
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.preferencias_clientes pc
+    WHERE pc.nro_cliente = @nro_cliente
+  AND pc.cod_categoria = JSON_VALUE(p.value, '$.codCategoria')
+  AND pc.nro_valor_dominio = d.value
+    );
+END;
+
 COMMIT TRAN;
+
 
 -- salida
 SELECT @nro_cliente AS nro_cliente_creado;
@@ -1090,7 +1160,7 @@ SELECT *
 FROM dbo.clientes c
          LEFT JOIN dbo.preferencias_clientes pc
                    ON pc.nro_cliente = c.nro_cliente;
-
+select * from dbo.preferencias_clientes
 
 go
 CREATE OR ALTER PROCEDURE dbo.login_cliente
@@ -1117,7 +1187,6 @@ ELSE
 END;
 GO
 
-
 CREATE OR ALTER PROCEDURE dbo.recomendar_restaurantes
     @tipoComida NVARCHAR(120) = NULL,
     @ciudad NVARCHAR(120) = NULL,
@@ -1131,16 +1200,13 @@ CREATE OR ALTER PROCEDURE dbo.recomendar_restaurantes
     @nombreRestaurante NVARCHAR(200) = NULL,
     @barrioZona NVARCHAR(120) = NULL,
     @horarioFlexible BIT = 0,
-    @nroCliente INT = NULL,
-
-    /* 🔥 NUEVO */
     @comida NVARCHAR(150) = NULL
     AS
 BEGIN
     SET NOCOUNT ON;
 
     /* ============================================================
-       1) Normalizar parámetros
+       1) Normalización
        ============================================================*/
     SET @tipoComida = NULLIF(LTRIM(RTRIM(@tipoComida)), '');
     SET @ciudad = NULLIF(LTRIM(RTRIM(@ciudad)), '');
@@ -1157,9 +1223,31 @@ BEGIN
     DECLARE @comidaNorm NVARCHAR(150) = LOWER(@comida);
 
     /* ============================================================
-       2) Rango horario
+       2) Manejo de múltiples valores con |
        ============================================================*/
-    DECLARE @horaDesde TIME(0) = NULL;
+    DECLARE @restricciones TABLE (valor NVARCHAR(120));
+    DECLARE @ambientes TABLE (valor NVARCHAR(120));
+    DECLARE @tiposComida TABLE (valor NVARCHAR(120));
+
+    IF @restriccionesAlimentarias IS NOT NULL
+        INSERT INTO @restricciones
+SELECT LTRIM(RTRIM(value))
+FROM STRING_SPLIT(@restriccionesAlimentarias, '|');
+
+IF @preferenciasAmbiente IS NOT NULL
+        INSERT INTO @ambientes
+SELECT LTRIM(RTRIM(value))
+FROM STRING_SPLIT(@preferenciasAmbiente, '|');
+
+IF @tipoComida IS NOT NULL
+        INSERT INTO @tiposComida
+SELECT LTRIM(RTRIM(value))
+FROM STRING_SPLIT(@tipoComida, '|');
+
+/* ============================================================
+   3) Rango horario
+   ============================================================*/
+DECLARE @horaDesde TIME(0) = NULL;
     DECLARE @horaHasta TIME(0) = NULL;
 
     IF @momentoDelDia IS NOT NULL
@@ -1171,7 +1259,7 @@ BEGIN
 END;
 
     /* ============================================================
-       3) Resolver provincia desde ciudad
+       4) Resolver provincia desde ciudad
        ============================================================*/
     IF @provincia IS NULL AND @ciudad IS NOT NULL
 BEGIN
@@ -1184,7 +1272,7 @@ WHERE l.nom_localidad COLLATE Latin1_General_CI_AI
 END;
 
     /* ============================================================
-       4) Candidatos + SCORING
+       5) Candidatos + scoring
        ============================================================*/
     ;WITH candidatos AS (
     SELECT
@@ -1227,9 +1315,8 @@ END;
               AND t.nro_sucursal = s.nro_sucursal
         ) AS hora_hasta,
 
-        /* ================= SCORING ================= */
         (
-            /* Nombre restaurante */
+            /* 🔒 Nombre restaurante – solo scoring */
             CASE
                 WHEN @nombreRestaurante IS NOT NULL
                     AND (
@@ -1238,10 +1325,26 @@ END;
                              OR s.nom_sucursal COLLATE Latin1_General_CI_AI
                              LIKE '%' + @nombreRestaurante + '%'
                          )
-                    THEN 3 ELSE 0
+                    THEN 20 ELSE 0
                 END
 
-                /* Tipo comida estructurado */
+                /* 🔥 Comida en texto */
+                +
+            CASE
+                WHEN @comidaNorm IS NOT NULL
+                    AND EXISTS (
+                        SELECT 1
+                        FROM dbo.contenidos_restaurantes c
+                        WHERE c.nro_restaurante = r.nro_restaurante
+                          AND c.nro_sucursal = s.nro_sucursal
+                          AND GETDATE() BETWEEN c.fecha_ini_vigencia AND c.fecha_fin_vigencia
+                          AND LOWER(c.contenido_a_publicar)
+                            LIKE '%' + @comidaNorm + '%'
+                    )
+                    THEN 10 ELSE 0
+                END
+
+                /* 🍣 Tipo de comida */
                 +
             CASE
                 WHEN @tipoComida IS NOT NULL
@@ -1253,28 +1356,45 @@ END;
                                                 AND dp.nro_valor_dominio = pr.nro_valor_dominio
                         WHERE pr.nro_restaurante = r.nro_restaurante
                           AND pr.cod_categoria = 3
-                          AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
-                            LIKE '%' + @tipoComida + '%'
+                          AND EXISTS (
+                            SELECT 1
+                            FROM @tiposComida tc
+                            WHERE dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
+                                      LIKE '%' + tc.valor + '%'
+                        )
+                    )
+                    THEN 6 ELSE 0
+                END
+
+                /* 📍 Barrio */
+                +
+            CASE
+                WHEN @barrioZona IS NOT NULL
+                    AND s.barrio COLLATE Latin1_General_CI_AI
+                         LIKE '%' + @barrioZona + '%'
+                    THEN 4 ELSE 0
+                END
+
+                /* 🌿 Ambiente */
+                +
+            CASE
+                WHEN @preferenciasAmbiente IS NOT NULL
+                    AND EXISTS (
+                        SELECT 1
+                        FROM dbo.zonas_sucursales_restaurantes z
+                        WHERE z.nro_restaurante = s.nro_restaurante
+                          AND z.nro_sucursal = s.nro_sucursal
+                          AND EXISTS (
+                            SELECT 1
+                            FROM @ambientes a
+                            WHERE z.desc_zona COLLATE Latin1_General_CI_AI
+                                      LIKE '%' + a.valor + '%'
+                        )
                     )
                     THEN 2 ELSE 0
                 END
 
-                /* 🔥 COMIDA EN TEXTO (MENÚ / CONTENIDOS) */
-                +
-            CASE
-                WHEN @comidaNorm IS NOT NULL
-                    AND EXISTS (
-                        SELECT 1
-                        FROM dbo.contenidos_restaurantes c
-                        WHERE c.nro_restaurante = r.nro_restaurante
-                          AND c.nro_sucursal = s.nro_sucursal
-                          AND GETDATE() BETWEEN c.fecha_ini_vigencia AND c.fecha_fin_vigencia
-                          AND LOWER(c.contenido_a_publicar) LIKE '%' + @comidaNorm + '%'
-                    )
-                    THEN 3 ELSE 0
-                END
-
-                /* Restricciones */
+                /* 🚫 Restricciones */
                 +
             CASE
                 WHEN @restriccionesAlimentarias IS NOT NULL
@@ -1286,37 +1406,17 @@ END;
                                                 AND dp.nro_valor_dominio = pr.nro_valor_dominio
                         WHERE pr.nro_restaurante = r.nro_restaurante
                           AND pr.cod_categoria = 2
-                          AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
-                            LIKE '%' + @restriccionesAlimentarias + '%'
+                          AND EXISTS (
+                            SELECT 1
+                            FROM @restricciones r2
+                            WHERE dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
+                                      LIKE '%' + r2.valor + '%'
+                        )
                     )
                     THEN 2 ELSE 0
                 END
 
-                /* Barrio */
-                +
-            CASE
-                WHEN @barrioZona IS NOT NULL
-                    AND s.barrio COLLATE Latin1_General_CI_AI
-                         LIKE '%' + @barrioZona + '%'
-                    THEN 2 ELSE 0
-                END
-
-                /* Ambiente */
-                +
-            CASE
-                WHEN @preferenciasAmbiente IS NOT NULL
-                    AND EXISTS (
-                        SELECT 1
-                        FROM dbo.zonas_sucursales_restaurantes z
-                        WHERE z.nro_restaurante = s.nro_restaurante
-                          AND z.nro_sucursal = s.nro_sucursal
-                          AND z.desc_zona COLLATE Latin1_General_CI_AI
-                            LIKE '%' + @preferenciasAmbiente + '%'
-                    )
-                    THEN 2 ELSE 0
-                END
-
-                /* Horario */
+                /* 🕒 Horario (solo ajuste fino) */
                 +
             CASE
                 WHEN @horaDesde IS NOT NULL
@@ -1328,7 +1428,7 @@ END;
                           AND t.hora_desde <= @horaHasta
                           AND t.hora_hasta >= @horaDesde
                     )
-                    THEN 2
+                    THEN 1
                 WHEN @horaDesde IS NOT NULL AND @horarioFlexible = 1
                     THEN 1
                 ELSE 0
@@ -1344,23 +1444,73 @@ END;
                         ON l.cod_provincia = p.cod_provincia
 
     WHERE
-        (@ciudad IS NULL OR l.nom_localidad COLLATE Latin1_General_CI_AI LIKE '%' + @ciudad + '%')
+        (@nombreRestaurante IS NULL OR
+         r.razon_social COLLATE Latin1_General_CI_AI LIKE '%' + @nombreRestaurante + '%'
+            OR s.nom_sucursal COLLATE Latin1_General_CI_AI LIKE '%' + @nombreRestaurante + '%')
+      AND (@ciudad IS NULL OR l.nom_localidad COLLATE Latin1_General_CI_AI LIKE '%' + @ciudad + '%')
       AND (@provincia IS NULL OR p.nom_provincia COLLATE Latin1_General_CI_AI LIKE '%' + @provincia + '%')
-      AND (
-        @barrioZona IS NULL
-            OR s.barrio COLLATE Latin1_General_CI_AI
-            LIKE '%' + @barrioZona + '%'
-        )
+      AND (@barrioZona IS NULL OR s.barrio COLLATE Latin1_General_CI_AI LIKE '%' + @barrioZona + '%')
 ),
           resultado_final AS (
               SELECT *,
                      ROW_NUMBER() OVER (
-                   PARTITION BY nro_restaurante_real, nro_sucursal
-                   ORDER BY coincidencias DESC
-               ) AS rn
+               PARTITION BY nro_restaurante_real, nro_sucursal
+               ORDER BY coincidencias DESC
+           ) AS rn
               FROM candidatos
-              WHERE coincidencias > 0
+              WHERE
+                  coincidencias > 0
+                AND (
+                  /* 🔥 Si hay comida, DEBE matchear comida */
+                  @comida IS NULL
+                      OR (
+                      @comida IS NOT NULL
+                          AND EXISTS (
+                          SELECT 1
+                          FROM dbo.contenidos_restaurantes c
+                          WHERE c.nro_restaurante = nro_restaurante_real
+                            AND c.nro_sucursal = nro_sucursal
+                            AND GETDATE() BETWEEN c.fecha_ini_vigencia AND c.fecha_fin_vigencia
+                            AND LOWER(c.contenido_a_publicar)
+                              LIKE '%' + LOWER(@comida) + '%'
+                      )
+                      )
+                  )
+                AND (
+                  /* 🍣 Si hay tipo de comida, DEBE matchear tipo */
+                  @tipoComida IS NULL
+                      OR EXISTS (
+                      SELECT 1
+                      FROM dbo.preferencias_restaurantes pr
+                               INNER JOIN dbo.dominio_categorias_preferencias dp
+                                          ON dp.cod_categoria = pr.cod_categoria
+                                              AND dp.nro_valor_dominio = pr.nro_valor_dominio
+                      WHERE pr.nro_restaurante = nro_restaurante_real
+                        AND pr.cod_categoria = 3
+                        AND dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
+                          LIKE '%' + @tipoComida + '%'
+                  )
+                  )
+                AND (
+                  @restriccionesAlimentarias IS NULL
+                      OR EXISTS (
+                      SELECT 1
+                      FROM dbo.preferencias_restaurantes pr
+                               INNER JOIN dbo.dominio_categorias_preferencias dp
+                                          ON dp.cod_categoria = pr.cod_categoria
+                                              AND dp.nro_valor_dominio = pr.nro_valor_dominio
+                      WHERE pr.nro_restaurante = nro_restaurante_real
+                        AND pr.cod_categoria = 2
+                        AND EXISTS (
+                          SELECT 1
+                          FROM @restricciones r2
+                          WHERE dp.nom_valor_dominio COLLATE Latin1_General_CI_AI
+                                    LIKE '%' + r2.valor + '%'
+                      )
+                  )
+                  )
           )
+
      SELECT
          nro_restaurante,
          nro_sucursal,
@@ -1376,9 +1526,10 @@ END;
      FROM resultado_final
      WHERE rn = 1
      ORDER BY coincidencias DESC, razon_social;
-
 END;
 GO
+
+
 
 /* ============================================================
    Procedimiento: get_datos_restaurante_promocion
@@ -3612,7 +3763,51 @@ END
 END;
 GO
 
+go
+CREATE OR ALTER PROCEDURE dbo.sp_get_preferencias_cliente_por_email
+    @correo NVARCHAR(255)
+    AS
+BEGIN
+    SET NOCOUNT ON;
 
+    DECLARE @nro_cliente INT;
+
+    /* 1️⃣ Buscar cliente por correo */
+SELECT
+    @nro_cliente = c.nro_cliente
+FROM clientes c
+WHERE c.correo = @correo;
+
+IF @nro_cliente IS NULL
+BEGIN
+        RAISERROR(
+            'No existe cliente con el correo %s',
+            16,
+            1,
+            @correo
+        );
+        RETURN;
+END
+
+    /* 2️⃣ Devolver SOLO nombres (sin códigos) en JSON */
+SELECT
+    (
+        SELECT
+            cp.nom_categoria          AS categoria,
+            dcp.nom_valor_dominio     AS valor
+        FROM preferencias_clientes pc
+                 INNER JOIN categorias_preferencias cp
+                            ON cp.cod_categoria = pc.cod_categoria
+                 INNER JOIN dominio_categorias_preferencias dcp
+                            ON dcp.cod_categoria = pc.cod_categoria
+                                AND dcp.nro_valor_dominio = pc.nro_valor_dominio
+        WHERE pc.nro_cliente = @nro_cliente
+        ORDER BY cp.nom_categoria, dcp.nom_valor_dominio
+        FOR JSON PATH
+        ) AS preferencias
+        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+END
+GO
 
 /*
 

@@ -11,11 +11,11 @@ public class FiltroRecomendacionBean {
     private String tieneMenores;
     private String restriccionesAlimentarias;
     private String preferenciasAmbiente;
-    private Integer nroCliente;
     private String nombreRestaurante;
     private String barrioZona;
     private Boolean horarioFlexible;
     private String comida;
+
 
 
     public String getTipoComida() { return tipoComida; }
@@ -44,9 +44,6 @@ public class FiltroRecomendacionBean {
 
     public String getPreferenciasAmbiente() { return preferenciasAmbiente; }
     public void setPreferenciasAmbiente(String preferenciasAmbiente) { this.preferenciasAmbiente = preferenciasAmbiente; }
-
-    public Integer getNroCliente() { return nroCliente; }
-    public void setNroCliente(Integer nroCliente) { this.nroCliente = nroCliente; }
 
     public String getNombreRestaurante() {
         return nombreRestaurante;

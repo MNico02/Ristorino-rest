@@ -20,16 +20,17 @@ public class GeminiService {
 
     @Autowired
     private RistorinoRepository ristorinoRepository;
-    private static final String API_KEY = "";
+    private static final String API_KEY = "AIzaSyDtH9i9BVzJ22geXSLtJJPLixDzLz7I20I";
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
-    public FiltroRecomendacionBean interpretarTexto(String textoUsuario) throws Exception {
+    public FiltroRecomendacionBean interpretarTexto(String textoUsuario, String preferenciasUsuarioJson) throws Exception {
 
         String promptBase =
                 ristorinoRepository.getPromptIA("BUSQUEDA");
         String prompt = promptBase
-                .replace("{TEXTO_BASE}", textoUsuario);
+                .replace("{TEXTO_BASE}", textoUsuario)
+                .replace("TEXTO_PREFERENCIA_CLIENTE",preferenciasUsuarioJson);
         String requestBody = """
     {
       "contents": [

@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 @Slf4j
 @Repository
 public class RistorinoRepository {
@@ -38,6 +39,18 @@ public class RistorinoRepository {
 
 
     public String registrarCliente(ClienteBean clienteBean) {
+
+        String preferenciasJson = null;
+
+        try {
+            if (clienteBean.getPreferencias() != null && !clienteBean.getPreferencias().isEmpty()) {
+                ObjectMapper mapper = new ObjectMapper();
+                preferenciasJson = mapper.writeValueAsString(clienteBean.getPreferencias());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error serializando preferencias", e);
+        }
+
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("apellido", clienteBean.getApellido())
                 .addValue("nombre", clienteBean.getNombre())
@@ -47,18 +60,23 @@ public class RistorinoRepository {
                 .addValue("nom_localidad", clienteBean.getNomLocalidad())
                 .addValue("nom_provincia", clienteBean.getNomProvincia())
                 .addValue("observaciones", clienteBean.getObservaciones())
-                .addValue("cod_categoria", clienteBean.getCodCategoria())
-                .addValue("nro_valor_dominio", clienteBean.getNroValorDominio());
 
+                // 🔹 LEGADO (opcional)
+                .addValue("cod_categoria", clienteBean.getCodCategoria())
+                .addValue("nro_valor_dominio", clienteBean.getNroValorDominio())
+
+                // 🔹 CLAVE: JSON de preferencias
+                .addValue("preferencias_json", preferenciasJson);
+        System.out.println("Preferencias recibidas: " + clienteBean.getPreferencias());
         try {
             jdbcCallFactory.execute("registrar_cliente", "dbo", params);
             return "Cliente registrado correctamente.";
         } catch (Exception e) {
-
-            return "Error al registrar cliente: " + e.getMessage();
+            throw new RuntimeException("Error al registrar cliente", e);
         }
-
     }
+
+
     public Optional<SolicitudClienteBean> getClienteCorreo(String correo) {
 
         SqlParameterSource params = new MapSqlParameterSource()
@@ -107,6 +125,26 @@ public class RistorinoRepository {
                 .compact();
     }
 
+    public String obtenerPreferenciasClienteJson(String correo) {
+
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("correo", correo);
+
+        List<Map<String, Object>> rs =
+                jdbcCallFactory.executeList(
+                        "sp_get_preferencias_cliente_por_email",
+                        "dbo",
+                        params
+                );
+
+        if (rs == null || rs.isEmpty()) {
+            return null;
+        }
+
+        // El SP devuelve FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+        Object json = rs.get(0).values().iterator().next();
+        return json != null ? json.toString() : null;
+    }
 
 
     /*--IA---*/
@@ -123,7 +161,6 @@ public class RistorinoRepository {
                 .addValue("tieneMenores", filtro.getTieneMenores())
                 .addValue("restriccionesAlimentarias", filtro.getRestriccionesAlimentarias())
                 .addValue("preferenciasAmbiente", filtro.getPreferenciasAmbiente())
-                .addValue("nroCliente", filtro.getNroCliente())
                 .addValue("nombreRestaurante", filtro.getNombreRestaurante())
                 .addValue("barrioZona", filtro.getBarrioZona())
                 .addValue("horarioFlexible", filtro.getHorarioFlexible())
