@@ -276,7 +276,7 @@ public class RestauranteRestClient implements RestauranteClient {
     public void notificarRestaurante(int nroRestaurante, BigDecimal costoAplicado, String nroContenidos) {
 
         NotiRestReqBean req = new NotiRestReqBean();
-        req.setNroRestaurante(nroRestaurante);
+        req.setNroRestaurante(1);
         req.setCostoAplicado(costoAplicado);
         req.setNroContenidos(nroContenidos);
 

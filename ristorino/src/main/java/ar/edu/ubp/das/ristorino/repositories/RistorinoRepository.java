@@ -398,14 +398,18 @@ public class RistorinoRepository {
             );
         }
     }
+
+    
     public List<RestauranteHomeBean> listarRestaurantesHome() {
+
         String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
-        SqlParameterSource params = new MapSqlParameterSource().addValue("idioma_front",idiomaActual);
+        SqlParameterSource params =
+                new MapSqlParameterSource().addValue("idioma_front", idiomaActual);
+
         List<Map<String, Object>> rs =
                 jdbcCallFactory.executeList("sp_listar_restaurantes_home", "dbo", params);
 
         List<RestauranteHomeBean> restaurantes = new ArrayList<>();
-
         ObjectMapper mapper = new ObjectMapper();
 
         if (rs != null) {
@@ -415,23 +419,22 @@ public class RistorinoRepository {
                 restaurante.setNroRestaurante(getStr(row.get("nro_restaurante")));
                 restaurante.setRazonSocial(getStr(row.get("razon_social")));
 
+            /* =============================
+               Categorías (igual que antes)
+               ============================= */
                 String categoriasJson = getStr(row.get("categorias_json"));
 
                 if (categoriasJson != null && !categoriasJson.isEmpty()) {
                     try {
-
                         List<Map<String, String>> lista =
                                 mapper.readValue(categoriasJson, new TypeReference<>() {});
 
                         Map<String, List<String>> categorias = new LinkedHashMap<>();
 
                         for (Map<String, String> c : lista) {
-                            String categoria = c.get("categoria");
-                            String valores = c.get("valores");
-
                             categorias.put(
-                                    categoria,
-                                    Arrays.asList(valores.split(","))
+                                    c.get("categoria"),
+                                    Arrays.asList(c.get("valores").split(","))
                             );
                         }
 
@@ -442,12 +445,64 @@ public class RistorinoRepository {
                     }
                 }
 
+            /* =============================
+               Sucursales (NUEVO)
+               ============================= */
+                String sucursalesJson = getStr(row.get("sucursales_json"));
+
+                if (sucursalesJson != null && !sucursalesJson.isEmpty()) {
+                    try {
+                        List<Map<String, Object>> sucursalesList =
+                                mapper.readValue(sucursalesJson, new TypeReference<>() {});
+
+                        List<SucursalesHomeBean> sucursales = new ArrayList<>();
+
+                        for (Map<String, Object> s : sucursalesList) {
+
+                            SucursalesHomeBean sucursal = new SucursalesHomeBean();
+                            sucursal.setNroSucursal((Integer) s.get("nroSucursal"));
+                            sucursal.setNomSucursal(getStr(s.get("nomSucursal")));
+                            sucursal.setCalle(getStr(s.get("calle")));
+                            sucursal.setNroCalle((Integer) s.get("nroCalle"));
+                            sucursal.setBarrio(getStr(s.get("barrio")));
+                            sucursal.setCodPostal(getStr(s.get("codPostal")));
+                            sucursal.setTelefonos(getStr(s.get("telefonos")));
+
+                            /* Preferencias por sucursal */
+                            Object prefObj = s.get("preferencias");
+                            if (prefObj != null) {
+                                List<Map<String, String>> prefList =
+                                        mapper.convertValue(prefObj, new TypeReference<>() {});
+
+                                Map<String, List<String>> preferencias = new LinkedHashMap<>();
+
+                                for (Map<String, String> p : prefList) {
+                                    preferencias.put(
+                                            p.get("categoria"),
+                                            Arrays.asList(p.get("valores").split(","))
+                                    );
+                                }
+
+                                sucursal.setPreferencias(preferencias);
+                            }
+
+                            sucursales.add(sucursal);
+                        }
+
+                        restaurante.setSucursales(sucursales);
+
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error parseando sucursales_json", e);
+                    }
+                }
+
                 restaurantes.add(restaurante);
             }
         }
 
         return restaurantes;
     }
+
 
     public RestauranteBean obtenerRestaurantePorId(String nroRestaurante) throws JsonProcessingException {
 

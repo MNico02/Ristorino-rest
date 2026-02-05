@@ -806,13 +806,23 @@ insert into dbo.configuracion_restaurantes(nro_restaurante,cod_atributo,valor) V
                                                                                    (1,1,'REST'),
                                                                                    (1,2,'http://localhost:8081/api/v1/restaurante1'),
                                                                                    (1,3,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0'),
-                                                                                   (2,1,'SOAP'), (2,4,'http://localhost:8082/services/reservas.wsdl'),
+                                                                                   (2,1,'SOAP'),
+                                                                                   (2,4,'http://localhost:8082/services/reservas.wsdl'),
                                                                                    (2,5,'http://services.restaurante2.das.ubp.edu.ar/'),
                                                                                    (2,6,'Restaurante2PortService'),
                                                                                    (2,7,'Restaurante2PortSoap11'),
                                                                                    (2,8,'usr_admin'),
-                                                                                   (2,9,'pwd_admin');
-
+                                                                                   (2,9,'pwd_admin'),
+                                                                                   (3,1,'REST'),
+                                                                                   (3,2,'http://localhost:8083/api/v1/restaurante3'),
+                                                                                   (3,3,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyZXN0YXVyYW50ZTEiLCJuYW1lIjoiR3J1cG9kYXNGR00iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAxMzQ4MDB9.iy_l8J91bSB3R2Bwe2-ywrndUaWV2QYJU13V1CgK0F0'),
+                                                                                   (4,1,'SOAP'),
+                                                                                   (4,4,'http://localhost:8084/services/reservas.wsdl'),
+                                                                                   (4,5,'http://services.restaurante2.das.ubp.edu.ar/'),
+                                                                                   (4,6,'Restaurante2PortService'),
+                                                                                   (4,7,'Restaurante2PortSoap11'),
+                                                                                   (4,8,'usr_admin'),
+                                                                                   (4,9,'pwd_admin');
 
 
 ---
@@ -2641,30 +2651,29 @@ END;
 GO
 
 go
+
 CREATE OR ALTER PROCEDURE dbo.sp_listar_restaurantes_home
-    @idioma_front VARCHAR(10) = 'es'   -- 'es', 'en', 'es_AR', 'en_US'
+    @idioma_front VARCHAR(10) = 'es'
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
     ------------------------------------------------------------
-    -- 0) Resolver nro_idioma (estático)
+    -- 0) Resolver nro_idioma
     ------------------------------------------------------------
-    DECLARE @nro_idioma INT;
-
-    SET @nro_idioma =
+    DECLARE @nro_idioma INT =
         CASE
             WHEN @idioma_front LIKE 'es%' THEN 1
             WHEN @idioma_front LIKE 'en%' THEN 2
-            ELSE 1 -- default español
+            ELSE 1
 END;
 
     ------------------------------------------------------------
-    -- 1) Restaurantes para HOME
+    -- 1) Restaurantes HOME + categorías + sucursales
     ------------------------------------------------------------
 SELECT
-    -- 🔐 cifrado estable
+    -- 🔐 Restaurante cifrado
     CONVERT(
             VARCHAR(1024),
             ENCRYPTBYPASSPHRASE(
@@ -2676,48 +2685,91 @@ SELECT
 
     r.razon_social,
 
-    -- 📦 categorías agrupadas SIN duplicados (multi-idioma)
+    --------------------------------------------------------
+    -- 📦 Categorías del restaurante (como ya lo tenías)
+    --------------------------------------------------------
     (
         SELECT
             x.nom_categoria AS categoria,
             STRING_AGG(x.nom_valor_dominio, ',') AS valores
         FROM (
                  SELECT DISTINCT
-                     -- categoría según idioma
                      ISNULL(icp.categoria, cp.nom_categoria) AS nom_categoria,
-
-                     -- valor de dominio según idioma
                      ISNULL(idcp.valor_dominio, dcp.nom_valor_dominio) AS nom_valor_dominio
                  FROM dbo.preferencias_restaurantes pr
-
                           INNER JOIN dbo.categorias_preferencias cp
                                      ON cp.cod_categoria = pr.cod_categoria
-
                           INNER JOIN dbo.dominio_categorias_preferencias dcp
-                                     ON dcp.cod_categoria      = pr.cod_categoria
+                                     ON dcp.cod_categoria = pr.cod_categoria
                                          AND dcp.nro_valor_dominio = pr.nro_valor_dominio
-
-                     -- categoría traducida
                           LEFT JOIN dbo.idiomas_categorias_preferencias icp
                                     ON icp.cod_categoria = pr.cod_categoria
-                                        AND icp.nro_idioma    = @nro_idioma
-
-                     -- dominio traducido
+                                        AND icp.nro_idioma = @nro_idioma
                           LEFT JOIN dbo.idiomas_dominio_cat_preferencias idcp
-                                    ON idcp.cod_categoria      = pr.cod_categoria
+                                    ON idcp.cod_categoria = pr.cod_categoria
                                         AND idcp.nro_valor_dominio = pr.nro_valor_dominio
-                                        AND idcp.nro_idioma        = @nro_idioma
-
+                                        AND idcp.nro_idioma = @nro_idioma
                  WHERE pr.nro_restaurante = r.nro_restaurante
              ) x
         GROUP BY x.nom_categoria
         FOR JSON PATH
-        ) AS categorias_json
+        ) AS categorias_json,
+
+    --------------------------------------------------------
+    -- 🏬 Sucursales + preferencias POR sucursal
+    --------------------------------------------------------
+    (
+SELECT
+    s.nro_sucursal      AS nroSucursal,
+    s.nom_sucursal      AS nomSucursal,
+    s.calle,
+    s.nro_calle         AS nroCalle,
+    s.barrio,
+    s.cod_postal        AS codPostal,
+    s.telefonos,
+
+    ------------------------------------------------
+    -- Preferencias de ESTA sucursal
+    ------------------------------------------------
+    (
+    SELECT
+    y.nom_categoria AS categoria,
+    STRING_AGG(y.nom_valor_dominio, ',') AS valores
+    FROM (
+    SELECT DISTINCT
+    ISNULL(icp.categoria, cp.nom_categoria) AS nom_categoria,
+    ISNULL(idcp.valor_dominio, dcp.nom_valor_dominio) AS nom_valor_dominio
+    FROM dbo.preferencias_restaurantes pr
+    INNER JOIN dbo.categorias_preferencias cp
+    ON cp.cod_categoria = pr.cod_categoria
+    INNER JOIN dbo.dominio_categorias_preferencias dcp
+    ON dcp.cod_categoria = pr.cod_categoria
+    AND dcp.nro_valor_dominio = pr.nro_valor_dominio
+    LEFT JOIN dbo.idiomas_categorias_preferencias icp
+    ON icp.cod_categoria = pr.cod_categoria
+    AND icp.nro_idioma = @nro_idioma
+    LEFT JOIN dbo.idiomas_dominio_cat_preferencias idcp
+    ON idcp.cod_categoria = pr.cod_categoria
+    AND idcp.nro_valor_dominio = pr.nro_valor_dominio
+    AND idcp.nro_idioma = @nro_idioma
+    WHERE pr.nro_restaurante = r.nro_restaurante
+    AND pr.nro_sucursal    = s.nro_sucursal
+    ) y
+    GROUP BY y.nom_categoria
+    FOR JSON PATH
+    ) AS preferencias
+
+FROM dbo.sucursales_restaurantes s
+WHERE s.nro_restaurante = r.nro_restaurante
+ORDER BY s.nro_sucursal
+    FOR JSON PATH
+    ) AS sucursales_json
 
 FROM dbo.restaurantes r
 ORDER BY r.razon_social;
-END
+END;
 GO
+
 
 CREATE OR ALTER PROCEDURE dbo.obtener_reservas_cliente_por_correo
     (

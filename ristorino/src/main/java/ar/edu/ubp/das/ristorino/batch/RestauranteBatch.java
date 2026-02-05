@@ -49,7 +49,7 @@ public class RestauranteBatch {
 
             } catch (Exception e) {
 
-                //  ESTE ES EL CASO QUE ACABÁS DE VER
+
                 log.warn(
                         "⛔ Restaurante {} no existe o no tiene configuración ({}) → fin del batch",
                         nroRestaurante,
