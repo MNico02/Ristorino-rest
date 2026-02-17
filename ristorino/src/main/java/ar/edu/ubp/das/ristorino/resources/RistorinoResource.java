@@ -224,7 +224,7 @@ public class RistorinoResource {
     }
 
 
-    @PostMapping("/obtenerCosto")
+   /* @PostMapping("/obtenerCosto")
     public ResponseEntity<Map<String, Object>> obtenerCosto(@RequestBody CostoBean req) {
 
         if (req.getTipoCosto() == null || req.getFecha() == null) {
@@ -258,7 +258,7 @@ public class RistorinoResource {
                     )
             );
         }
-    }
+    }*/
 
 
 

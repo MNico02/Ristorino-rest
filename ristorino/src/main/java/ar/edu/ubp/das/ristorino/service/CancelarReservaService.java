@@ -55,29 +55,31 @@ public class CancelarReservaService {
                 resp.put("message", msgRest);
                 return resp;
             }*/
+            if(rtaRest.isSuccess()) {
+                // 2) Reflejar en Ristorino (SP) usando el repository
+                Map<String, Object> rtaRistorino =
+                        ristorinoRepository.cancelarReservaRistorinoPorCodigo(codReservaSucursal);
 
-            // 2) Reflejar en Ristorino (SP) usando el repository
-            Map<String, Object> rtaRistorino =
-                    ristorinoRepository.cancelarReservaRistorinoPorCodigo(codReservaSucursal);
+                boolean okRis = Boolean.TRUE.equals(rtaRistorino.get("success"));
 
-            boolean okRis = Boolean.TRUE.equals(rtaRistorino.get("success"));
+                if (!okRis) {
+                    // Restaurante canceló, pero Ristorino no pudo reflejar.
+                    resp.put("success", false);
+                    resp.put("status", "PARTIAL_FAILURE");
+                    resp.put("message", "El restaurante canceló, pero Ristorino no pudo reflejar la cancelación.");
+                    resp.put("restaurante", rtaRest);
+                    resp.put("ristorino", rtaRistorino);
+                    return resp;
+                }
 
-            if (!okRis) {
-                // Restaurante canceló, pero Ristorino no pudo reflejar.
-                resp.put("success", false);
-                resp.put("status", "PARTIAL_FAILURE");
-                resp.put("message", "El restaurante canceló, pero Ristorino no pudo reflejar la cancelación.");
+
+                resp.put("success", true);
+                resp.put("status", rtaRistorino.get("status"));
+                resp.put("message", "Reserva cancelada correctamente en restaurante y reflejada en Ristorino.");
                 resp.put("restaurante", rtaRest);
                 resp.put("ristorino", rtaRistorino);
                 return resp;
             }
-
-
-            resp.put("success", true);
-            resp.put("status", rtaRistorino.get("status"));
-            resp.put("message", "Reserva cancelada correctamente en restaurante y reflejada en Ristorino.");
-            resp.put("restaurante", rtaRest);
-            resp.put("ristorino", rtaRistorino);
             return resp;
 
         } catch (IllegalArgumentException e) {

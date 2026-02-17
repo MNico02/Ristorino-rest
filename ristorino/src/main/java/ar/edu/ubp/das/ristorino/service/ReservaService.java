@@ -38,7 +38,7 @@ public class ReservaService {
         // 4) Delegar en el client correspondiente (REST o SOAP)
         RestauranteClient client = factory.getClient(nroRestaurante);
 
-        ConfirmarReservaResponseBean body = client.confirmarReserva(payload, nroRestaurante);
+        ConfirmarReservaResponseBean body = client.confirmarReserva(payload);
 
         if (body == null) {
             throw new RuntimeException("Error al confirmar la reserva en el restaurante " + nroRestaurante);

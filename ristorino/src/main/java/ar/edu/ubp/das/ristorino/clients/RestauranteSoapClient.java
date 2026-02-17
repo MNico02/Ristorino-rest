@@ -8,15 +8,12 @@ import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.beans.ContenidoBean;
 import ar.edu.ubp.das.ristorino.beans.HorarioBean;
 import ar.edu.ubp.das.ristorino.beans.ModificarReservaReqBean;
-import ar.edu.ubp.das.ristorino.beans.NotiRestReqBean;
 import ar.edu.ubp.das.ristorino.beans.ReservaRestauranteBean;
 import ar.edu.ubp.das.ristorino.beans.ResponseBean;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import jakarta.xml.bind.JAXBElement;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.smartcardio.ResponseAPDU;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -35,7 +32,7 @@ public class RestauranteSoapClient implements RestauranteClient {
         this.jsonConfig = jsonConfig;
     }
     @Override
-    public ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload, int nroRestaurante) {
+    public ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload) {
 
         try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
@@ -67,26 +64,21 @@ public class RestauranteSoapClient implements RestauranteClient {
     }
 
     @Override
-    public SyncRestauranteBean obtenerRestaurante(int nroRestaurante) {
+    public SyncRestauranteBean obtenerRestaurante() {
         try{
             SOAPClient client = SOAPClient.SOAPClientBuilder
                     .fromConfig(jsonConfig)
                     .operationName("GetInfoRestauranteRequest")
                     .build();
-            String jsonPayload = "{\"id\": 1}";
 
-            //String jsonPayload = gson.toJson("id",1);
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
+
             Map<String, Object> params = new HashMap<>();
 
-            params.put("jsonRequest", jsonPayload);
             String jsonResponse = client.callServiceForString(
                     "GetInfoRestauranteResponse",
                     params
             );
             SyncRestauranteBean result = gson.fromJson(jsonResponse, SyncRestauranteBean.class);
-            result.setNroRestaurante(nroRestaurante);
             return result;
 
         }catch (Exception e){
@@ -215,7 +207,7 @@ public class RestauranteSoapClient implements RestauranteClient {
     }
 
     @Override
-    public List<ContenidoBean> obtenerPromociones(int nroRestaurante) {
+    public List<ContenidoBean> obtenerPromociones() {
 
         try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
@@ -223,13 +215,10 @@ public class RestauranteSoapClient implements RestauranteClient {
                     .operationName("obtenerPromocionesRequest")
                     .build();
 
-            String jsonPayload = "{\"id\": 1}";
 
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
+
 
             Map<String, Object> params = new HashMap<>();
-            params.put("jsonRequest", jsonPayload);
 
             String jsonResponse = client.callServiceForString(
                     "obtenerPromocionesResponse",
@@ -240,25 +229,24 @@ public class RestauranteSoapClient implements RestauranteClient {
             List<ContenidoBean> result = gson.fromJson(jsonResponse, listType);
 
             if (result == null) {
-                log.warn("SOAP promociones vacío restaurante {}", nroRestaurante);
+                log.warn("SOAP promociones vacío restaurante ");
                 return List.of();
             }
             return result;
 
         } catch (Exception e) {
-            log.error("Error SOAP obteniendo promociones restaurante {}: {}",
-                    nroRestaurante, e.getMessage(), e);
+            log.error("Error SOAP obteniendo promociones restaurante : {}", e.getMessage(), e);
             return List.of();
         }
     }
 
     @Override
-    public void notificarRestaurante(int nroRestaurante, BigDecimal costo, String contenidos) {
+    public void notificarRestaurante(BigDecimal costoAplicado , String nroContenidos) {
 
-        NotiRestReqBean req = new NotiRestReqBean();
-        req.setNroRestaurante(1);
-        req.setCostoAplicado(costo);
-        req.setNroContenidos(contenidos);
+        String json = gson.toJson(Map.of(
+                "costoAplicado", costoAplicado,
+                "nroContenidos", nroContenidos
+        ));
 
         try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
@@ -266,13 +254,9 @@ public class RestauranteSoapClient implements RestauranteClient {
                     .operationName("notificarRestauranteRequest")
                     .build();
 
-            String jsonPayload = gson.toJson(req);
-
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
 
             Map<String, Object> params = new HashMap<>();
-            params.put("jsonRequest", jsonPayload);
+            params.put("jsonRequest", json);
 
             String jsonResponse = client.callServiceForString(
                     "notificarRestauranteResponse",
@@ -281,12 +265,10 @@ public class RestauranteSoapClient implements RestauranteClient {
             UpdPublicarContenidosRespBean result =
                     gson.fromJson(jsonResponse, UpdPublicarContenidosRespBean.class);
 
-            log.info("Notificación SOAP enviada restaurante {} (contenidos {})",
-                    nroRestaurante, contenidos);
+            log.info("Notificación SOAP enviada restaurante (contenidos {})", nroContenidos);
 
         } catch (Exception e) {
-            log.error("Error SOAP notificando restaurante {}: {}",
-                    nroRestaurante, e.getMessage(), e);
+            log.error("Error SOAP notificando restaurante : {}", e.getMessage(), e);
         }
     }
 

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.google.gson.Gson;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 public class RestauranteRestClient implements RestauranteClient {
-
+    private final Gson gson = new Gson();
     private final String baseUrl;
     private final String token;
     private final RestTemplate restTemplate;
@@ -29,12 +30,11 @@ public class RestauranteRestClient implements RestauranteClient {
     }
 
     @Override
-    public SyncRestauranteBean obtenerRestaurante(int nroRestaurante) {
+    public SyncRestauranteBean obtenerRestaurante() {
 
         try {
             String url = UriComponentsBuilder
                     .fromHttpUrl(baseUrl + "/restaurante")
-                    .queryParam("id", 1)
                     .toUriString();
 
             HttpHeaders headers = new HttpHeaders();
@@ -56,15 +56,14 @@ public class RestauranteRestClient implements RestauranteClient {
 
                 SyncRestauranteBean sync = response.getBody();
 
-                sync.setNroRestaurante(nroRestaurante);
 
                 return sync;
             }
 
-            log.warn("Restaurante {} respondió {}", nroRestaurante, response.getStatusCode());
+          //  log.warn("Restaurante {} respondió {}", nroRestaurante, response.getStatusCode());
 
         } catch (Exception e) {
-            log.error("Error REST restaurante {}: {}", nroRestaurante, e.getMessage());
+            log.error("Error REST restaurante : {}", e.getMessage());
         }
 
         return null;
@@ -77,7 +76,8 @@ public class RestauranteRestClient implements RestauranteClient {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(token);
 
-            HttpEntity<List<ClickNotiBean>> request = new HttpEntity<>(clicks, headers);
+            String jsonClicks = gson.toJson(clicks);
+            HttpEntity<String> request = new HttpEntity<>(jsonClicks, headers);
 
             ResponseEntity<ResponseBean> response = restTemplate.postForEntity(
                     baseUrl + "/registrarClicks",
@@ -106,14 +106,14 @@ public class RestauranteRestClient implements RestauranteClient {
     }
 
     @Override
-    public ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload, int nroRestaurante) {
+    public ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload) {
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<ReservaRestauranteBean> request = new HttpEntity<>(payload, headers);
+            String json = gson.toJson(payload);
+            HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             ResponseEntity<ConfirmarReservaResponseBean> response =
                     restTemplate.exchange(
@@ -124,14 +124,14 @@ public class RestauranteRestClient implements RestauranteClient {
                     );
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                log.warn("REST confirmarReserva restaurante {} -> {}", nroRestaurante, response.getStatusCode());
+                log.warn("REST confirmarReserva restaurante  -> {}", response.getStatusCode());
                 return null;
             }
 
             return response.getBody();
 
         } catch (Exception e) {
-            log.error("Error REST confirmarReserva restaurante {}: {}", nroRestaurante, e.getMessage(), e);
+            log.error("Error REST confirmarReserva restaurante : {}", e.getMessage(), e);
             return null;
         }
     }
@@ -143,8 +143,10 @@ public class RestauranteRestClient implements RestauranteClient {
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            Map<String, Object> body = Map.of("codReservaSucursal", codReservaSucursal);
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+            String json = gson.toJson(Map.of(
+                    "codReservaSucursal", codReservaSucursal
+            ));
+            HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             ResponseEntity<ResponseBean> response = restTemplate.exchange(
                     baseUrl + "/cancelarReserva",
@@ -177,18 +179,8 @@ public class RestauranteRestClient implements RestauranteClient {
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("codReservaSucursal", req.getCodReservaSucursal());
-            body.put("fechaReserva", req.getFechaReserva());
-            body.put("horaReserva", req.getHoraReserva());
-            body.put("codZona", req.getCodZona());
-            body.put("cantAdultos", req.getCantAdultos());
-            body.put("cantMenores", req.getCantMenores());
-            body.put("costoReserva", req.getCostoReserva());
-
-            log.info("BODY REST modificar reserva: {}", body);
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+            String json = gson.toJson(req);
+            HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             ResponseEntity<ResponseBean> response = restTemplate.exchange(
                     baseUrl + "/modificarReserva",
@@ -224,7 +216,9 @@ public class RestauranteRestClient implements RestauranteClient {
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<SoliHorarioBean> request = new HttpEntity<>(soli, headers);
+            String json = gson.toJson(soli);
+            System.out.println("el json tiene en ristorino: " + json);
+            HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             ResponseEntity<HorarioBean[]> response =
                     restTemplate.exchange(
@@ -245,7 +239,7 @@ public class RestauranteRestClient implements RestauranteClient {
     }
 
     @Override
-    public List<ContenidoBean> obtenerPromociones(int nroRestaurante) {
+    public List<ContenidoBean> obtenerPromociones() {
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -255,7 +249,7 @@ public class RestauranteRestClient implements RestauranteClient {
 
             ResponseEntity<ContenidoBean[]> response =
                     restTemplate.exchange(
-                            baseUrl + "/obtenerPromociones?id=" + nroRestaurante,
+                            baseUrl + "/obtenerPromociones",
                             HttpMethod.GET,
                             request,
                             ContenidoBean[].class
@@ -267,26 +261,24 @@ public class RestauranteRestClient implements RestauranteClient {
                     : List.of();
 
         } catch (Exception e) {
-            log.error("Error obteniendo promociones REST {}: {}", nroRestaurante, e.getMessage());
+            log.error("Error obteniendo promociones REST : {}", e.getMessage());
             return List.of();
         }
     }
 
     @Override
-    public void notificarRestaurante(int nroRestaurante, BigDecimal costoAplicado, String nroContenidos) {
-
-        NotiRestReqBean req = new NotiRestReqBean();
-        req.setNroRestaurante(1);
-        req.setCostoAplicado(costoAplicado);
-        req.setNroContenidos(nroContenidos);
-
+    public void notificarRestaurante(BigDecimal costoAplicado, String nroContenidos) {
         try {
+            String json = gson.toJson(Map.of(
+                    "costoAplicado", costoAplicado,
+                    "nroContenidos", nroContenidos
+            ));
+
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<NotiRestReqBean> request =
-                    new HttpEntity<>(req, headers);
+            HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             restTemplate.exchange(
                     baseUrl + "/notificarRestaurante",
@@ -295,10 +287,10 @@ public class RestauranteRestClient implements RestauranteClient {
                     UpdPublicarContenidosRespBean.class
             );
 
-            log.info("Notificación enviada REST restaurante {}", nroRestaurante);
+
 
         } catch (Exception e) {
-            log.error("Error notificando REST restaurante {}: {}", nroRestaurante, e.getMessage());
+            log.error("Error notificando REST restaurante : {}", e.getMessage());
         }
     }
 

@@ -24,6 +24,6 @@ public class RestauranteService {
             log.warn("No hay cliente configurado para restaurante {}", nroRestaurante);
             return null;
         }
-        return client.obtenerRestaurante(nroRestaurante);
+        return client.obtenerRestaurante();
     }
 }

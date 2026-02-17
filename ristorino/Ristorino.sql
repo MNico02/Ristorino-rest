@@ -1795,14 +1795,14 @@ select * from dbo.clicks_contenidos_restaurantes
 go */
 
 
-
+/*
 GO
 exec get_promociones
-go
+go*/
 CREATE OR ALTER PROCEDURE dbo.get_promociones
     @cod_restaurante VARCHAR(1024) = NULL,  -- cifrado
     @nro_sucursal    INT = NULL,
-    @idioma    VARCHAR(10) = 'es'     -- 'es', 'en', 'es_AR', 'en_US'
+    @idioma          VARCHAR(10) = 'es'     -- 'es', 'en', 'es_AR', 'en_US'
     AS
 BEGIN
     SET NOCOUNT ON;
@@ -1845,10 +1845,9 @@ WHERE r.nro_restaurante = CONVERT(
 END
 
     ------------------------------------------------------------
-    -- 2) Promociones VIGENTES + por idioma
+    -- 2) Promociones VIGENTES + por idioma + CON CONTENIDO
     ------------------------------------------------------------
 SELECT
-    -- 🔐 DEVOLVEMOS SIEMPRE CIFRADO
     nro_restaurante = CONVERT(
             VARCHAR(1024),
             ENCRYPTBYPASSPHRASE(
@@ -1867,14 +1866,11 @@ FROM dbo.contenidos_restaurantes cr
 WHERE
     (@nro_restaurante IS NULL OR cr.nro_restaurante = @nro_restaurante)
   AND (@nro_sucursal IS NULL OR cr.nro_sucursal = @nro_sucursal)
-
-  -- 👇 FILTRO POR IDIOMA
   AND cr.nro_idioma = @nro_idioma
-
-  -- 👇 SOLO VIGENTES
   AND cr.fecha_fin_vigencia >= CAST(GETDATE() AS DATE)
   AND cr.fecha_ini_vigencia <= CAST(GETDATE() AS DATE)
-
+  AND cr.contenido_promocional IS NOT NULL
+  AND LTRIM(RTRIM(cr.contenido_promocional)) <> ''
 ORDER BY
     cr.nro_restaurante,
     cr.nro_sucursal,

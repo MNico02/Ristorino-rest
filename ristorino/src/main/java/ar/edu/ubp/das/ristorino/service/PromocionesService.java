@@ -27,7 +27,7 @@ public class PromocionesService {
             return List.of();
         }
 
-        return client.obtenerPromociones(nroRestaurante);
+        return client.obtenerPromociones();
     }
 
     public void notificarRestaurante(
@@ -41,6 +41,7 @@ public class PromocionesService {
             return;
         }
 
-        client.notificarRestaurante(nroRestaurante, costoAplicado, nroContenidos);
+        client.notificarRestaurante(costoAplicado, nroContenidos);
+        log.info("Notificación enviada REST restaurante {}", nroRestaurante);
     }
 }

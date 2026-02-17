@@ -33,7 +33,7 @@ public class RestauranteBatch {
 
                 SyncRestauranteBean restaurante =
                         restauranteService.obtenerRestaurante(nroRestaurante);
-
+                restaurante.setNroRestaurante(nroRestaurante);
                 // por si el service devuelve null (caso REST)
                 if (restaurante == null) {
                     log.info("⛔ Restaurante {} no existe → fin del batch", nroRestaurante);

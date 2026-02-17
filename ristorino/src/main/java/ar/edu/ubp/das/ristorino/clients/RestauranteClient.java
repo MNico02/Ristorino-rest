@@ -6,12 +6,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface RestauranteClient {
-    SyncRestauranteBean obtenerRestaurante(int nroRestaurante);
+    SyncRestauranteBean obtenerRestaurante();
     ResponseBean enviarClicks(List<ClickNotiBean> clicks);
-    ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload, int nroRestaurante);
+    ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload);
     ResponseBean cancelarReserva(String codReservaSucursal);
     ResponseBean modificarReserva(ModificarReservaReqBean request);
     List<HorarioBean> obtenerDisponibilidad(SoliHorarioBean soli);
-    List<ContenidoBean> obtenerPromociones(int nroRestaurante);
-    void notificarRestaurante(int nroRestaurante, BigDecimal costoAplicado, String nroContenidos);
+    List<ContenidoBean> obtenerPromociones();
+    void notificarRestaurante(BigDecimal costoAplicado, String nroContenidos);
 }
