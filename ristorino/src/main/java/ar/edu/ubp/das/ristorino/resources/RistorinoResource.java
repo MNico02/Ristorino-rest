@@ -5,14 +5,17 @@ import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.google.gson.Gson;
 
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -34,12 +37,12 @@ public class RistorinoResource {
     private CancelarReservaService cancelarReserva;
     @Autowired
     private ModificarReservaService modificarReservaService;
-
+    private final Gson gson = new Gson();
 
     @PostMapping("/registrarCliente")
     public ResponseEntity<Map<String, String>> registrarCliente(@RequestBody ClienteBean clienteBean) {
-
-        String mensaje = ristorinoRepository.registrarCliente(clienteBean);
+        String json = gson.toJson(clienteBean);
+        String mensaje = ristorinoRepository.registrarCliente(json);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -136,9 +139,9 @@ public class RistorinoResource {
 
             FiltroRecomendacionBean filtros =
                     geminiService.interpretarTexto(texto, preferenciasUsuario);
-
+            String json = gson.toJson(filtros);
             List<Map<String, Object>> restaurantes =
-                    ristorinoRepository.obtenerRecomendaciones(filtros);
+                    ristorinoRepository.obtenerRecomendaciones(json);
 
             return ResponseEntity.ok(restaurantes);
 
@@ -178,7 +181,12 @@ public class RistorinoResource {
     * */
     @GetMapping("/obtenerPromociones")
     public ResponseEntity<List<PromocionBean>> obtenerPromociones(@RequestParam(required = false) String nroRestaurante, @RequestParam(required = false) Integer nroSucursal) {
-        List<PromocionBean> resultado = ristorinoRepository.obtenerPromociones(nroRestaurante, nroSucursal);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("nroRestaurante", nroRestaurante);
+        body.put("nroSucursal", nroSucursal);
+        body.put("idioma", LocaleContextHolder.getLocale().getLanguage());
+        String json = new Gson().toJson(body);
+        List<PromocionBean> resultado = ristorinoRepository.obtenerPromociones(json);
         return ResponseEntity.ok(resultado);
 
     }
@@ -209,8 +217,8 @@ public class RistorinoResource {
     * */
     @PostMapping("/registrarClickPromocion")
     public ResponseEntity<Map<String, Object>> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
-        System.out.println("aca esta el correo " + clickBean.getEmailUsuario());
-        Map<String, Object> body = ristorinoRepository.registrarClick(clickBean);
+        String json = gson.toJson(clickBean);
+        Map<String, Object> body = ristorinoRepository.registrarClick(json);
         boolean ok = (boolean) body.getOrDefault("success", false);
         return new ResponseEntity<>(body, ok ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
     }

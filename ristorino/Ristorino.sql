@@ -1011,31 +1011,33 @@ VALUES
 go
 ---------
 CREATE OR ALTER PROCEDURE registrar_cliente
-    @apellido           NVARCHAR(120),
-    @nombre             NVARCHAR(120),
-    @correo             NVARCHAR(255),
-    @clave              NVARCHAR(255),
-    @telefonos          NVARCHAR(100) = NULL,
-    @nom_localidad      NVARCHAR(120),
-    @nom_provincia      NVARCHAR(120),
-
-    -- 🔹 LEGADO (1 preferencia)
-    @cod_categoria      INT = NULL,
-    @nro_valor_dominio  INT = NULL,
-
-    @observaciones      NVARCHAR(500) = NULL,
-
-    -- 🔹 NUEVO (múltiples preferencias)
-    @preferencias_json  NVARCHAR(MAX) = NULL
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
+    DECLARE @apellido           NVARCHAR(120) = JSON_VALUE(@json, '$.apellido');
+    DECLARE @nombre             NVARCHAR(120) = JSON_VALUE(@json, '$.nombre');
+    DECLARE @correo             NVARCHAR(255) = JSON_VALUE(@json, '$.correo');
+    DECLARE @clave              NVARCHAR(255) = JSON_VALUE(@json, '$.clave');
+    DECLARE @telefonos          NVARCHAR(100) = JSON_VALUE(@json, '$.telefonos');
+    DECLARE @nom_localidad      NVARCHAR(120) = JSON_VALUE(@json, '$.nomLocalidad');
+    DECLARE @nom_provincia      NVARCHAR(120) = JSON_VALUE(@json, '$.nomProvincia');
+    DECLARE @observaciones      NVARCHAR(500) = JSON_VALUE(@json, '$.observaciones');
+
+    -- LEGADO
+    DECLARE @cod_categoria      INT           = TRY_CAST(JSON_VALUE(@json, '$.codCategoria')     AS INT);
+    DECLARE @nro_valor_dominio  INT           = TRY_CAST(JSON_VALUE(@json, '$.nroValorDominio')  AS INT);
+
+    -- NUEVO (array de preferencias)
+    DECLARE @preferencias_json  NVARCHAR(MAX) = JSON_QUERY(@json, '$.preferencias');
+
     DECLARE @cod_provincia INT;
     DECLARE @nro_localidad INT;
     DECLARE @nro_cliente   INT;
 
+    -- resto queda EXACTAMENTE igual
     /* ===============================
        Validación correo duplicado
        =============================== */
@@ -1055,9 +1057,7 @@ WHERE LOWER(nom_provincia) COLLATE Latin1_General_CI_AI =
 
 IF @cod_provincia IS NULL
 BEGIN
-INSERT INTO dbo.provincias (nom_provincia)
-VALUES (@nom_provincia);
-
+INSERT INTO dbo.provincias (nom_provincia) VALUES (@nom_provincia);
 SET @cod_provincia = SCOPE_IDENTITY();
 END;
 
@@ -1074,7 +1074,6 @@ IF @nro_localidad IS NULL
 BEGIN
 INSERT INTO dbo.localidades (nom_localidad, cod_provincia)
 VALUES (@nom_localidad, @cod_provincia);
-
 SET @nro_localidad = SCOPE_IDENTITY();
 END;
 
@@ -1091,45 +1090,22 @@ BEGIN TRAN;
     /* ===============================
        Cliente
        =============================== */
-INSERT INTO dbo.clientes (
-    apellido,
-    nombre,
-    clave,
-    correo,
-    telefonos,
-    nro_localidad,
-    habilitado
-)
-VALUES (
-           @apellido,
-           @nombre,
-           @clave_hash,
-           @correo,
-           @telefonos,
-           @nro_localidad,
-           1
-       );
+INSERT INTO dbo.clientes
+(apellido, nombre, clave, correo, telefonos, nro_localidad, habilitado)
+VALUES
+    (@apellido, @nombre, @clave_hash, @correo, @telefonos, @nro_localidad, 1);
 
 SET @nro_cliente = SCOPE_IDENTITY();
 
     /* ===============================
        Preferencia LEGADO
        =============================== */
-    IF @cod_categoria IS NOT NULL
-       AND @nro_valor_dominio IS NOT NULL
+    IF @cod_categoria IS NOT NULL AND @nro_valor_dominio IS NOT NULL
 BEGIN
-INSERT INTO dbo.preferencias_clientes (
-    nro_cliente,
-    cod_categoria,
-    nro_valor_dominio,
-    observaciones
-)
-VALUES (
-           @nro_cliente,
-           @cod_categoria,
-           @nro_valor_dominio,
-           @observaciones
-       );
+INSERT INTO dbo.preferencias_clientes
+(nro_cliente, cod_categoria, nro_valor_dominio, observaciones)
+VALUES
+    (@nro_cliente, @cod_categoria, @nro_valor_dominio, @observaciones);
 END;
 
     /* ===============================
@@ -1137,12 +1113,8 @@ END;
        =============================== */
     IF @preferencias_json IS NOT NULL
 BEGIN
-INSERT INTO dbo.preferencias_clientes (
-    nro_cliente,
-    cod_categoria,
-    nro_valor_dominio,
-    observaciones
-)
+INSERT INTO dbo.preferencias_clientes
+(nro_cliente, cod_categoria, nro_valor_dominio, observaciones)
 SELECT
     @nro_cliente,
     JSON_VALUE(p.value, '$.codCategoria'),
@@ -1153,19 +1125,18 @@ FROM OPENJSON(@preferencias_json) p
 WHERE NOT EXISTS (
     SELECT 1
     FROM dbo.preferencias_clientes pc
-    WHERE pc.nro_cliente = @nro_cliente
-  AND pc.cod_categoria = JSON_VALUE(p.value, '$.codCategoria')
+    WHERE pc.nro_cliente      = @nro_cliente
+  AND pc.cod_categoria    = JSON_VALUE(p.value, '$.codCategoria')
   AND pc.nro_valor_dominio = d.value
     );
 END;
 
 COMMIT TRAN;
 
-
--- salida
 SELECT @nro_cliente AS nro_cliente_creado;
 END;
 GO
+
 SELECT *
 FROM dbo.clientes c
          LEFT JOIN dbo.preferencias_clientes pc
@@ -1198,22 +1169,26 @@ END;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.recomendar_restaurantes
-    @tipoComida NVARCHAR(120) = NULL,
-    @ciudad NVARCHAR(120) = NULL,
-    @provincia NVARCHAR(120) = NULL,
-    @momentoDelDia NVARCHAR(20) = NULL,
-    @rangoPrecio NVARCHAR(50) = NULL,
-    @cantidadPersonas INT = NULL,
-    @tieneMenores NVARCHAR(10) = NULL,
-    @restriccionesAlimentarias NVARCHAR(120) = NULL,
-    @preferenciasAmbiente NVARCHAR(120) = NULL,
-    @nombreRestaurante NVARCHAR(200) = NULL,
-    @barrioZona NVARCHAR(120) = NULL,
-    @horarioFlexible BIT = 0,
-    @comida NVARCHAR(150) = NULL
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @tipoComida                 NVARCHAR(120) = JSON_VALUE(@json, '$.tipoComida');
+    DECLARE @ciudad                     NVARCHAR(120) = JSON_VALUE(@json, '$.ciudad');
+    DECLARE @provincia                  NVARCHAR(120) = JSON_VALUE(@json, '$.provincia');
+    DECLARE @momentoDelDia              NVARCHAR(20)  = JSON_VALUE(@json, '$.momentoDelDia');
+    DECLARE @rangoPrecio                NVARCHAR(50)  = JSON_VALUE(@json, '$.rangoPrecio');
+    DECLARE @cantidadPersonas           INT           = TRY_CAST(JSON_VALUE(@json, '$.cantidadPersonas') AS INT);
+    DECLARE @tieneMenores               NVARCHAR(10)  = JSON_VALUE(@json, '$.tieneMenores');
+    DECLARE @restriccionesAlimentarias  NVARCHAR(120) = JSON_VALUE(@json, '$.restriccionesAlimentarias');
+    DECLARE @preferenciasAmbiente       NVARCHAR(120) = JSON_VALUE(@json, '$.preferenciasAmbiente');
+    DECLARE @nombreRestaurante          NVARCHAR(200) = JSON_VALUE(@json, '$.nombreRestaurante');
+    DECLARE @barrioZona                 NVARCHAR(120) = JSON_VALUE(@json, '$.barrioZona');
+    DECLARE @horarioFlexible            BIT           = ISNULL(TRY_CAST(JSON_VALUE(@json, '$.horarioFlexible') AS BIT), 0);
+    DECLARE @comida                     NVARCHAR(150) = JSON_VALUE(@json, '$.comida');
+
+
 
     /* ============================================================
        1) Normalización
@@ -1588,13 +1563,15 @@ Descripción: Registra un click en un contenido promocional
        automáticamente de forma incremental.
 ============================================================*/
 CREATE OR ALTER PROCEDURE dbo.registrar_click_contenido
-    @cod_restaurante VARCHAR(1024),      -- código HEX cifrado
-    @nro_contenido   INT,
-    @correo_cliente  NVARCHAR(255) = NULL
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+
+    DECLARE @cod_restaurante VARCHAR(1024) = JSON_VALUE(@json, '$.nroRestaurante');
+    DECLARE @nro_contenido   INT           = CAST(JSON_VALUE(@json, '$.nroContenido') AS INT);
+    DECLARE @correo_cliente  NVARCHAR(255) = JSON_VALUE(@json, '$.emailUsuario');
 
     DECLARE @nuevo_nro_click INT;
     DECLARE @ErrorMessage NVARCHAR(4000);
@@ -1800,13 +1777,16 @@ GO
 exec get_promociones
 go*/
 CREATE OR ALTER PROCEDURE dbo.get_promociones
-    @cod_restaurante VARCHAR(1024) = NULL,  -- cifrado
-    @nro_sucursal    INT = NULL,
-    @idioma          VARCHAR(10) = 'es'     -- 'es', 'en', 'es_AR', 'en_US'
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+
+    DECLARE @cod_restaurante VARCHAR(1024) = JSON_VALUE(@json, '$.nroRestaurante');
+    DECLARE @nro_sucursal    INT           = TRY_CAST(JSON_VALUE(@json, '$.nroSucursal') AS INT);
+    DECLARE @idioma          VARCHAR(10)   = ISNULL(JSON_VALUE(@json, '$.idioma'), 'es');
+
 
     ------------------------------------------------------------
     -- 0) Resolver nro_idioma (estático)
@@ -2131,23 +2111,22 @@ GO
 
 
 CREATE OR ALTER PROCEDURE dbo.sp_clicks_confirmar_notificados_obj
-    @items_json      NVARCHAR(MAX),   -- Ej: '[{"nro_click":101},{"nro_click":102}]'
-    @nro_restaurante INT = NULL       -- (opcional) para acotar por restaurante
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    -- 1️⃣ Crear tabla temporal para los IDs extraídos del JSON
-    DECLARE @ids TABLE (nro_click INT PRIMARY KEY);
+    DECLARE @nro_restaurante INT = CAST(JSON_VALUE(@json, '$[0].nroRestaurante') AS INT);
 
+    DECLARE @ids TABLE (nro_click INT PRIMARY KEY);
 INSERT INTO @ids (nro_click)
 SELECT DISTINCT TRY_CAST(nro_click AS INT)
-FROM OPENJSON(@items_json)
-    WITH (nro_click INT '$.nro_click')
+FROM OPENJSON(@json)
+    WITH (nro_click INT '$.nroClick')
 WHERE TRY_CAST(nro_click AS INT) IS NOT NULL;
 
--- 2️⃣ Actualizar solo los clics no notificados aún
+
 UPDATE c
 SET c.notificado = 1
     FROM dbo.clicks_contenidos_restaurantes AS c
@@ -2156,7 +2135,7 @@ ON i.nro_click = c.nro_click
 WHERE ISNULL(c.notificado,0) = 0
   AND (@nro_restaurante IS NULL OR c.nro_restaurante = @nro_restaurante);
 
--- 3️⃣ Devolver los registros afectados
+
 SELECT c.nro_click,
        c.nro_restaurante,
        c.nro_idioma,
@@ -2172,13 +2151,14 @@ END;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.ins_contenidos_restaurante_lote
-    @nro_restaurante      INT,
-    @promociones_json     NVARCHAR(MAX),  -- 👈 JSON con array de promociones
-    @costo_aplicado       DECIMAL(12,2) OUTPUT
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+
+    DECLARE @nro_restaurante INT = CAST(JSON_VALUE(@json, '$.nroRestaurante') AS INT);
+    DECLARE @promociones_json NVARCHAR(MAX) = JSON_QUERY(@json, '$.promociones');
 
 BEGIN TRY
 BEGIN TRAN;
@@ -2186,12 +2166,12 @@ BEGIN TRAN;
         ------------------------------------------------------------
         -- 1) Obtener el costo vigente actual
         ------------------------------------------------------------
-        DECLARE @costo_actual DECIMAL(12,2);
+        DECLARE @costo_actual    DECIMAL(12,2);
         DECLARE @fecha_fin_costo DATE;
-        DECLARE @fecha_actual DATE = CAST(GETDATE() AS DATE);
+        DECLARE @fecha_actual    DATE = CAST(GETDATE() AS DATE);
 
 SELECT TOP 1
-            @costo_actual = c.monto,
+            @costo_actual    = c.monto,
         @fecha_fin_costo = c.fecha_fin_vigencia
 FROM dbo.costos c
 WHERE c.tipo_costo = 'CLICK'
@@ -2199,17 +2179,18 @@ WHERE c.tipo_costo = 'CLICK'
   AND c.fecha_fin_vigencia >= @fecha_actual
 ORDER BY c.fecha_ini_vigencia DESC;
 
-SET @costo_actual = ISNULL(@costo_actual, 0.00);
+SET @costo_actual    = ISNULL(@costo_actual, 0.00);
         SET @fecha_fin_costo = ISNULL(@fecha_fin_costo, DATEADD(YEAR, 1, @fecha_actual));
 
         ------------------------------------------------------------
         -- 2) Crear tabla temporal con los datos del JSON
+        --    cod_contenido_restaurante se arma acá con el split
         ------------------------------------------------------------
 CREATE TABLE #promociones_temp (
-                                   nro_contenido           INT,
-                                   nro_sucursal            INT,
-                                   contenido_a_publicar    NVARCHAR(MAX),
-                                   imagen_promocional      NVARCHAR(255),
+                                   nro_contenido             INT,
+                                   nro_sucursal              INT,
+                                   contenido_a_publicar      NVARCHAR(MAX),
+                                   imagen_promocional        NVARCHAR(255),
                                    cod_contenido_restaurante NVARCHAR(MAX)
 );
 
@@ -2225,18 +2206,18 @@ SELECT
     nro_sucursal,
     contenido_a_publicar,
     imagen_promocional,
-    cod_contenido_restaurante
+    CAST(@nro_restaurante AS NVARCHAR) + '-' + CAST(nro_contenido AS NVARCHAR)
 FROM OPENJSON(@promociones_json)
     WITH (
-    nro_contenido           INT             '$.nro_contenido',
-    nro_sucursal            INT             '$.nro_sucursal',
-    contenido_a_publicar    NVARCHAR(MAX)   '$.contenido_a_publicar',
-    imagen_promocional      NVARCHAR(255)   '$.imagen_promocional',
-    cod_contenido_restaurante NVARCHAR(MAX) '$.cod_contenido_restaurante'
+    nro_contenido          INT           '$.nroContenido',
+    nro_sucursal           INT           '$.nroSucursal',
+    contenido_a_publicar   NVARCHAR(MAX) '$.contenidoAPublicar',
+    imagen_promocional     NVARCHAR(255) '$.imagenAPublicar'
     );
 
+-- resto queda EXACTAMENTE igual
 ------------------------------------------------------------
--- 3) Eliminar duplicados de la tabla temporal
+-- 3) Eliminar duplicados
 ------------------------------------------------------------
 DELETE t
         FROM #promociones_temp t
@@ -2251,25 +2232,15 @@ DELETE t
         -- 4) Insertar en ESPAÑOL (nro_idioma = 1)
         ------------------------------------------------------------
 INSERT INTO dbo.contenidos_restaurantes (
-    nro_restaurante,
-    nro_idioma,
-    nro_sucursal,
-    contenido_a_publicar,
-    imagen_promocional,
-    costo_click,
-    fecha_ini_vigencia,
-    fecha_fin_vigencia,
+    nro_restaurante, nro_idioma, nro_sucursal,
+    contenido_a_publicar, imagen_promocional,
+    costo_click, fecha_ini_vigencia, fecha_fin_vigencia,
     cod_contenido_restaurante
 )
 SELECT
-    @nro_restaurante,
-    1,  -- ESPAÑOL
-    t.nro_sucursal,
-    t.contenido_a_publicar,
-    t.imagen_promocional,
-    @costo_actual,
-    @fecha_actual,
-    @fecha_fin_costo,
+    @nro_restaurante, 1, t.nro_sucursal,
+    t.contenido_a_publicar, t.imagen_promocional,
+    @costo_actual, @fecha_actual, @fecha_fin_costo,
     t.cod_contenido_restaurante
 FROM #promociones_temp t;
 
@@ -2277,47 +2248,34 @@ FROM #promociones_temp t;
 -- 5) Insertar en INGLÉS (nro_idioma = 2)
 ------------------------------------------------------------
 INSERT INTO dbo.contenidos_restaurantes (
-    nro_restaurante,
-    nro_idioma,
-    nro_sucursal,
-    contenido_a_publicar,
-    imagen_promocional,
-    costo_click,
-    fecha_ini_vigencia,
-    fecha_fin_vigencia,
+    nro_restaurante, nro_idioma, nro_sucursal,
+    contenido_a_publicar, imagen_promocional,
+    costo_click, fecha_ini_vigencia, fecha_fin_vigencia,
     cod_contenido_restaurante
 )
 SELECT
-    @nro_restaurante,
-    2,  -- INGLÉS
-    t.nro_sucursal,
-    t.contenido_a_publicar,
-    t.imagen_promocional,
-    @costo_actual,
-    @fecha_actual,
-    @fecha_fin_costo,
+    @nro_restaurante, 2, t.nro_sucursal,
+    t.contenido_a_publicar, t.imagen_promocional,
+    @costo_actual, @fecha_actual, @fecha_fin_costo,
     t.cod_contenido_restaurante
 FROM #promociones_temp t;
 
 ------------------------------------------------------------
--- 6) Asignar costo de salida
+-- 6) Retornar costo aplicado como ResultSet
 ------------------------------------------------------------
-SET @costo_aplicado = @costo_actual;
+SELECT @costo_actual AS costoAplicado;
 
 DROP TABLE #promociones_temp;
-
 COMMIT;
+
 END TRY
 BEGIN CATCH
-IF XACT_STATE() <> 0
-            ROLLBACK;
-
-        SET @costo_aplicado = NULL;
-        THROW;
+IF XACT_STATE() <> 0 ROLLBACK;
+DROP TABLE IF EXISTS #promociones_temp;
+THROW;
 END CATCH
 END;
 GO
-
 
 
 
@@ -2408,28 +2366,27 @@ GO
 
 
 CREATE OR ALTER PROCEDURE dbo.ins_reserva_confirmada_ristorino
-    (
-    @correo                 NVARCHAR(255),
-
-    -- lo que devuelve el restaurante (UUID o nro o string)
-    @cod_reserva_restaurante NVARCHAR(50),
-
-    @fecha_reserva           DATE,
-    @hora_reserva            TIME(0),
-    @nro_restaurante         INT,
-    @nro_sucursal            INT,
-    @cod_zona                INT,
-    @cant_adultos            INT,
-    @cant_menores            INT = 0,
-    @costo_reserva           DECIMAL(12,2) = NULL,
-
-    -- opcional: estado (si no lo mandás, queda 1)
-    @cod_estado              INT = 1
-    )
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+
+    DECLARE @correo                  NVARCHAR(255)  = JSON_VALUE(@json, '$.correo');
+    DECLARE @cod_reserva_restaurante NVARCHAR(50)   = JSON_VALUE(@json, '$.codReservaRestaurante');
+    DECLARE @fecha_reserva           DATE           = CAST(JSON_VALUE(@json, '$.fechaReserva')  AS DATE);
+    DECLARE @hora_reserva            TIME(0)        = CAST(JSON_VALUE(@json, '$.horaReserva')   AS TIME(0));
+    DECLARE @nro_sucursal            INT            = CAST(JSON_VALUE(@json, '$.idSucursal')     AS INT);
+    DECLARE @cod_zona                INT            = CAST(JSON_VALUE(@json, '$.codZona')        AS INT);
+    DECLARE @cant_adultos            INT            = CAST(JSON_VALUE(@json, '$.cantAdultos')    AS INT);
+    DECLARE @cant_menores            INT            = ISNULL(CAST(JSON_VALUE(@json, '$.cantMenores') AS INT), 0);
+    DECLARE @costo_reserva           DECIMAL(12,2)  = CAST(JSON_VALUE(@json, '$.costoReserva')  AS DECIMAL(12,2));
+    DECLARE @cod_estado              INT            = 1;
+
+    -- nro_restaurante del split lado izquierdo de codSucursalRestaurante
+    DECLARE @cod_sucursal_restaurante NVARCHAR(20)  = JSON_VALUE(@json, '$.codSucursalRestaurante');
+    DECLARE @nro_restaurante          INT           = CAST(LEFT(@cod_sucursal_restaurante,
+                                                        CHARINDEX('-', @cod_sucursal_restaurante) - 1) AS INT);
 
 BEGIN TRY
 BEGIN TRAN;
@@ -2957,18 +2914,20 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE dbo.modificar_reserva_ristorino_por_codigo_sucursal
-    @cod_reserva_sucursal NVARCHAR(50),
-
-    @fecha_reserva  DATE,
-    @hora_reserva   TIME(0),
-    @cod_zona       INT,
-    @cant_adultos   INT,
-    @cant_menores   INT,
-    @costo_reserva Decimal(12,2)
+    @json NVARCHAR(MAX)
     AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+
+    DECLARE @cod_reserva_sucursal NVARCHAR(50)  = JSON_VALUE(@json, '$.codReservaSucursal');
+    DECLARE @fecha_reserva        DATE          = CAST(JSON_VALUE(@json, '$.fechaReserva')  AS DATE);
+    DECLARE @hora_reserva         TIME(0)       = CAST(JSON_VALUE(@json, '$.horaReserva')   AS TIME(0));
+    DECLARE @cod_zona             INT           = CAST(JSON_VALUE(@json, '$.codZona')        AS INT);
+    DECLARE @cant_adultos         INT           = CAST(JSON_VALUE(@json, '$.cantAdultos')    AS INT);
+    DECLARE @cant_menores         INT           = ISNULL(CAST(JSON_VALUE(@json, '$.cantMenores') AS INT), 0);
+    DECLARE @costo_reserva        DECIMAL(12,2) = CAST(JSON_VALUE(@json, '$.costoReserva')  AS DECIMAL(12,2));
+
 
     DECLARE
         -- datos actuales

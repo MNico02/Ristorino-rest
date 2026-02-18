@@ -32,15 +32,13 @@ public class RestauranteSoapClient implements RestauranteClient {
         this.jsonConfig = jsonConfig;
     }
     @Override
-    public ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload) {
+    public ConfirmarReservaResponseBean confirmarReserva(String jsonPayload) {
 
         try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
                     .fromConfig(jsonConfig)
                     .operationName("confirmarReservaRequest")
                     .build();
-
-            String jsonPayload = gson.toJson(payload);
 
             JsonDataRequestBean requestBean = new JsonDataRequestBean();
             requestBean.setJsonRequest(jsonPayload);
@@ -180,15 +178,12 @@ public class RestauranteSoapClient implements RestauranteClient {
     }
 
     @Override
-    public ResponseBean modificarReserva(ModificarReservaReqBean req) {
+    public ResponseBean modificarReserva(String jsonPayload) {
         try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
                     .fromConfig(jsonConfig)
                     .operationName("ModificarReservaRequest")
                     .build();
-            String jsonPayload = gson.toJson(req);
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
             Map<String, Object> params = new HashMap<>();
             params.put("jsonRequest", jsonPayload);
 

@@ -4,6 +4,7 @@ import ar.edu.ubp.das.ristorino.beans.RestauranteBean;
 import ar.edu.ubp.das.ristorino.beans.SyncRestauranteBean;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.RestauranteService;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.WebApplicationType;
@@ -39,9 +40,9 @@ public class RestauranteBatch {
                     log.info("⛔ Restaurante {} no existe → fin del batch", nroRestaurante);
                     break;
                 }
-
+                String json = new Gson().toJson(restaurante);
                 Map<String, Object> result =
-                        repository.guardarInfoRestaurante(restaurante);
+                        repository.guardarInfoRestaurante(json);
 
                 log.info("✅ Sync OK restaurante {} -> {}", nroRestaurante, result);
 

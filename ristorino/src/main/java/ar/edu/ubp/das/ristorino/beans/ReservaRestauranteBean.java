@@ -2,7 +2,7 @@ package ar.edu.ubp.das.ristorino.beans;
 
 public class ReservaRestauranteBean {
     private SolicitudClienteBean solicitudCliente;
-    private ReservaSolicitudBean reserva;
+    private ReservaBean reserva;
 
     public SolicitudClienteBean getSolicitudCliente() {
         return solicitudCliente;
@@ -12,11 +12,11 @@ public class ReservaRestauranteBean {
         this.solicitudCliente = solicitudCliente;
     }
 
-    public ReservaSolicitudBean getReserva() {
+    public ReservaBean getReserva() {
         return reserva;
     }
 
-    public void setReserva(ReservaSolicitudBean reserva) {
+    public void setReserva(ReservaBean reserva) {
         this.reserva = reserva;
     }
 }

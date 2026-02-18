@@ -8,9 +8,9 @@ import java.util.List;
 public interface RestauranteClient {
     SyncRestauranteBean obtenerRestaurante();
     ResponseBean enviarClicks(List<ClickNotiBean> clicks);
-    ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload);
+    ConfirmarReservaResponseBean confirmarReserva(String json);
     ResponseBean cancelarReserva(String codReservaSucursal);
-    ResponseBean modificarReserva(ModificarReservaReqBean request);
+    ResponseBean modificarReserva(String json);
     List<HorarioBean> obtenerDisponibilidad(SoliHorarioBean soli);
     List<ContenidoBean> obtenerPromociones();
     void notificarRestaurante(BigDecimal costoAplicado, String nroContenidos);

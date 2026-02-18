@@ -5,6 +5,7 @@ import ar.edu.ubp.das.ristorino.beans.ResponseBean;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +18,13 @@ public class ModificarReservaService {
 
     private final RistorinoRepository ristorinoRepository;
     private final RestauranteClientFactory clientFactory;
+    private final Gson gson;
 
     public ModificarReservaService(RistorinoRepository ristorinoRepository,
-                                   RestauranteClientFactory clientFactory) {
+                                   RestauranteClientFactory clientFactory, Gson gson) {
         this.ristorinoRepository = ristorinoRepository;
         this.clientFactory = clientFactory;
+        this.gson = gson;
     }
 
     public Map<String, Object> modificarReserva(ModificarReservaReqBean req) {
@@ -44,8 +47,8 @@ public class ModificarReservaService {
 
             RestauranteClient client = clientFactory.getClient(nroRestaurante);
 
-
-            ResponseBean rtaRest = client.modificarReserva(req);
+            String json = gson.toJson(req);
+            ResponseBean rtaRest = client.modificarReserva(json);
 
             /*boolean okRest = Boolean.TRUE.equals(rtaRest.get("success"));
             String statusRest = String.valueOf(rtaRest.getOrDefault("status", "UNKNOWN"));
@@ -60,8 +63,28 @@ public class ModificarReservaService {
                 return resp;
             }*/
 
+            if (req.getCodReservaSucursal() == null || req.getCodReservaSucursal().isBlank()) {
+                resp.put("success", false);
+                resp.put("status", "INVALID");
+                resp.put("message", "codReservaSucursal es obligatorio.");
+                return resp;
+            }
 
-            Map<String, Object> rtaRistorino = ristorinoRepository.modificarReservaRistorino(req);
+            if (req.getFechaReserva() == null) {
+                resp.put("success", false);
+                resp.put("status", "INVALID");
+                resp.put("message", "fechaReserva es obligatoria.");
+                return resp;
+            }
+
+            if (req.getHoraReserva() == null) {
+                resp.put("success", false);
+                resp.put("status", "INVALID");
+                resp.put("message", "horaReserva es obligatoria.");
+                return resp;
+            }
+
+            Map<String, Object> rtaRistorino = ristorinoRepository.modificarReservaRistorino(json);
 
             boolean okRis = Boolean.TRUE.equals(rtaRistorino.get("success"));
 

@@ -4,8 +4,10 @@ import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
+import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.google.gson.Gson;
 
 @Service
 @Slf4j
@@ -13,6 +15,7 @@ public class ReservaService {
 
     private final RistorinoRepository ristorinoRepository;
     private final RestauranteClientFactory factory;
+    private final Gson gson = new Gson();
 
     public ReservaService(RistorinoRepository ristorinoRepository,
                           RestauranteClientFactory factory) {
@@ -32,13 +35,14 @@ public class ReservaService {
 
         // 3) Armar payload para restaurante
         ReservaRestauranteBean payload = new ReservaRestauranteBean();
-        payload.setSolicitudCliente(mapCliente(cliente));
-        payload.setReserva(mapReservaSolicitud(reserva));
+        payload.setSolicitudCliente(cliente);
+        payload.setReserva(reserva);
+        String json = gson.toJson(payload);
 
         // 4) Delegar en el client correspondiente (REST o SOAP)
         RestauranteClient client = factory.getClient(nroRestaurante);
 
-        ConfirmarReservaResponseBean body = client.confirmarReserva(payload);
+        ConfirmarReservaResponseBean body = client.confirmarReserva(json);
 
         if (body == null) {
             throw new RuntimeException("Error al confirmar la reserva en el restaurante " + nroRestaurante);
@@ -49,9 +53,14 @@ public class ReservaService {
             String msg = (body.getMensaje() != null) ? body.getMensaje() : "Reserva rechazada por el restaurante";
             throw new RuntimeException(msg);
         }
+        if (body.getCodReserva() == null || body.getCodReserva().isBlank())
+            throw new IllegalArgumentException("codReserva vacío");
+        JsonObject jsonObject = gson.toJsonTree(reserva).getAsJsonObject();
+        jsonObject.addProperty("codReservaRestaurante", body.getCodReserva());
+        String jsonRistorino = jsonObject.toString();
 
         // 6) Guardar en Ristorino
-        ristorinoRepository.insReservaConfirmadaRistorino(body, reserva, nroRestaurante);
+        ristorinoRepository.insReservaConfirmadaRistorino(jsonRistorino);
 
         // 7) Devolver código
         return body.getCodReserva();
@@ -64,26 +73,4 @@ public class ReservaService {
         return Integer.parseInt(codigo.split("-")[0]);
     }
 
-    private SolicitudClienteBean mapCliente(SolicitudClienteBean c) {
-        SolicitudClienteBean sc = new SolicitudClienteBean();
-        sc.setNombre(c.getNombre());
-        sc.setApellido(c.getApellido());
-        sc.setCorreo(c.getCorreo());
-        sc.setTelefonos(c.getTelefonos());
-        return sc;
-    }
-
-    private ReservaSolicitudBean mapReservaSolicitud(ReservaBean r) {
-        ReservaSolicitudBean rs = new ReservaSolicitudBean();
-        rs.setCodSucursalRestaurante(r.getCodSucursalRestaurante());
-        rs.setCorreo(r.getCorreo());
-        rs.setIdSucursal(r.getIdSucursal());
-        rs.setFechaReserva(r.getFechaReserva());
-        rs.setHoraReserva(r.getHoraReserva());
-        rs.setCantAdultos(r.getCantAdultos());
-        rs.setCantMenores(r.getCantMenores());
-        rs.setCodZona(r.getCodZona());
-        rs.setCostoReserva(r.getCostoReserva());
-        return rs;
-    }
 }

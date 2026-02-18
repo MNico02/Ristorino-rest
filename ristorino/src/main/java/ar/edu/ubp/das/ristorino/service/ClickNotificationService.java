@@ -1,7 +1,6 @@
 package ar.edu.ubp.das.ristorino.service;
 
 import ar.edu.ubp.das.ristorino.beans.ClickNotiBean;
-import ar.edu.ubp.das.ristorino.beans.ReservaSolicitudBean;
 import ar.edu.ubp.das.ristorino.beans.ResponseBean;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;

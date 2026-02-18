@@ -12,8 +12,11 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import com.google.gson.Gson;
 
 @Slf4j
 @SpringBootApplication(scanBasePackages = "ar.edu.ubp.das.ristorino")
@@ -49,10 +52,13 @@ public class PromocionesBatch {
                     log.info("No hay promociones para restaurante {}", nroRestaurante);
                     continue;
                 }
-
+                Map<String, Object> body = new LinkedHashMap<>();
+                body.put("nroRestaurante", nroRestaurante);
+                body.put("promociones", promociones);
+                String json = new Gson().toJson(body);
                 // Guardar promociones
                 BigDecimal costoAplicado =
-                        repository.guardarPromociones(promociones, nroRestaurante);
+                        repository.guardarPromociones(json);
 
                 log.info("Se guardaron {} promociones del restaurante {} | Costo aplicado: {}",
                         promociones.size(), nroRestaurante, costoAplicado);

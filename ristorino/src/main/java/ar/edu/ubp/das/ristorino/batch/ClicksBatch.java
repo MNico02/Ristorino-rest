@@ -12,7 +12,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.google.gson.Gson;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,7 +53,8 @@ public class ClicksBatch {
 
             if (exito) {
                 log.info("Clicks enviados correctamente al restaurante {}", nroRestaurante);
-                List<ClickNotiBean> confirmados = repository.marcarClicksComoNotificados(listaClicks, nroRestaurante);
+                String json = new Gson().toJson(listaClicks);
+                List<ClickNotiBean> confirmados = repository.marcarClicksComoNotificados(json);
                 log.info("{} clics confirmados como notificados.", confirmados.size());
             } else {
                 log.warn("Falló el envío de clics al restaurante {}", nroRestaurante);

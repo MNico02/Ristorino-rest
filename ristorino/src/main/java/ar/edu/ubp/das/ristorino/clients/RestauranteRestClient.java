@@ -106,13 +106,12 @@ public class RestauranteRestClient implements RestauranteClient {
     }
 
     @Override
-    public ConfirmarReservaResponseBean confirmarReserva(ReservaRestauranteBean payload) {
+    public ConfirmarReservaResponseBean confirmarReserva(String json) {
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String json = gson.toJson(payload);
             HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             ResponseEntity<ConfirmarReservaResponseBean> response =
@@ -173,13 +172,12 @@ public class RestauranteRestClient implements RestauranteClient {
     }
 
     @Override
-    public ResponseBean modificarReserva(ModificarReservaReqBean req) {
+    public ResponseBean modificarReserva(String json) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            String json = gson.toJson(req);
             HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             ResponseEntity<ResponseBean> response = restTemplate.exchange(
