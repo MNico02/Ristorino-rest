@@ -21,12 +21,12 @@ Este repositorio contiene exclusivamente el código del servidor (Backend). La i
 
 ## 🛠️ Tecnologías Utilizadas
 
-* **Lenguaje:** Java [17]
-* **Framework Core:** Spring Boot [ 3.5.6]
+* **Lenguaje:** Java 17
+* **Framework Core:** Spring Boot  3.5.6
 * **Acceso a Datos:** Spring Data JPA / Hibernate
-* **Base de Datos:** [MySQL]
-* **Gestor de Dependencias:** [Maven]
+* **Base de Datos:** MySQL
+* **Gestor de Dependencias:** Maven
 
 ## 👨‍💻 Autor
-Nicolás Moresco
-Email: nicolasmoresco02@gmail.com
+* Nicolás Moresco
+* Email: nicolasmoresco02@gmail.com
