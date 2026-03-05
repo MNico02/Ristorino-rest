@@ -1,7 +1,10 @@
 package ar.edu.ubp.das.ristorino.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,44 +25,4 @@ public class SyncRestauranteBean {
     @Builder.Default
     private List<SyncSucursalBean> sucursales = new ArrayList<>();
 
-
-    public int getNroRestaurante() {
-        return nroRestaurante;
-    }
-
-    public void setNroRestaurante(int nroRestaurante) {
-        this.nroRestaurante = nroRestaurante;
-    }
-
-    public String getRazonSocial() {
-        return razonSocial;
-    }
-
-    public void setRazonSocial(String razonSocial) {
-        this.razonSocial = razonSocial;
-    }
-
-    public String getCuit() {
-        return cuit;
-    }
-
-    public void setCuit(String cuit) {
-        this.cuit = cuit;
-    }
-
-    public List<ContenidoBean> getContenidos() {
-        return contenidos;
-    }
-
-    public void setContenidos(List<ContenidoBean> contenidos) {
-        this.contenidos = contenidos;
-    }
-
-    public List<SyncSucursalBean> getSucursales() {
-        return sucursales;
-    }
-
-    public void setSucursales(List<SyncSucursalBean> sucursales) {
-        this.sucursales = sucursales;
-    }
 }

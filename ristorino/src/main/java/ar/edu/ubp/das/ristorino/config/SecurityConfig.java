@@ -56,7 +56,6 @@ public class SecurityConfig {
                                 "/ristorino/obtenerCosto"
 
 
-
                         ).permitAll()
 
                         .anyRequest().authenticated()

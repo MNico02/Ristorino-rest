@@ -3,16 +3,15 @@ package ar.edu.ubp.das.ristorino.batch;
 import ar.edu.ubp.das.ristorino.beans.ClickNotiBean;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.ClickNotificationService;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import com.google.gson.Gson;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,9 +28,9 @@ public class ClicksBatch {
     private ClickNotificationService clickNotificationService;
 
     /*
-    * Notifica los click pendientes a su respectivo restaurante
-    * Si se notifico correctamente, los marca como notificados en la base de datos de ristorino
-    * */
+     * Notifica los click pendientes a su respectivo restaurante
+     * Si se notifico correctamente, los marca como notificados en la base de datos de ristorino
+     * */
     @Transactional
     public void procesarClicksPendientes() {
 
@@ -44,7 +43,6 @@ public class ClicksBatch {
         // Agrupar por restaurante
         Map<Integer, List<ClickNotiBean>> clicksPorRestaurante = clicksPendientes.stream()
                 .collect(Collectors.groupingBy(ClickNotiBean::getNroRestaurante));
-
 
 
         // Enviar por restaurante

@@ -1,14 +1,13 @@
 package ar.edu.ubp.das.ristorino.clients;
 
 import ar.edu.ubp.das.ristorino.beans.*;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.google.gson.Gson;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,13 +53,11 @@ public class RestauranteRestClient implements RestauranteClient {
             if (response.getStatusCode().is2xxSuccessful()
                     && response.getBody() != null) {
 
-                SyncRestauranteBean sync = response.getBody();
 
-
-                return sync;
+                return response.getBody();
             }
 
-          //  log.warn("Restaurante {} respondió {}", nroRestaurante, response.getStatusCode());
+            //  log.warn("Restaurante {} respondió {}", nroRestaurante, response.getStatusCode());
 
         } catch (Exception e) {
             log.error("Error REST restaurante : {}", e.getMessage());
@@ -70,13 +67,12 @@ public class RestauranteRestClient implements RestauranteClient {
     }
 
     @Override
-    public ResponseBean enviarClicks(List<ClickNotiBean> clicks) {
+    public ResponseBean enviarClicks(String jsonClicks) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(token);
 
-            String jsonClicks = gson.toJson(clicks);
             HttpEntity<String> request = new HttpEntity<>(jsonClicks, headers);
 
             ResponseEntity<ResponseBean> response = restTemplate.postForEntity(
@@ -166,7 +162,7 @@ public class RestauranteRestClient implements RestauranteClient {
             log.error("Error REST cancelando reserva: {}", e.getMessage());
             ResponseBean resp = new ResponseBean();
             resp.setSuccess(Boolean.FALSE);
-            resp.setMessage("Error comunicándose con el restaurante: "  + e.getMessage());
+            resp.setMessage("Error comunicándose con el restaurante: " + e.getMessage());
             return resp;
         }
     }
@@ -201,21 +197,19 @@ public class RestauranteRestClient implements RestauranteClient {
             ResponseBean resp = new ResponseBean();
             resp.setSuccess(Boolean.FALSE);
             resp.setStatus("ERROR");
-            resp.setMessage("Error comunicándose con el restaurante: "  + e.getMessage());
+            resp.setMessage("Error comunicándose con el restaurante: " + e.getMessage());
             return resp;
         }
     }
 
     @Override
-    public List<HorarioBean> obtenerDisponibilidad(SoliHorarioBean soli) {
+    public List<HorarioBean> obtenerDisponibilidad(String json) {
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            String json = gson.toJson(soli);
-            System.out.println("el json tiene en ristorino: " + json);
             HttpEntity<String> request = new HttpEntity<>(json, headers);
 
             ResponseEntity<HorarioBean[]> response =
@@ -278,13 +272,13 @@ public class RestauranteRestClient implements RestauranteClient {
 
             HttpEntity<String> request = new HttpEntity<>(json, headers);
 
-            restTemplate.exchange(
+            ResponseEntity<UpdPublicarContenidosRespBean> resp = restTemplate.exchange(
                     baseUrl + "/notificarRestaurante",
                     HttpMethod.POST,
                     request,
                     UpdPublicarContenidosRespBean.class
             );
-
+            log.info("respuesta del restaurante: {}", resp.getBody());
 
 
         } catch (Exception e) {

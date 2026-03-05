@@ -46,16 +46,7 @@ public class CancelarReservaService {
             ResponseBean rtaRest = client.cancelarReserva(codReservaSucursal);
 
 
-            /*String statusRest = String.valueOf(rtaRest.getOrDefault("status", "UNKNOWN"));
-            String msgRest = String.valueOf(rtaRest.getOrDefault("message", "Sin mensaje."));
-
             if (rtaRest.isSuccess()) {
-                resp.put("success", false);
-                resp.put("status", statusRest);
-                resp.put("message", msgRest);
-                return resp;
-            }*/
-            if(rtaRest.isSuccess()) {
                 // 2) Reflejar en Ristorino (SP) usando el repository
                 Map<String, Object> rtaRistorino =
                         ristorinoRepository.cancelarReservaRistorinoPorCodigo(codReservaSucursal);

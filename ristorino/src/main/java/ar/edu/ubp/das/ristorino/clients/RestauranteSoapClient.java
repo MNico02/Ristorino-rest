@@ -1,15 +1,7 @@
 package ar.edu.ubp.das.ristorino.clients;
 
 
-
 import ar.edu.ubp.das.ristorino.beans.*;
-
-
-import ar.edu.ubp.das.ristorino.beans.ContenidoBean;
-import ar.edu.ubp.das.ristorino.beans.HorarioBean;
-import ar.edu.ubp.das.ristorino.beans.ModificarReservaReqBean;
-import ar.edu.ubp.das.ristorino.beans.ReservaRestauranteBean;
-import ar.edu.ubp.das.ristorino.beans.ResponseBean;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +23,7 @@ public class RestauranteSoapClient implements RestauranteClient {
     public RestauranteSoapClient(String jsonConfig) {
         this.jsonConfig = jsonConfig;
     }
+
     @Override
     public ConfirmarReservaResponseBean confirmarReserva(String jsonPayload) {
 
@@ -40,9 +33,6 @@ public class RestauranteSoapClient implements RestauranteClient {
                     .operationName("confirmarReservaRequest")
                     .build();
 
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
-
             Map<String, Object> params = new HashMap<>();
             params.put("jsonRequest", jsonPayload);
 
@@ -50,20 +40,20 @@ public class RestauranteSoapClient implements RestauranteClient {
                     "confirmarReservaResponse",
                     params
             );
-            ConfirmarReservaResponseBean result =
-                    gson.fromJson(jsonResponse, ConfirmarReservaResponseBean.class);
 
-            return result;
+            return gson.fromJson(jsonResponse, ConfirmarReservaResponseBean.class);
 
         } catch (Exception e) {
             log.error("Error: {}", e.getMessage(), e);
-            return null;
+            ConfirmarReservaResponseBean resp= new ConfirmarReservaResponseBean();
+            resp.setMensaje(e.getMessage());
+            return resp;
         }
     }
 
     @Override
     public SyncRestauranteBean obtenerRestaurante() {
-        try{
+        try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
                     .fromConfig(jsonConfig)
                     .operationName("GetInfoRestauranteRequest")
@@ -76,25 +66,22 @@ public class RestauranteSoapClient implements RestauranteClient {
                     "GetInfoRestauranteResponse",
                     params
             );
-            SyncRestauranteBean result = gson.fromJson(jsonResponse, SyncRestauranteBean.class);
-            return result;
+            return gson.fromJson(jsonResponse, SyncRestauranteBean.class);
 
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Error: {}", e.getMessage(), e);
             return null;
         }
     }
+
     @Override
-    public ResponseBean enviarClicks(List<ClickNotiBean> clicks) {
+    public ResponseBean enviarClicks(String jsonPayload) {
         try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
                     .fromConfig(jsonConfig)
                     .operationName("registrarClicksRequest")
                     .build();
 
-            String jsonPayload = gson.toJson(clicks);
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
 
             Map<String, Object> params = new HashMap<>();
             params.put("jsonRequest", jsonPayload);
@@ -103,10 +90,8 @@ public class RestauranteSoapClient implements RestauranteClient {
                     "registrarClicksResponse",
                     params
             );
-            ResponseBean result =
-                    gson.fromJson(jsonResponse, ResponseBean.class);
 
-            return result;
+            return gson.fromJson(jsonResponse, ResponseBean.class);
 
         } catch (Exception e) {
             log.error("Error SOAP enviando clicks: {}", e.getMessage());
@@ -115,8 +100,9 @@ public class RestauranteSoapClient implements RestauranteClient {
             return resp;
         }
     }
+
     @Override
-    public List<HorarioBean> obtenerDisponibilidad(SoliHorarioBean soli) {
+    public List<HorarioBean> obtenerDisponibilidad(String jsonPayload) {
 
         try {
             SOAPClient client = SOAPClient.SOAPClientBuilder
@@ -124,10 +110,6 @@ public class RestauranteSoapClient implements RestauranteClient {
                     .operationName("ConsultarDisponibilidadRequest")
                     .build();
 
-            String jsonPayload = gson.toJson(soli);
-
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
 
             Map<String, Object> params = new HashMap<>();
             params.put("jsonRequest", jsonPayload);
@@ -136,9 +118,10 @@ public class RestauranteSoapClient implements RestauranteClient {
                     "ConsultarDisponibilidadResponse",
                     params
             );
-            Type listType = new TypeToken<List<HorarioBean>>(){}.getType();
+            Type listType = new TypeToken<List<HorarioBean>>() {
+            }.getType();
             List<HorarioBean> result = gson.fromJson(jsonResponse, listType);
-            if(result.isEmpty())
+            if (result.isEmpty())
                 return List.of();
 
             return result;
@@ -148,6 +131,7 @@ public class RestauranteSoapClient implements RestauranteClient {
             return List.of();
         }
     }
+
     @Override
     public ResponseBean cancelarReserva(String codReservaSucursal) {
         try {
@@ -155,11 +139,9 @@ public class RestauranteSoapClient implements RestauranteClient {
                     .fromConfig(jsonConfig)
                     .operationName("cancelarReservaRequest")
                     .build();
-            CancelarReservaReqBean data = new CancelarReservaReqBean();
-            data.setCodReservaSucursal(codReservaSucursal);
-            String jsonPayload = gson.toJson(data);
-            JsonDataRequestBean requestBean = new JsonDataRequestBean();
-            requestBean.setJsonRequest(jsonPayload);
+            String jsonPayload = gson.toJson(Map.of(
+                    "codReservaSucursal", codReservaSucursal
+            ));
             Map<String, Object> params = new HashMap<>();
             params.put("jsonRequest", jsonPayload);
 
@@ -167,9 +149,8 @@ public class RestauranteSoapClient implements RestauranteClient {
                     "cancelarReservaResponse",
                     params
             );
-            ResponseBean  result = gson.fromJson(jsonResponse, ResponseBean.class);
 
-            return result;
+            return gson.fromJson(jsonResponse, ResponseBean.class);
 
         } catch (Exception e) {
             log.error("Error: {}", e.getMessage(), e);
@@ -191,9 +172,8 @@ public class RestauranteSoapClient implements RestauranteClient {
                     "ModificarReservaResponse",
                     params
             );
-            ResponseBean  result = gson.fromJson(jsonResponse, ResponseBean.class);
 
-            return result;
+            return gson.fromJson(jsonResponse, ResponseBean.class);
 
         } catch (Exception e) {
             log.error("Error: {}", e.getMessage(), e);
@@ -211,8 +191,6 @@ public class RestauranteSoapClient implements RestauranteClient {
                     .build();
 
 
-
-
             Map<String, Object> params = new HashMap<>();
 
             String jsonResponse = client.callServiceForString(
@@ -220,7 +198,8 @@ public class RestauranteSoapClient implements RestauranteClient {
                     params
             );
 
-            Type listType = new TypeToken<List<ContenidoBean>>(){}.getType();
+            Type listType = new TypeToken<List<ContenidoBean>>() {
+            }.getType();
             List<ContenidoBean> result = gson.fromJson(jsonResponse, listType);
 
             if (result == null) {
@@ -236,7 +215,7 @@ public class RestauranteSoapClient implements RestauranteClient {
     }
 
     @Override
-    public void notificarRestaurante(BigDecimal costoAplicado , String nroContenidos) {
+    public void notificarRestaurante(BigDecimal costoAplicado, String nroContenidos) {
 
         String json = gson.toJson(Map.of(
                 "costoAplicado", costoAplicado,
@@ -257,8 +236,8 @@ public class RestauranteSoapClient implements RestauranteClient {
                     "notificarRestauranteResponse",
                     params
             );
-            UpdPublicarContenidosRespBean result =
-                    gson.fromJson(jsonResponse, UpdPublicarContenidosRespBean.class);
+            UpdPublicarContenidosRespBean result = gson.fromJson(jsonResponse, UpdPublicarContenidosRespBean.class);
+            log.info("notificarRestaurante result: {}", result);
 
             log.info("Notificación SOAP enviada restaurante (contenidos {})", nroContenidos);
 

@@ -40,8 +40,8 @@ public class PromocionesService {
             log.warn("No hay cliente promociones para {}", nroRestaurante);
             return;
         }
-
-        client.notificarRestaurante(costoAplicado, nroContenidos);
         log.info("Notificación enviada REST restaurante {}", nroRestaurante);
+        client.notificarRestaurante(costoAplicado, nroContenidos);
+
     }
 }

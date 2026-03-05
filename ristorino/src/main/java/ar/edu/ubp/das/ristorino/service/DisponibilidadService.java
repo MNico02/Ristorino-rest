@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+import com.google.gson.Gson;
 @Service
 @Slf4j
 public class DisponibilidadService {
@@ -24,8 +24,8 @@ public class DisponibilidadService {
         int nroRestaurante = resolverRestaurante(soli.getCodSucursalRestaurante());
 
         RestauranteClient client = factory.getClient(nroRestaurante);
-
-        return client.obtenerDisponibilidad(soli);
+        String json = new Gson().toJson(soli);
+        return client.obtenerDisponibilidad(json);
     }
 
     private int resolverRestaurante(String codigo) {

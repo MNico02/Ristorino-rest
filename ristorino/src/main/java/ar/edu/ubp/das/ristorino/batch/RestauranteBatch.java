@@ -1,6 +1,5 @@
 package ar.edu.ubp.das.ristorino.batch;
 
-import ar.edu.ubp.das.ristorino.beans.RestauranteBean;
 import ar.edu.ubp.das.ristorino.beans.SyncRestauranteBean;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.RestauranteService;
@@ -11,7 +10,6 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
@@ -19,14 +17,16 @@ import java.util.Map;
 @SpringBootApplication(scanBasePackages = "ar.edu.ubp.das.ristorino")
 public class RestauranteBatch {
 
-    @Autowired private RestauranteService restauranteService;
-    @Autowired private RistorinoRepository repository;
+    @Autowired
+    private RestauranteService restauranteService;
+    @Autowired
+    private RistorinoRepository repository;
 
     public void ejecutar() {
 
         log.info("🚀 Iniciando batch de sync de restaurantes");
 
-        int nroRestaurante =1;
+        int nroRestaurante = 1;
 
         while (true) {
             try {

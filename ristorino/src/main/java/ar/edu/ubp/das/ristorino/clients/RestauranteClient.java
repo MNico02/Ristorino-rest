@@ -7,11 +7,18 @@ import java.util.List;
 
 public interface RestauranteClient {
     SyncRestauranteBean obtenerRestaurante();
-    ResponseBean enviarClicks(List<ClickNotiBean> clicks);
+
+    ResponseBean enviarClicks(String json);
+
     ConfirmarReservaResponseBean confirmarReserva(String json);
+
     ResponseBean cancelarReserva(String codReservaSucursal);
+
     ResponseBean modificarReserva(String json);
-    List<HorarioBean> obtenerDisponibilidad(SoliHorarioBean soli);
+
+    List<HorarioBean> obtenerDisponibilidad(String json);
+
     List<ContenidoBean> obtenerPromociones();
+
     void notificarRestaurante(BigDecimal costoAplicado, String nroContenidos);
 }

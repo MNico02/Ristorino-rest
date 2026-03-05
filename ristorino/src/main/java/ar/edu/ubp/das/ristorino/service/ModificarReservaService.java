@@ -43,7 +43,7 @@ public class ModificarReservaService {
         }
 
         try {
-            log.info("antes de el soapclient"+req.getHoraReserva().toString());
+            log.info("antes de el soapclient{}", req.getHoraReserva());
 
             RestauranteClient client = clientFactory.getClient(nroRestaurante);
 

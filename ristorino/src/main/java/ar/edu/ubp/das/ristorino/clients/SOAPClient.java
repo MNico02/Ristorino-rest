@@ -1,11 +1,7 @@
 package ar.edu.ubp.das.ristorino.clients;
 
 import com.google.gson.Gson;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.MarshalException;
-import jakarta.xml.bind.Marshaller;
-import jakarta.xml.bind.UnmarshalException;
-import jakarta.xml.bind.Unmarshaller;
+import jakarta.xml.bind.*;
 import jakarta.xml.soap.*;
 import jakarta.xml.ws.Dispatch;
 import jakarta.xml.ws.Service;
@@ -52,21 +48,17 @@ public class SOAPClient {
             SOAPMessage soapResponse = sendRequest(soapRequest);
             soapResponse.writeTo(System.out); // Para depuración
             return processResponseForObject(soapResponse, clazz, responseElementName);
-        }
-        catch (SOAPFaultException e) {
+        } catch (SOAPFaultException e) {
             SOAPFault fault = e.getFault();
             throw new RuntimeException(fault.getFaultCode() + "- " + fault.getFaultString());
-        }
-        catch (MarshalException | UnmarshalException e) {
+        } catch (MarshalException | UnmarshalException e) {
             Throwable linkedException = e.getLinkedException();
             if (linkedException != null) {
                 throw new RuntimeException(linkedException.getMessage(), e);
-            }
-            else {
+            } else {
                 throw new RuntimeException(e.getMessage(), e);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -82,21 +74,17 @@ public class SOAPClient {
             SOAPMessage soapResponse = sendRequest(soapRequest);
             soapResponse.writeTo(System.out); // Para depuración
             return processResponseForList(soapResponse, clazz, responseElementName);
-        }
-        catch (SOAPFaultException e) {
+        } catch (SOAPFaultException e) {
             SOAPFault fault = e.getFault();
             throw new RuntimeException(fault.getFaultCode() + "- " + fault.getFaultString());
-        }
-        catch (MarshalException | UnmarshalException e) {
+        } catch (MarshalException | UnmarshalException e) {
             Throwable linkedException = e.getLinkedException();
             if (linkedException != null) {
                 throw new RuntimeException(linkedException.getMessage(), e);
-            }
-            else {
+            } else {
                 throw new RuntimeException(e.getMessage(), e);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -104,6 +92,7 @@ public class SOAPClient {
     public <T> List<T> callServiceForList(Class<T> clazz, String responseElementName) {
         return callServiceForList(clazz, responseElementName, null);
     }
+
     public String callServiceForString(String responseElementName, Map<String, Object> parameters) {
         try {
             SOAPMessage soapRequest = createRequest(parameters);
@@ -111,12 +100,10 @@ public class SOAPClient {
             SOAPMessage soapResponse = sendRequest(soapRequest);
             soapResponse.writeTo(System.out);
             return extractStringFromResponse(soapResponse, responseElementName);
-        }
-        catch (SOAPFaultException e) {
+        } catch (SOAPFaultException e) {
             SOAPFault fault = e.getFault();
             throw new RuntimeException(fault.getFaultCode() + "- " + fault.getFaultString());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
@@ -170,7 +157,6 @@ public class SOAPClient {
         soapMessage.saveChanges();
 
 
-
         return soapMessage;
     }
 
@@ -178,8 +164,7 @@ public class SOAPClient {
         if (isSimpleType(parameter.getClass())) {
             SOAPElement childElement = operation.addChildElement(parameterName, "tns", namespace);
             childElement.addTextNode(parameter.toString());
-        }
-        else {
+        } else {
             JAXBContext jaxbContext = JAXBContext.newInstance(parameter.getClass());
             Marshaller marshaller = jaxbContext.createMarshaller();
             marshaller.marshal(parameter, operation);
@@ -289,15 +274,33 @@ public class SOAPClient {
             private String username;
             private String password;
 
-            public String getWsdlUrl() { return wsdlUrl; }
-            public String getNamespace() { return namespace; }
-            public String getServiceName() { return serviceName; }
-            public String getPortName() { return portName; }
-            public String getUsername() { return username; }
-            public String getPassword() { return password; }
+            public String getWsdlUrl() {
+                return wsdlUrl;
+            }
+
+            public String getNamespace() {
+                return namespace;
+            }
+
+            public String getServiceName() {
+                return serviceName;
+            }
+
+            public String getPortName() {
+                return portName;
+            }
+
+            public String getUsername() {
+                return username;
+            }
+
+            public String getPassword() {
+                return password;
+            }
         }
 
-        private SOAPClientBuilder() {}
+        private SOAPClientBuilder() {
+        }
 
         public static SOAPClientBuilder fromConfig(String jsonConfigString) {
             Gson gson = new Gson();

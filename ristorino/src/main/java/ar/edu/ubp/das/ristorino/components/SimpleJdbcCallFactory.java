@@ -1,4 +1,5 @@
 package ar.edu.ubp.das.ristorino.components;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
@@ -40,6 +41,7 @@ public class SimpleJdbcCallFactory {
     public void execute(String procedureName, String schemaName, SqlParameterSource params) {
         executeWithOutputs(procedureName, schemaName, params);
     }
+
     public <T> T executeSingle(String procedureName, String schemaName, SqlParameterSource params, String resultSetName, Class<T> mappedClass) {
         List<T> result = executeQuery(procedureName, schemaName, params, resultSetName, mappedClass);
         return result.isEmpty() ? null : result.get(0);
@@ -54,6 +56,7 @@ public class SimpleJdbcCallFactory {
                 .withProcedureName(procedureName)
                 .withSchemaName(schemaName);
     }
+
     public List<Map<String, Object>> executeList(String procedureName, String schemaName, SqlParameterSource params) {
         SimpleJdbcCall jdbcCall = createCall(procedureName, schemaName);
         Map<String, Object> result = jdbcCall.execute(params);

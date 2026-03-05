@@ -4,7 +4,7 @@ import ar.edu.ubp.das.ristorino.beans.ClickNotiBean;
 import ar.edu.ubp.das.ristorino.beans.ResponseBean;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
-import jakarta.xml.ws.Response;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -32,9 +32,9 @@ public class ClickNotificationService {
         try {
             // Obtener cliente según el restaurante
             RestauranteClient client = clientFactory.getClient(nroRestaurante);
-
+            String json = new Gson().toJson(clicks);
             // Enviar clicks
-            ResponseBean resultado = client.enviarClicks(clicks);
+            ResponseBean resultado = client.enviarClicks(json);
 
             if (resultado.isSuccess()) {
                 log.info("Clicks registrados correctamente en restaurante {}", nroRestaurante);

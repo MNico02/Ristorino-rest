@@ -1,7 +1,7 @@
 package ar.edu.ubp.das.ristorino.beans;
 
 public class ClickNotiBean {
-    private int nroClick ;
+    private int nroClick;
     private int nroRestaurante;
     private String correo_cliente;
     private String fechaHoraRegistro;

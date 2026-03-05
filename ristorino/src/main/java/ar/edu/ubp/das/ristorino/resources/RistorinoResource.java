@@ -4,23 +4,19 @@ import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import com.google.gson.Gson;
-
 
 import java.math.BigDecimal;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("ristorino")
@@ -50,7 +46,7 @@ public class RistorinoResource {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String,String>> logueo(@RequestBody LoginBean loginBean) {
+    public ResponseEntity<Map<String, String>> logueo(@RequestBody LoginBean loginBean) {
         System.out.println("ENTRÓ AL LOGIN: " + loginBean.getCorreo());
         try {
             String token = ristorinoRepository.login(loginBean);
@@ -67,12 +63,13 @@ public class RistorinoResource {
 
     @GetMapping("/zonasSucursal")
     public ResponseEntity<List<ZonaBean>> obtenerZonasSucursal(@RequestParam int nroRestaurante, @RequestParam int nroSucursal) {
-        List<ZonaBean> zonasSucursal = ristorinoRepository.getZonasSucursal(nroRestaurante,nroSucursal);
+        List<ZonaBean> zonasSucursal = ristorinoRepository.getZonasSucursal(nroRestaurante, nroSucursal);
         return ResponseEntity.ok(zonasSucursal);
     }
 
-    @GetMapping ("/misReservas")
-    public ResponseEntity<ReservasClienteRespBean> obtenerReservasCliente(Authentication auth) {   String correo = auth.getName();
+    @GetMapping("/misReservas")
+    public ResponseEntity<ReservasClienteRespBean> obtenerReservasCliente(Authentication auth) {
+        String correo = auth.getName();
         //System.out.println("correo: " + correo);
         ReservasClienteRespBean res = ristorinoRepository.getReservasCliente(correo);
         return ResponseEntity.ok(res);
@@ -93,24 +90,21 @@ public class RistorinoResource {
     }
 
     /*
-    * Consume el servicio del restaurante y registra una reserva
-    * recive un reservaBean y si todo sale bien obtiene un codigo de reserva por parte del restuarnte
-    * */
+     * Consume el servicio del restaurante y registra una reserva
+     * recive un reservaBean y si todo sale bien obtiene un codigo de reserva por parte del restuarnte
+     * */
     @PostMapping("/registrarReserva")
-    public ResponseEntity<Map<String, String>> registrarReserva(@RequestBody ReservaBean reserva) {
+    public ResponseEntity<ResponseBean> registrarReserva(@RequestBody ReservaBean reserva) {
 
-        String codigoReserva = reservaService.registrarReserva(reserva);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("codReserva", codigoReserva);
-
-        return ResponseEntity.ok(response);
+        ResponseBean resp = reservaService.registrarReserva(reserva);
+        System.out.println("respuesta"+resp);
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/consultarDisponibilidad")
     public ResponseEntity<DispoRespBean> consultarDisponibilidad(@RequestBody SoliHorarioBean soliHorarioBean) {
         String tipoCosto = "RESERVA";
-        BigDecimal costo = ristorinoRepository.obtenerCostoVigente(tipoCosto,soliHorarioBean.getFecha());
+        BigDecimal costo = ristorinoRepository.obtenerCostoVigente(tipoCosto, soliHorarioBean.getFecha());
         DispoRespBean dispoRespBean = new DispoRespBean();
         dispoRespBean.setHorarios(disponibilidadService.obtenerDisponibilidad(soliHorarioBean));
         dispoRespBean.setCosto(costo);
@@ -118,10 +112,10 @@ public class RistorinoResource {
     }
 
     /*
-    * A partir de un texto de busqueda, la IA genera filtros que son usados en la BD para obtener una lista de restaurantes
-    *  que coincidan con el texto de busqueda.
-    * Devuelve una lista de restaurantes.
-    * */
+     * A partir de un texto de busqueda, la IA genera filtros que son usados en la BD para obtener una lista de restaurantes
+     *  que coincidan con el texto de busqueda.
+     * Devuelve una lista de restaurantes.
+     * */
     @PostMapping("/ia/recomendaciones")
     public ResponseEntity<?> procesarTexto(@RequestBody Map<String, String> body) {
         try {
@@ -154,10 +148,10 @@ public class RistorinoResource {
 
 
     /*
-    * Obtiene los contenidos pendientes, genera un texto promocional con la IA para cada uno, y lo registra en la BD.
-    * Devuelve la cantidad de contenidos generados.
-    * SOLO ES DE PRUEBA,
-    * */
+     * Obtiene los contenidos pendientes, genera un texto promocional con la IA para cada uno, y lo registra en la BD.
+     * Devuelve la cantidad de contenidos generados.
+     * SOLO ES DE PRUEBA,
+     * */
     @PostMapping("/ia/generarContenidosPromocionales")
     public ResponseEntity<?> generarContenidosPromocionales() {
         try {
@@ -175,10 +169,10 @@ public class RistorinoResource {
 
 
     /*
-    * Obtiene el contenido promocional desde la BD de ristorino
-    * Se necesita antes haber registrado el contenido del restaurante en la BD de ristorino y haber generado a partir de este la promocion con IA
-    * recive idRestaurante e idSucural devuelve una lista de las promociones
-    * */
+     * Obtiene el contenido promocional desde la BD de ristorino
+     * Se necesita antes haber registrado el contenido del restaurante en la BD de ristorino y haber generado a partir de este la promocion con IA
+     * recive idRestaurante e idSucural devuelve una lista de las promociones
+     * */
     @GetMapping("/obtenerPromociones")
     public ResponseEntity<List<PromocionBean>> obtenerPromociones(@RequestParam(required = false) String nroRestaurante, @RequestParam(required = false) Integer nroSucursal) {
         Map<String, Object> body = new LinkedHashMap<>();
@@ -200,9 +194,9 @@ public class RistorinoResource {
 
 
     /*
-    * Obtiene desde la BD de ristorino toda la info, menos el contenido promocional, de un restaurante solicitado por id
-    * recive el numero de restaurante y devuelve un restauranteBean
-    * */
+     * Obtiene desde la BD de ristorino toda la info, menos el contenido promocional, de un restaurante solicitado por id
+     * recive el numero de restaurante y devuelve un restauranteBean
+     * */
     @GetMapping("/obtenerRestaurante/{nro}")
     public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable String nro) throws JsonProcessingException {
         RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
@@ -211,10 +205,10 @@ public class RistorinoResource {
     }
 
     /*
-    * Se registra el click de una promocion en la base de datos de ristorino
-    * Recive un clickBean y devuelve un json
-    * //Todavia no guarda el cliente del click
-    * */
+     * Se registra el click de una promocion en la base de datos de ristorino
+     * Recive un clickBean y devuelve un json
+     * //Todavia no guarda el cliente del click
+     * */
     @PostMapping("/registrarClickPromocion")
     public ResponseEntity<Map<String, Object>> RegistrarClickPromocion(@RequestBody ClickBean clickBean) {
         String json = gson.toJson(clickBean);
@@ -230,45 +224,5 @@ public class RistorinoResource {
                 ristorinoRepository.obtenerCategoriasPreferencias();
         return ResponseEntity.ok(resultado);
     }
-
-
-   /* @PostMapping("/obtenerCosto")
-    public ResponseEntity<Map<String, Object>> obtenerCosto(@RequestBody CostoBean req) {
-
-        if (req.getTipoCosto() == null || req.getFecha() == null) {
-            return ResponseEntity.badRequest().body(
-                    Map.of(
-                            "success", false,
-                            "message", "tipoCosto y fecha son obligatorios"
-                    )
-            );
-        }
-
-        try {
-            BigDecimal monto =
-                    ristorinoRepository.obtenerCostoVigente(
-                            req.getTipoCosto(),
-                            req.getFecha()
-                    );
-
-            return ResponseEntity.ok(
-                    Map.of(
-                            "success", true,
-                            "monto", monto
-                    )
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(
-                    Map.of(
-                            "success", false,
-                            "message", e.getMessage()
-                    )
-            );
-        }
-    }*/
-
-
-
 
 }

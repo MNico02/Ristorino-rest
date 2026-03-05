@@ -2,29 +2,24 @@ package ar.edu.ubp.das.ristorino.repositories;
 
 import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.components.SimpleJdbcCallFactory;
-import ar.edu.ubp.das.ristorino.service.GeminiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
-import lombok.extern.slf4j.Slf4j;
+
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Types;
-import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -32,16 +27,16 @@ import java.util.stream.Collectors;
 public class RistorinoRepository {
     @Autowired
     private SimpleJdbcCallFactory jdbcCallFactory;
-   // @Autowired
+    // @Autowired
     //private GeminiService geminiService;
     @Value("${security.jwt.secret}")
     private String jwtSecret;
 
-    //listo
+
     public String registrarCliente(String json) {
 
         SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("json", json ,Types.NVARCHAR);
+                .addValue("json", json, Types.NVARCHAR);
 
         try {
             jdbcCallFactory.execute("registrar_cliente", "dbo", params);
@@ -50,7 +45,7 @@ public class RistorinoRepository {
             throw new RuntimeException("Error al registrar cliente", e);
         }
     }
-    //no se modifico
+
     public Optional<SolicitudClienteBean> getClienteCorreo(String correo) {
 
         SqlParameterSource params = new MapSqlParameterSource()
@@ -66,7 +61,7 @@ public class RistorinoRepository {
 
         return Optional.ofNullable(cliente);
     }
-    //no se modifico
+
     public String login(LoginBean loginBean) {
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("correo", loginBean.getCorreo())
@@ -97,7 +92,7 @@ public class RistorinoRepository {
                 .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
     }
-    //no se modifico
+
     public String obtenerPreferenciasClienteJson(String correo) {
 
         SqlParameterSource params = new MapSqlParameterSource()
@@ -118,13 +113,14 @@ public class RistorinoRepository {
         Object json = rs.get(0).values().iterator().next();
         return json != null ? json.toString() : null;
     }
+
     /*--IA---*/
     @SuppressWarnings("unchecked")
     //listo
     public List<Map<String, Object>> obtenerRecomendaciones(String json) {
 
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("json", json ,Types.NVARCHAR);
+                .addValue("json", json, Types.NVARCHAR);
 
         try {
             return jdbcCallFactory.executeQueryAsMap(
@@ -137,20 +133,23 @@ public class RistorinoRepository {
             throw new RuntimeException("Error al obtener recomendaciones: " + e.getMessage(), e);
         }
     }
+
     /*--IA Promociones--*/
-        // Obtener todos los contenidos pendientes de generación
-        @SuppressWarnings("unchecked")
-        //no se modifico
-        public List<Map<String, Object>> obtenerContenidosPendientes() {
-            return jdbcCallFactory.executeList("get_contenidos_a_generar", "dbo", new MapSqlParameterSource());
-        }
-        //no se modifico
-        public void actualizarContenidoPromocional(Integer nroContenido, String textoGenerado) {
-            SqlParameterSource params = new MapSqlParameterSource()
-                    .addValue("nro_contenido", nroContenido)
-                    .addValue("contenido_promocional", textoGenerado);
-            jdbcCallFactory.execute("actualizar_contenido_promocional", "dbo", params);
-        }
+    // Obtener todos los contenidos pendientes de generación
+    @SuppressWarnings("unchecked")
+    //no se modifico
+    public List<Map<String, Object>> obtenerContenidosPendientes() {
+        return jdbcCallFactory.executeList("get_contenidos_a_generar", "dbo", new MapSqlParameterSource());
+    }
+
+    //no se modifico
+    public void actualizarContenidoPromocional(Integer nroContenido, String textoGenerado) {
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("nro_contenido", nroContenido)
+                .addValue("contenido_promocional", textoGenerado);
+        jdbcCallFactory.execute("actualizar_contenido_promocional", "dbo", params);
+    }
+
     /*-----*/
     //no se modifico
     public String getPromptIA(String tipoPrompt) {
@@ -175,7 +174,8 @@ public class RistorinoRepository {
 
         return rs.get(0).get("texto_prompt").toString();
     }
-        /*--Clicks--*/
+
+    /*--Clicks--*/
     //listo
     public Map<String, Object> registrarClick(String json) {
 
@@ -193,13 +193,15 @@ public class RistorinoRepository {
         }
         return resp;
     }
+
     //no se modifico
     public List<ClickNotiBean> obtenerClicksPendientes() {
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("nro_restaurante", null, Types.INTEGER)
                 .addValue("top", null, Types.INTEGER);
-        return jdbcCallFactory.executeQuery("sp_clicks_pendientes", "dbo", params,"", ClickNotiBean.class);
+        return jdbcCallFactory.executeQuery("sp_clicks_pendientes", "dbo", params, "", ClickNotiBean.class);
     }
+
     //listo
     public List<ClickNotiBean> marcarClicksComoNotificados(String json) {
 
@@ -222,37 +224,37 @@ public class RistorinoRepository {
             return actualizados;
 
         } catch (Exception e) {
-           log.error("Error al marcar clics como notificados: {}", e.getMessage(), e);
+            log.error("Error al marcar clics como notificados: {}", e.getMessage(), e);
             return List.of();
         }
     }
-        /*----------*/
-        //listo
-        public BigDecimal guardarPromociones(String json) {
-            try {
-                SqlParameterSource params = new MapSqlParameterSource()
-                        .addValue("json", json, Types.NVARCHAR);
 
-                List<Map<String, Object>> result = jdbcCallFactory.executeQueryAsMap(
-                        "ins_contenidos_restaurante_lote",
-                        "dbo",
-                        params,
-                        "result"
-                );
+    /*----------*/
+    //listo
+    public BigDecimal guardarPromociones(String json) {
+        try {
+            SqlParameterSource params = new MapSqlParameterSource()
+                    .addValue("json", json, Types.NVARCHAR);
+            System.out.println("el json es "+json);
+            List<Map<String, Object>> result = jdbcCallFactory.executeQueryAsMap(
+                    "ins_contenidos_restaurante_lote",
+                    "dbo",
+                    params,
+                    "result"
+            );
 
-                if (result == null || result.isEmpty()) return null;
-                return (BigDecimal) result.get(0).get("costoAplicado");
+            if (result == null || result.isEmpty()) return null;
+            return (BigDecimal) result.get(0).get("costoAplicado");
 
-            } catch (Exception e) {
-                log.error("Error guardando promociones: {}", e.getMessage(), e);
-                return null;
-            }
+        } catch (Exception e) {
+            log.error("Error guardando promociones: {}", e.getMessage(), e);
+            return null;
         }
+    }
+
     //listo
     public Map<String, Object> guardarInfoRestaurante(String json) {
         try {
-
-
 
 
             SqlParameterSource params = new MapSqlParameterSource()
@@ -270,14 +272,16 @@ public class RistorinoRepository {
             throw new RuntimeException("Error en sync bulk restaurante JSON: " + e.getMessage(), e);
         }
     }
+
     //listo
     public List<PromocionBean> obtenerPromociones(String json) {
 
         SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("json", json, Types.NVARCHAR);
 
-        return jdbcCallFactory.executeQuery("get_promociones", "dbo", params,"", PromocionBean.class);
+        return jdbcCallFactory.executeQuery("get_promociones", "dbo", params, "", PromocionBean.class);
     }
+
     //no se modifico
     public String obtenerConfiguracionJson(int nroRestaurante) {
 
@@ -324,6 +328,7 @@ public class RistorinoRepository {
             );
         }
     }
+
     //no se modifico
     public List<RestauranteHomeBean> listarRestaurantesHome() {
 
@@ -352,7 +357,8 @@ public class RistorinoRepository {
                 if (categoriasJson != null && !categoriasJson.isEmpty()) {
                     try {
                         List<Map<String, String>> lista =
-                                mapper.readValue(categoriasJson, new TypeReference<>() {});
+                                mapper.readValue(categoriasJson, new TypeReference<>() {
+                                });
 
                         Map<String, List<String>> categorias = new LinkedHashMap<>();
 
@@ -378,7 +384,8 @@ public class RistorinoRepository {
                 if (sucursalesJson != null && !sucursalesJson.isEmpty()) {
                     try {
                         List<Map<String, Object>> sucursalesList =
-                                mapper.readValue(sucursalesJson, new TypeReference<>() {});
+                                mapper.readValue(sucursalesJson, new TypeReference<>() {
+                                });
 
                         List<SucursalesHomeBean> sucursales = new ArrayList<>();
 
@@ -397,7 +404,8 @@ public class RistorinoRepository {
                             Object prefObj = s.get("preferencias");
                             if (prefObj != null) {
                                 List<Map<String, String>> prefList =
-                                        mapper.convertValue(prefObj, new TypeReference<>() {});
+                                        mapper.convertValue(prefObj, new TypeReference<>() {
+                                        });
 
                                 Map<String, List<String>> preferencias = new LinkedHashMap<>();
 
@@ -427,15 +435,16 @@ public class RistorinoRepository {
 
         return restaurantes;
     }
+
     //no se modifico
     public RestauranteBean obtenerRestaurantePorId(String nroRestaurante) throws JsonProcessingException {
 
         String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
 
 
-            SqlParameterSource params = new MapSqlParameterSource()
+        SqlParameterSource params = new MapSqlParameterSource()
                 .addValue("cod_restaurante", nroRestaurante)
-                    .addValue("idioma_front",idiomaActual);
+                .addValue("idioma_front", idiomaActual);
 
         Map<String, Object> out =
                 jdbcCallFactory.executeWithOutputs("get_restaurante_info", "dbo", params);
@@ -546,16 +555,17 @@ public class RistorinoRepository {
         restaurante.setSucursales(new ArrayList<>(sucursalesMap.values()));
         return restaurante;
     }
+
     //no se modifico
     public List<CategoriaPreferenciaBean> obtenerCategoriasPreferencias() {
         String idiomaActual = LocaleContextHolder.getLocale().getLanguage();
         SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("idioma_front",idiomaActual);
+                .addValue("idioma_front", idiomaActual);
 
         Map<String, Object> out =
                 jdbcCallFactory.executeWithOutputs(
                         "get_categorias_preferencias",
-                        "dbo",params
+                        "dbo", params
                 );
 
         // RS1: Categorías
@@ -595,6 +605,7 @@ public class RistorinoRepository {
 
         return new ArrayList<>(categoriasMap.values());
     }
+
     //listo
     public ReservaConfirmadaBean insReservaConfirmadaRistorino(String json) {
 
@@ -613,13 +624,14 @@ public class RistorinoRepository {
         if (saved == null) throw new RuntimeException("SP no devolvió fila insertada");
         return saved;
     }
+
     //listo
     public Map<String, Object> modificarReservaRistorino(String json) {
 
         Map<String, Object> resp = new HashMap<>();
 
         SqlParameterSource params = new MapSqlParameterSource()
-                .addValue("json",json, Types.NVARCHAR);
+                .addValue("json", json, Types.NVARCHAR);
 
         try {
             Map<String, Object> out =
@@ -664,6 +676,7 @@ public class RistorinoRepository {
             return resp;
         }
     }
+
     //no se modifico
     public ReservasClienteRespBean getReservasCliente(String correo) {
 
@@ -693,34 +706,24 @@ public class RistorinoRepository {
         return res;
 
     }
+
     //no se modifico
     public List<ZonaBean> getZonasSucursal(int nroRestaurante, int nroSucursal) {
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("nro_restaurante", nroRestaurante)
                 .addValue("nro_sucursal", nroSucursal);
-
-        List<Map<String, Object>> rs = jdbcCallFactory.executeQueryAsMap(
+        List<ZonaBean> result =
+         jdbcCallFactory.executeQuery(
                 "get_zonas_sucursal",
                 "dbo",
                 params,
-                "result"
+                "result",
+                ZonaBean.class
         );
-
-        List<ZonaBean> out = new ArrayList<>();
-        for (Map<String, Object> row : rs) {
-            ZonaBean z = new ZonaBean();
-
-            z.setCodZona(getInt(row.get("codZona")));
-            z.setNomZona(getStr(row.get("nomZona")));
-            z.setCantComensales(getInt(row.get("cantComensales")));
-            z.setPermiteMenores(getBool(row.get("permiteMenores")));
-            z.setHabilitada(getBool(row.get("habilitada")));
-
-            out.add(z);
-        }
-        return out;
+        return result.isEmpty() ? null : result;
     }
+
     //no se modifico
     public Map<String, Object> cancelarReservaRistorinoPorCodigo(String codReservaSucursal) {
 
@@ -740,6 +743,7 @@ public class RistorinoRepository {
                 ? Map.of("success", false, "status", "ERROR", "message", "SP no devolvió resultado.")
                 : rs.get(0);
     }
+
     //no se modifico
     public BigDecimal obtenerCostoVigente(String tipoCosto, String fecha) {
 
@@ -775,6 +779,7 @@ public class RistorinoRepository {
 
         return new BigDecimal(montoObj.toString());
     }
+
     //no se modifico
     public List<Integer> obtenerNrosActivos() {
         List<NroRestBean> restaurantes =
@@ -802,10 +807,14 @@ public class RistorinoRepository {
     private static int getInt(Object o) {
         if (o == null) return 0;
         if (o instanceof Integer) return (Integer) o;
-        if (o instanceof Long)    return ((Long) o).intValue();
-        if (o instanceof Short)   return ((Short) o).intValue();
+        if (o instanceof Long) return ((Long) o).intValue();
+        if (o instanceof Short) return ((Short) o).intValue();
         if (o instanceof BigDecimal) return ((BigDecimal) o).intValue();
-        try { return Integer.parseInt(o.toString()); } catch (Exception e) { return 0; }
+        try {
+            return Integer.parseInt(o.toString());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private static Integer getIntObj(Object o) {
@@ -815,15 +824,19 @@ public class RistorinoRepository {
     private static boolean getBool(Object o) {
         if (o == null) return false;
         if (o instanceof Boolean) return (Boolean) o;
-        if (o instanceof Number)  return ((Number) o).intValue() != 0;
+        if (o instanceof Number) return ((Number) o).intValue() != 0;
         return Boolean.parseBoolean(o.toString());
     }
 
     private static BigDecimal getBigDec(Object o) {
         if (o == null) return null;
         if (o instanceof BigDecimal) return (BigDecimal) o;
-        if (o instanceof Number)     return BigDecimal.valueOf(((Number) o).doubleValue());
-        try { return new BigDecimal(o.toString()); } catch (Exception e) { return null; }
+        if (o instanceof Number) return BigDecimal.valueOf(((Number) o).doubleValue());
+        try {
+            return new BigDecimal(o.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -877,7 +890,6 @@ public class RistorinoRepository {
             return null;
         }
     }
-
 
 
 }

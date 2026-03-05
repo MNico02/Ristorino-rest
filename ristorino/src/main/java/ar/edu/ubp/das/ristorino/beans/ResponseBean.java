@@ -1,12 +1,15 @@
 package ar.edu.ubp.das.ristorino.beans;
+import lombok.Data;
 
+@Data
 public class ResponseBean {
 
     private boolean success;
     private String status;
     private String message;
 
-    public ResponseBean() {}
+    public ResponseBean() {
+    }
 
     public ResponseBean(boolean success, String status, String message) {
         this.success = success;
@@ -14,27 +17,4 @@ public class ResponseBean {
         this.message = message;
     }
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
 }

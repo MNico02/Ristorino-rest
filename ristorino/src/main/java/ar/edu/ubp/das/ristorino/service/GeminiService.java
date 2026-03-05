@@ -20,7 +20,7 @@ public class GeminiService {
 
     @Autowired
     private RistorinoRepository ristorinoRepository;
-    private static final String API_KEY = "";
+    private static final String API_KEY = "AIzaSyAuSYIXPTpiOVqQnQPfvsCBUm3WCYmvzyA";
     private static final String GEMINI_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
@@ -34,7 +34,7 @@ public class GeminiService {
 
         String bloquePreferencias;
         if (preferenciasUsuarioJson == null || preferenciasUsuarioJson.isBlank()) {
-            bloquePreferencias = ""; 
+            bloquePreferencias = "";
         } else {
             bloquePreferencias = preferenciasUsuarioJson;
         }
@@ -43,16 +43,16 @@ public class GeminiService {
                 .replace("{TEXTO_BASE}", textoUsuario)
                 .replace("{TEXTO_PREFERENCIA_CLIENTE}", bloquePreferencias);
         String requestBody = """
-    {
-      "contents": [
-        {
-          "parts": [
-            { "text": "%s" }
-          ]
-        }
-      ]
-    }
-    """.formatted(prompt.replace("\"", "\\\""));
+                {
+                  "contents": [
+                    {
+                      "parts": [
+                        { "text": "%s" }
+                      ]
+                    }
+                  ]
+                }
+                """.formatted(prompt.replace("\"", "\\\""));
 
         URL url = new URL(GEMINI_URL);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -172,12 +172,12 @@ public class GeminiService {
 
 
         String requestBody = """
-    {
-      "contents": [
-        { "parts": [ { "text": "%s" } ] }
-      ]
-    }
-    """.formatted(prompt.replace("\"", "\\\""));
+                {
+                  "contents": [
+                    { "parts": [ { "text": "%s" } ] }
+                  ]
+                }
+                """.formatted(prompt.replace("\"", "\\\""));
 
         URL url = new URL(GEMINI_URL);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
