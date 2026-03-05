@@ -1,0 +1,54 @@
+# Nombre del workflow, aparece en la pestaña "Actions" de GitHub
+name: CI - Ristorino Backend
+
+# ---------------------------------------------------------------
+# DISPARADORES: cuándo se ejecuta este workflow
+# Se activa en cada push o pull request a la rama main
+# ---------------------------------------------------------------
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# ---------------------------------------------------------------
+# JOBS: tareas que se ejecutan en el workflow
+# ---------------------------------------------------------------
+jobs:
+  test:
+    name: Correr Tests
+    runs-on: ubuntu-latest  # GitHub provee una VM con Ubuntu gratis
+
+    steps:
+
+      # 1. Descarga el código del repositorio en la VM
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      # 2. Instala Java 17 en la VM (igual que tu entorno local)
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 3. Cachea las dependencias de Maven para que no las descargue
+      #    desde cero en cada ejecución (hace el workflow mucho más rápido)
+      - name: Cachear dependencias Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # 4. Ejecuta los tests con Maven
+      #    -B = modo batch (sin colores, ideal para CI)
+      #    -Dspring.datasource.url=... evita que Spring intente conectarse
+      #    a SQL Server (que no existe en la VM de GitHub)
+      - name: Ejecutar tests
+        working-directory: ristorino
+        run: mvn -B test
+          -Dspring.datasource.url=jdbc:h2:mem:testdb
+          -Dspring.datasource.driver-class-name=org.h2.Driver
+          -Dspring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
