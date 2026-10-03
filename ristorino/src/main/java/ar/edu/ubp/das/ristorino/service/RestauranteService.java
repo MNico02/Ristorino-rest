@@ -5,6 +5,7 @@ import ar.edu.ubp.das.ristorino.clients.RestauranteClient;
 import ar.edu.ubp.das.ristorino.clients.RestauranteClientFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ar.edu.ubp.das.ristorino.exceptions.IntegracionException;
 
 @Slf4j
 @Service
@@ -25,5 +26,17 @@ public class RestauranteService {
             return null;
         }
         return client.obtenerRestaurante();
+    }
+
+    public void verificarDisponible(int nroRestaurante) {
+        try {
+            if (obtenerRestaurante(nroRestaurante) == null) {
+                throw new IntegracionException("Restaurante " + nroRestaurante + " no respondió");
+            }
+        } catch (IntegracionException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IntegracionException("Restaurante " + nroRestaurante + " no disponible", e);
+        }
     }
 }

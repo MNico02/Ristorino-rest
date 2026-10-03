@@ -3,6 +3,7 @@ package ar.edu.ubp.das.ristorino.resources;
 import ar.edu.ubp.das.ristorino.beans.*;
 import ar.edu.ubp.das.ristorino.repositories.RistorinoRepository;
 import ar.edu.ubp.das.ristorino.service.*;
+import ar.edu.ubp.das.ristorino.exceptions.RecursoNoEncontradoException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,8 @@ public class RistorinoResource {
     private CancelarReservaService cancelarReserva;
     @Autowired
     private ModificarReservaService modificarReservaService;
+    @Autowired
+    private RestauranteService restauranteService;
     private final Gson gson = new Gson();
 
     @PostMapping("/registrarCliente")
@@ -200,7 +203,13 @@ public class RistorinoResource {
     @GetMapping("/obtenerRestaurante/{nro}")
     public ResponseEntity<RestauranteBean> obtenerRestaurante(@PathVariable String nro) throws JsonProcessingException {
         RestauranteBean restauranteBean = ristorinoRepository.obtenerRestaurantePorId(nro);
-        System.out.println("restauranteBeannro = " + restauranteBean.getNroRestaurante());
+        if (restauranteBean == null) {
+            throw new RecursoNoEncontradoException("Restaurante inexistente");
+        }
+        if (restauranteBean.getSucursales() != null && !restauranteBean.getSucursales().isEmpty()) {
+            String cod = restauranteBean.getSucursales().get(0).getCodSucursalRestaurante();
+            restauranteService.verificarDisponible(Integer.parseInt(cod.split("-")[0]));
+        }
         return ResponseEntity.ok(restauranteBean);
     }
 

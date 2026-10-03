@@ -52,7 +52,8 @@ public class RistorinoResourceTest {
     private CancelarReservaService cancelarReserva;
     @MockitoBean
     private ModificarReservaService modificarReservaService;
-
+    @MockitoBean
+    private RestauranteService restauranteService;
     // ---------------------------------------------------------------
     // TEST 1: POST /ristorino/registrarCliente → 201 CREATED
     //
