@@ -70,7 +70,7 @@ public class RestauranteSoapClient implements RestauranteClient {
 
         } catch (Exception e) {
             log.error("Error: {}", e.getMessage(), e);
-            return null;
+            throw new RuntimeException("No se pudo obtener la información del restaurante.", e);
         }
     }
 
@@ -128,7 +128,7 @@ public class RestauranteSoapClient implements RestauranteClient {
 
         } catch (Exception e) {
             log.error("Error SOAP consultarDisponibilidad: {}", e.getMessage(), e);
-            return List.of();
+            throw new RuntimeException("No se pudo consultar la disponibilidad del restaurante.", e);
         }
     }
 
@@ -154,7 +154,7 @@ public class RestauranteSoapClient implements RestauranteClient {
 
         } catch (Exception e) {
             log.error("Error: {}", e.getMessage(), e);
-            return null;
+            throw new RuntimeException("No se pudo cancelar la reserva.", e);
         }
     }
 
@@ -177,7 +177,7 @@ public class RestauranteSoapClient implements RestauranteClient {
 
         } catch (Exception e) {
             log.error("Error: {}", e.getMessage(), e);
-            return null;
+            throw new RuntimeException("No se pudo modificar la reserva.", e);
         }
     }
 
